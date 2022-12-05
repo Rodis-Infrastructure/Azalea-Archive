@@ -10,6 +10,7 @@ export default class Properties {
     }
 
     public static roles = {
+        trialModerator: "",
         trialStageOne: "",
         trialStageTwo: "",
         moderator: "",
@@ -22,8 +23,7 @@ export default class Properties {
         internalAffairs: "",
         infrastructure: "",
         management: "",
-        seniorModerators: "",
-        trialModerator: ""
+        seniorModerators: ""
     }
 
     public static noLogsChannels = [
