@@ -1,3 +1,5 @@
+import ListenerLoader from "./handlers/listeners/Loader";
+
 import {Client, GatewayIntentBits, Partials} from "discord.js";
 import "dotenv/config";
 
@@ -25,6 +27,9 @@ export default class Bot extends Client {
         });
 
         (async () => {
+            const listeners = new ListenerLoader(this);
+            await listeners.load();
+
             await this.login(process.env.BOT_TOKEN);
         })();
     }

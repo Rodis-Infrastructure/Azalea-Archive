@@ -4,7 +4,7 @@
   "description": "The Roblox Discord's Moderation Bot",
   "main": "src/Bot.ts",
   "scripts": {
-    "test": "ts-node src/Bot.ts"
+    "start": "tsc; node dist/Bot.js"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   "dependencies": {
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
   }
 }
