@@ -5,7 +5,7 @@ import {readdirSync} from "fs";
 import {join} from "path";
 
 import Properties from "../../../utils/Properties";
-import LogsUtils from "../../../utils/LogsUtils";
+import LoggingUtils from "../../../utils/LoggingUtils";
 import SelectMenu from "./SelectMenu";
 import Bot from "../../../Bot";
 
@@ -74,7 +74,7 @@ export default class CommandHandler {
         try {
             if (!Properties.noLogsChannels.includes(interaction.channelId)) {
                 const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LogsUtils.log({
+                await LoggingUtils.log({
                     action: "Select Menu Usage",
                     author: interaction.user,
                     logsChannel: commandUseLogsChannel,

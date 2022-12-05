@@ -1,4 +1,4 @@
-import LogsUtils from "../../../utils/LogsUtils";
+import LoggingUtils from "../../../utils/LoggingUtils";
 import Bot from "../../../Bot";
 import Button from "./Button";
 
@@ -73,7 +73,7 @@ export default class CommandHandler {
         try {
             if (!Properties.noLogsChannels.includes(interaction.channelId)) {
                 const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LogsUtils.log({
+                await LoggingUtils.log({
                     action: "Button Usage",
                     author: interaction.user,
                     logsChannel: commandUseLogsChannel,

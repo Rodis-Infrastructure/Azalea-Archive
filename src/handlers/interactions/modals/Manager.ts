@@ -4,7 +4,7 @@ import {readdirSync} from "fs";
 import {join} from "path";
 
 import Properties from "../../../utils/Properties";
-import LogsUtils from "../../../utils/LogsUtils";
+import LoggingUtils from "../../../utils/LoggingUtils";
 import Bot from "../../../Bot";
 import Modal from "./Modal";
 
@@ -59,7 +59,7 @@ export default class CommandHandler {
         try {
             if (!Properties.noLogsChannels.includes(interaction.channelId as string)) {
                 const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LogsUtils.log({
+                await LoggingUtils.log({
                     action: "Modal Usage",
                     author: interaction.user,
                     logsChannel: commandUseLogsChannel,

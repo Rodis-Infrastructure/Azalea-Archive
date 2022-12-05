@@ -1,7 +1,7 @@
 import {ColorResolvable, EmbedBuilder, GuildMember, TextChannel, User} from "discord.js";
 import Properties from "./Properties";
 
-export default class LogsUtils {
+export default class LoggingUtils {
     public static async log(data: {
         action: string,
         author: User,

@@ -1,7 +1,7 @@
 import ContextMenuCommand from "./ContextMenuCommand";
 import Properties from "../../../utils/Properties";
 import ChatInputCommand from "./ChatInputCommand";
-import LogsUtils from "../../../utils/LogsUtils";
+import LoggingUtils from "../../../utils/LoggingUtils";
 import Bot from "../../../Bot";
 
 import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
@@ -94,7 +94,7 @@ export default class CommandHandler {
         try {
             if (!Properties.noLogsChannels.includes(interaction.channelId)) {
                 const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LogsUtils.log({
+                await LoggingUtils.log({
                     action: "Command Usage",
                     author: interaction.user,
                     logsChannel: commandUseLogsChannel,
