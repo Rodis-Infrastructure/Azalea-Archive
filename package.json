@@ -1,25 +1,26 @@
 {
-  "name": "moderation-bot",
-  "version": "1.0.0",
-  "description": "The Roblox Discord's Moderation Bot",
-  "main": "src/Bot.ts",
-  "scripts": {
-    "start": "tsc; node dist/Bot.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Rodis-Infrastructure/moderation-bot.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Rodis-Infrastructure/moderation-bot/issues"
-  },
-  "homepage": "https://github.com/Rodis-Infrastructure/moderation-bot#readme",
-  "dependencies": {
-    "discord.js": "^14.7.1",
-    "dotenv": "^16.0.3",
-    "fs": "^0.0.1-security",
-    "path": "^0.12.7"
-  }
+    "name": "moderation-bot",
+    "version": "1.0.0",
+    "description": "The Roblox Discord's Moderation Bot",
+    "main": "src/Bot.ts",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/Bot.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Rodis-Infrastructure/moderation-bot.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Rodis-Infrastructure/moderation-bot/issues"
+    },
+    "homepage": "https://github.com/Rodis-Infrastructure/moderation-bot#readme",
+    "dependencies": {
+        "discord.js": "^14.7.1",
+        "dotenv": "^16.0.3",
+        "fs": "^0.0.1-security",
+        "path": "^0.12.7"
+    }
 }
