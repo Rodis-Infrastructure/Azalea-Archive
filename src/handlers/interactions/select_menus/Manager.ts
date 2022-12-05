@@ -1,9 +1,11 @@
+import {Collection, GuildMember, StringSelectMenuInteraction, TextChannel} from "discord.js";
 import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {Collection, GuildMember, StringSelectMenuInteraction} from "discord.js";
 import {ResponseType} from "../../../utils/Properties";
 import {readdirSync} from "fs";
 import {join} from "path";
 
+import Properties from "../../../utils/Properties";
+import LogsUtils from "../../../utils/LogsUtils";
 import SelectMenu from "./SelectMenu";
 import Bot from "../../../Bot";
 
@@ -70,6 +72,19 @@ export default class CommandHandler {
         }
 
         try {
+            if (!Properties.noLogsChannels.includes(interaction.channelId)) {
+                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
+                await LogsUtils.log({
+                    action: "Select Menu Usage",
+                    author: interaction.user,
+                    logsChannel: commandUseLogsChannel,
+                    fields: [{
+                        name: "Select Menu ID",
+                        value: `\`${interaction.customId}\``
+                    }]
+                });
+            }
+
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             await selectMenu.execute(interaction, this.client);

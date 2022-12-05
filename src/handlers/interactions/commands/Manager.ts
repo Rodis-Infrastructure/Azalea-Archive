@@ -1,5 +1,7 @@
 import ContextMenuCommand from "./ContextMenuCommand";
+import Properties from "../../../utils/Properties";
 import ChatInputCommand from "./ChatInputCommand";
+import LogsUtils from "../../../utils/LogsUtils";
 import Bot from "../../../Bot";
 
 import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
@@ -11,7 +13,8 @@ import {
     GuildMember,
     ChatInputCommandInteraction,
     UserContextMenuCommandInteraction,
-    MessageContextMenuCommandInteraction
+    MessageContextMenuCommandInteraction,
+    TextChannel
 } from "discord.js";
 
 type Command = ChatInputCommand | ContextMenuCommand;
@@ -89,6 +92,19 @@ export default class CommandHandler {
         }
 
         try {
+            if (!Properties.noLogsChannels.includes(interaction.channelId)) {
+                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
+                await LogsUtils.log({
+                    action: "Command Usage",
+                    author: interaction.user,
+                    logsChannel: commandUseLogsChannel,
+                    fields: [{
+                        name: "Command Name",
+                        value: `\`${interaction.commandName}\``
+                    }]
+                });
+            }
+
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             await command.execute(interaction, this.client);

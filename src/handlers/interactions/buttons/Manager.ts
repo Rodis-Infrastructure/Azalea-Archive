@@ -1,9 +1,10 @@
+import LogsUtils from "../../../utils/LogsUtils";
 import Bot from "../../../Bot";
 import Button from "./Button";
 
 import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ButtonInteraction, Collection, GuildMember} from "discord.js";
-import {ResponseType} from "../../../utils/Properties";
+import {ButtonInteraction, Collection, GuildMember, TextChannel} from "discord.js";
+import Properties, {ResponseType} from "../../../utils/Properties";
 import {readdirSync} from "fs";
 import {join} from "path";
 
@@ -70,6 +71,19 @@ export default class CommandHandler {
         }
 
         try {
+            if (!Properties.noLogsChannels.includes(interaction.channelId)) {
+                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
+                await LogsUtils.log({
+                    action: "Button Usage",
+                    author: interaction.user,
+                    logsChannel: commandUseLogsChannel,
+                    fields: [{
+                        name: "Button ID",
+                        value: `\`${interaction.customId}\``
+                    }]
+                });
+            }
+
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             await button.execute(interaction, this.client);

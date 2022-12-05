@@ -1,8 +1,10 @@
+import {Collection, GuildMember, ModalSubmitInteraction, TextChannel} from "discord.js";
 import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {Collection, GuildMember, ModalSubmitInteraction} from "discord.js";
 import {readdirSync} from "fs";
 import {join} from "path";
 
+import Properties from "../../../utils/Properties";
+import LogsUtils from "../../../utils/LogsUtils";
 import Bot from "../../../Bot";
 import Modal from "./Modal";
 
@@ -55,6 +57,19 @@ export default class CommandHandler {
         }
 
         try {
+            if (!Properties.noLogsChannels.includes(interaction.channelId as string)) {
+                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
+                await LogsUtils.log({
+                    action: "Modal Usage",
+                    author: interaction.user,
+                    logsChannel: commandUseLogsChannel,
+                    fields: [{
+                        name: "Modal ID",
+                        value: `\`${interaction.customId}\``
+                    }]
+                });
+            }
+
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             await modal.execute(interaction, this.client);
