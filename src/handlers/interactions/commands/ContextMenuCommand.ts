@@ -1,22 +1,24 @@
-import {ApplicationCommandType, MessageApplicationCommandData} from "discord.js";
+import {ApplicationCommandType, UserApplicationCommandData, MessageApplicationCommandData} from "discord.js";
 import {ResponseType} from "../../../utils/Properties";
 //import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 
 import CommandHandler from "./Manager";
 import Bot from "../../../Bot";
 
-type CustomApplicationCommandData = MessageApplicationCommandData & {
+type ContextMenuCommandData = MessageApplicationCommandData | UserApplicationCommandData;
+
+type CustomApplicationCommandData = ContextMenuCommandData & {
     //    restriction: RestrictionLevel;
-    defer: ResponseType;
+defer: ResponseType;
 }
 
-export default class MessageCommand {
+export default class ContextMenuCommand {
     client: Bot;
     manager: CommandHandler;
     //    restriction: RestrictionLevel;
     defer: ResponseType;
     name: string;
-    type: ApplicationCommandType.Message
+    type: ApplicationCommandType.User | ApplicationCommandType.Message;
 
     constructor(client: Bot, data: CustomApplicationCommandData) {
         this.client = client;
@@ -35,7 +37,7 @@ export default class MessageCommand {
         }
     }
 
-    build(): MessageApplicationCommandData {
+    build(): ContextMenuCommandData {
         return {
             name: this.name,
             type: this.type

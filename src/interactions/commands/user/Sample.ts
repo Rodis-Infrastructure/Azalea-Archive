@@ -11,14 +11,14 @@ export default class SampleCommand extends ContextMenuCommand {
             name: "Sample",
             //            restriction: RestrictionLevel.Public,
             defer: ResponseType.EphemeralDefer,
-            type: ApplicationCommandType.Message
+            type: ApplicationCommandType.User
         });
     }
 
     /**
-     * @param {ContextMenuCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
+    * @param {ContextMenuCommandInteraction} interaction
+    * @returns {Promise<void>}
+    */
     async execute(interaction: ContextMenuCommandInteraction): Promise<void> {
         await interaction.editReply("This is a sample command.");
         return;

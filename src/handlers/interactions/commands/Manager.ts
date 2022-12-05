@@ -10,10 +10,10 @@ import {
 //import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
 
 import ChatInputCommand from "./ChatInputCommand";
-import MessageCommand from "./MessageCommand";
+import ContextMenuCommand from "./ContextMenuCommand";
 import Bot from "../../../Bot";
 
-type Command = ChatInputCommand | MessageCommand;
+type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
     ChatInputCommandInteraction
     | UserContextMenuCommandInteraction
@@ -32,7 +32,7 @@ export default class CommandHandler {
     }
 
     public async load() {
-        const directories = ["application", "message"];
+        const directories = ["application", "message", "user"];
 
         for (const directory of directories) {
             const files = readdirSync(join(__dirname, `../../../interactions/commands/${directory}`));
@@ -47,7 +47,7 @@ export default class CommandHandler {
     }
 
     public async register(command: Command) {
-        this.list.set(command.name, command);
+        this.list.set(`${command.name}_${command.type}`, command);
     }
 
     public async publish() {
@@ -64,7 +64,7 @@ export default class CommandHandler {
     }
 
     public async handle(interaction: CommandInteraction) {
-        const command = this.list.get(interaction.commandName);
+        const command = this.list.get(`${interaction.commandName}_${interaction.type}`);
         if (!command) return;
 
         switch (command.defer) {

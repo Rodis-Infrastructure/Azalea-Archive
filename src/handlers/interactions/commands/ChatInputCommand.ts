@@ -7,6 +7,7 @@ import Bot from "../../../Bot";
 
 type CustomApplicationCommandData = ChatInputApplicationCommandData & {
 //    restriction: RestrictionLevel;
+    type: ApplicationCommandType;
     defer: ResponseType;
 }
 
@@ -18,6 +19,7 @@ export default class ChatInputCommand {
     name: string;
     description: string;
     options?: ApplicationCommandOptionData[];
+    type: ApplicationCommandType.ChatInput;
 
     constructor(client: Bot, data: CustomApplicationCommandData) {
         this.client = client;
@@ -26,6 +28,7 @@ export default class ChatInputCommand {
         this.defer = data.defer;
         this.name = data.name;
         this.description = data.description;
+        this.type = data.type;
         this.options = data.options ?? [];
 
         try {
