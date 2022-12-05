@@ -1,11 +1,11 @@
+import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {Collection, GuildMember, ModalSubmitInteraction} from "discord.js";
-//import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {readdirSync} from "fs";
+import {join} from "path";
 
 import Bot from "../../../Bot";
 import Modal from "./Modal";
 
-import {readdirSync} from "fs";
-import {join} from "path";
 
 export default class CommandHandler {
     client: Bot;
@@ -45,14 +45,14 @@ export default class CommandHandler {
         if (!modal) return;
         await interaction.deferReply({ephemeral: modal.ephemeral});
 
-//        if (!await RestrictionUtils.verifyAccess(modal.restriction, interaction.member as GuildMember)) {
-//            await interaction.editReply({
-//                content:
-//                `You are **below** the required restriction level for this modal: \`${RestrictionLevel[modal.restriction]}\`\n`
-//                + `Your restriction level: \`${await RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-//            });
-//            return;
-//        }
+        if (!await RestrictionUtils.verifyAccess(modal.restriction, interaction.member as GuildMember)) {
+            await interaction.editReply({
+                content:
+                `You are **below** the required restriction level for this modal: \`${RestrictionLevel[modal.restriction]}\`\n`
+                + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+            });
+            return;
+        }
 
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

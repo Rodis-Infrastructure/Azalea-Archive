@@ -1,16 +1,11 @@
-import {
-    Collection,
-    GuildMember,
-    StringSelectMenuInteraction
-} from "discord.js";
-//import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {Collection, GuildMember, StringSelectMenuInteraction} from "discord.js";
 import {ResponseType} from "../../../utils/Properties";
+import {readdirSync} from "fs";
+import {join} from "path";
 
 import SelectMenu from "./SelectMenu";
 import Bot from "../../../Bot";
-
-import {readdirSync} from "fs";
-import {join} from "path";
 
 export default class CommandHandler {
     client: Bot;
@@ -65,14 +60,14 @@ export default class CommandHandler {
             }
         }
 
-//        if (!await RestrictionUtils.verifyAccess(select_menu.restriction, interaction.member as GuildMember)) {
-//            await interaction.editReply({
-//                content:
-//                    `You are **below** the required restriction level for this select menu: \`${RestrictionLevel[select_menu.restriction]}\`\n`
-//                    + `Your restriction level: \`${await RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-//            });
-//            return;
-//        }
+        if (!await RestrictionUtils.verifyAccess(selectMenu.restriction, interaction.member as GuildMember)) {
+            await interaction.editReply({
+                content:
+                    `You are **below** the required restriction level for this select menu: \`${RestrictionLevel[selectMenu.restriction]}\`\n`
+                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+            });
+            return;
+        }
 
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

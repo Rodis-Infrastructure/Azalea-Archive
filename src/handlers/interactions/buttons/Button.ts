@@ -1,22 +1,22 @@
-//import {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {ResponseType} from "../../../utils/Properties";
 import Bot from "../../../Bot";
 
 type CustomButtonComponentData = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }
-//    restriction: RestrictionLevel;
+    restriction: RestrictionLevel;
     defer: ResponseType;
 }
 
 export default class Button {
     client: Bot;
-//    restriction: RestrictionLevel;
+    restriction: RestrictionLevel;
     defer: ResponseType;
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
 
     constructor(client: Bot, data: CustomButtonComponentData) {
         this.client = client;
-//        this.restriction = data.restriction;
+        this.restriction = data.restriction;
         this.defer = data.defer;
         this.name = data.name;
 

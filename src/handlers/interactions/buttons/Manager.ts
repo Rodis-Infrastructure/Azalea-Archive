@@ -1,8 +1,8 @@
-//import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import Bot from "../../../Bot";
 import Button from "./Button";
 
-import {ButtonInteraction, Collection} from "discord.js";
+import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {ButtonInteraction, Collection, GuildMember} from "discord.js";
 import {ResponseType} from "../../../utils/Properties";
 import {readdirSync} from "fs";
 import {join} from "path";
@@ -60,14 +60,14 @@ export default class CommandHandler {
             }
         }
 
-//        if (!await RestrictionUtils.verifyAccess(button.restriction, interaction.member as GuildMember)) {
-//            await interaction.editReply({
-//                content:
-//                    `You are **below** the required restriction level for this button: \`${RestrictionLevel[button.restriction]}\`\n`
-//                    + `Your restriction level: \`${await RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-//            });
-//            return;
-//        }
+        if (!await RestrictionUtils.verifyAccess(button.restriction, interaction.member as GuildMember)) {
+            await interaction.editReply({
+                content:
+                    `You are **below** the required restriction level for this button: \`${RestrictionLevel[button.restriction]}\`\n`
+                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+            });
+            return;
+        }
 
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

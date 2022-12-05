@@ -1,4 +1,10 @@
+import ContextMenuCommand from "./ContextMenuCommand";
+import ChatInputCommand from "./ChatInputCommand";
+import Bot from "../../../Bot";
+
+import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {ResponseType} from "../../../utils/Properties";
+
 import {
     ApplicationCommandDataResolvable,
     Collection,
@@ -7,11 +13,6 @@ import {
     UserContextMenuCommandInteraction,
     MessageContextMenuCommandInteraction
 } from "discord.js";
-//import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-
-import ChatInputCommand from "./ChatInputCommand";
-import ContextMenuCommand from "./ContextMenuCommand";
-import Bot from "../../../Bot";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
@@ -78,14 +79,14 @@ export default class CommandHandler {
             }
         }
 
-        //        if (!await RestrictionUtils.verifyAccess(command.restriction, interaction.member as GuildMember)) {
-        //            await interaction.editReply({
-        //                content:
-        //                    `You are **below** the required restriction level for this command: \`${RestrictionLevel[command.restriction]}\`\n`
-        //                    + `Your restriction level: \`${await RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-        //            });
-        //            return;
-        //        }
+        if (!await RestrictionUtils.verifyAccess(command.restriction, interaction.member as GuildMember)) {
+            await interaction.editReply({
+                content:
+                    `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[command.restriction]}\`\n`
+                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+            });
+            return;
+        }
 
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

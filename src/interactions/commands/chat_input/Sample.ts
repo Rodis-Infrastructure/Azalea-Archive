@@ -8,7 +8,7 @@ import {
     TextInputStyle
 } from "discord.js";
 
-//import {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {ResponseType} from "../../../utils/Properties";
 
 export default class SampleCommand extends ChatInputCommand {
@@ -16,7 +16,7 @@ export default class SampleCommand extends ChatInputCommand {
         super(client, {
             name: "sample-command",
             description: "This is a sample application command.",
-//            restriction: RestrictionLevel.Public,
+            restriction: RestrictionLevel.Public,
             type: ApplicationCommandType.ChatInput,
             defer: ResponseType.EphemeralDefer
         });
@@ -28,6 +28,5 @@ export default class SampleCommand extends ChatInputCommand {
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         await interaction.editReply("This is a sample **CHAT_INPUT** command.");
-        return;
     }
 }

@@ -1,25 +1,25 @@
 import ModalHandler from "./Manager";
 import Bot from "../../../Bot";
 
-//import {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 
 type CustomModalComponent = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }
-//    restriction: RestrictionLevel;
+    restriction: RestrictionLevel;
     ephemeral: boolean;
 }
 
 export default class Modal {
     client: Bot;
     manager: ModalHandler;
-//    restriction: RestrictionLevel;
+    restriction: RestrictionLevel;
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
     ephemeral: boolean;
 
     constructor(client: Bot, data: CustomModalComponent) {
         this.client = client;
         this.manager = client.modals;
-//        this.restriction = data.restriction;
+        this.restriction = data.restriction;
         this.name = data.name;
         this.ephemeral = data.ephemeral
 
