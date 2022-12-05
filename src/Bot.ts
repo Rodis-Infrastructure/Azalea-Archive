@@ -1,3 +1,4 @@
+import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
 import CommandHandler from "./handlers/interactions/commands/Manager";
 import ButtonHandler from "./handlers/interactions/buttons/Manager";
 import ListenerLoader from "./handlers/listeners/Loader";
@@ -9,6 +10,7 @@ process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 export default class Bot extends Client {
+    select_menus!: SelectMenuHandler;
     commands!: CommandHandler;
     buttons!: ButtonHandler;
 
@@ -32,6 +34,7 @@ export default class Bot extends Client {
         });
 
         (async () => {
+            this.select_menus = new SelectMenuHandler(this);
             this.commands = new CommandHandler(this);
             this.buttons = new ButtonHandler(this);
 
