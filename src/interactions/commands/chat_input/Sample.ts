@@ -7,10 +7,7 @@ import {
     ButtonBuilder,
     ButtonStyle,
     ActionRowBuilder,
-    ActionRowData,
-    ButtonComponentData,
-    StringSelectMenuBuilder,
-    StringSelectMenuComponentData
+    StringSelectMenuBuilder
 } from "discord.js";
 //import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {ResponseType} from "../../../utils/Properties";
@@ -18,7 +15,7 @@ import {ResponseType} from "../../../utils/Properties";
 export default class SampleCommand extends ChatInputCommand {
     constructor(client: Bot) {
         super(client, {
-            name: "sample",
+            name: "sample-command",
             description: "This is a sample application command.",
 //            restriction: RestrictionLevel.Public,
             type: ApplicationCommandType.ChatInput,
@@ -32,14 +29,14 @@ export default class SampleCommand extends ChatInputCommand {
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const button = new ButtonBuilder()
-            .setCustomId("sample")
+            .setCustomId("sample-button")
             .setLabel("Sample")
             .setStyle(ButtonStyle.Primary)
 
         const actionRow = new ActionRowBuilder().setComponents(button) as ActionRowBuilder<ButtonBuilder>;
 
         const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId("sample")
+            .setCustomId("sample-select-menu")
             .setOptions({
                 label: "sample",
                 description: "sample description",

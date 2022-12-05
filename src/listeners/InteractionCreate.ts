@@ -16,5 +16,7 @@ module.exports = class InteractionCreateEventListener extends EventListener {
         ) {
             await this.client.commands.handle(interaction);
         }
+
+        if (interaction.isButton()) await this.client.buttons.handle(interaction);
     }
 };

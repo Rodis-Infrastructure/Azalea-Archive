@@ -1,4 +1,5 @@
 import CommandHandler from "./handlers/interactions/commands/Manager";
+import ButtonHandler from "./handlers/interactions/buttons/Manager";
 import ListenerLoader from "./handlers/listeners/Loader";
 
 import {Client, GatewayIntentBits, Partials} from "discord.js";
@@ -9,6 +10,7 @@ process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 export default class Bot extends Client {
     commands!: CommandHandler;
+    buttons!: ButtonHandler;
 
     constructor() {
         super({
@@ -31,6 +33,7 @@ export default class Bot extends Client {
 
         (async () => {
             this.commands = new CommandHandler(this);
+            this.buttons = new ButtonHandler(this);
 
             const listeners = new ListenerLoader(this);
             await listeners.load();
