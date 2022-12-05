@@ -32,7 +32,7 @@ export default class CommandHandler {
     }
 
     public async load() {
-        const directories = ["chat_input", "message", "user"];
+        const directories = readdirSync(join(__dirname, "../../../interactions/commands"));
 
         for (const directory of directories) {
             const files = readdirSync(join(__dirname, `../../../interactions/commands/${directory}`));
