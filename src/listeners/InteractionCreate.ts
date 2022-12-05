@@ -18,6 +18,7 @@ module.exports = class InteractionCreateEventListener extends EventListener {
         }
 
         if (interaction.isButton()) await this.client.buttons.handle(interaction);
+        if (interaction.isModalSubmit()) await this.client.modals.handle(interaction);
         if (interaction.isStringSelectMenu()) await this.client.select_menus.handle(interaction);
     }
 };

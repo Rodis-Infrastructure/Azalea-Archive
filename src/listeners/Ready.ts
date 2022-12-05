@@ -14,6 +14,7 @@ module.exports = class ReadyEventListener extends EventListener {
 
         await client.select_menus.load();
         await client.buttons.load();
+        await client.modals.load();
 
         await client.commands.load();
         await client.commands.publish();

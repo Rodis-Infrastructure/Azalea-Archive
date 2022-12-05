@@ -1,6 +1,7 @@
 import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
 import CommandHandler from "./handlers/interactions/commands/Manager";
 import ButtonHandler from "./handlers/interactions/buttons/Manager";
+import ModalHandler from "./handlers/interactions/modals/Manager";
 import ListenerLoader from "./handlers/listeners/Loader";
 
 import {Client, GatewayIntentBits, Partials} from "discord.js";
@@ -13,6 +14,7 @@ export default class Bot extends Client {
     select_menus!: SelectMenuHandler;
     commands!: CommandHandler;
     buttons!: ButtonHandler;
+    modals!: ModalHandler;
 
     constructor() {
         super({
@@ -37,6 +39,7 @@ export default class Bot extends Client {
             this.select_menus = new SelectMenuHandler(this);
             this.commands = new CommandHandler(this);
             this.buttons = new ButtonHandler(this);
+            this.modals = new ModalHandler(this);
 
             const listeners = new ListenerLoader(this);
             await listeners.load();
