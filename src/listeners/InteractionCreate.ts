@@ -9,8 +9,12 @@ module.exports = class InteractionCreateEventListener extends EventListener {
     }
 
     public async execute(interaction: Interaction) {
-        if (interaction.isChatInputCommand()) {
-            await this.client.application_commands.handle(interaction);
+        if (
+            interaction.isChatInputCommand() ||
+            interaction.isMessageContextMenuCommand() ||
+            interaction.isUserContextMenuCommand()
+        ) {
+            await this.client.commands.handle(interaction);
         }
     }
 };

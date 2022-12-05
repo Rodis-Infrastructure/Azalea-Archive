@@ -1,4 +1,4 @@
-import CommandHandler from "./handlers/interactions/commands/application/Manager";
+import CommandHandler from "./handlers/interactions/commands/Manager";
 import ListenerLoader from "./handlers/listeners/Loader";
 
 import {Client, GatewayIntentBits, Partials} from "discord.js";
@@ -8,7 +8,7 @@ process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 export default class Bot extends Client {
-    application_commands!: CommandHandler;
+    commands!: CommandHandler;
 
     constructor() {
         super({
@@ -30,7 +30,7 @@ export default class Bot extends Client {
         });
 
         (async () => {
-            this.application_commands = new CommandHandler(this);
+            this.commands = new CommandHandler(this);
 
             const listeners = new ListenerLoader(this);
             await listeners.load();

@@ -1,21 +1,16 @@
-import {ApplicationCommandOptionData, ChatInputApplicationCommandData} from "discord.js";
+import {ApplicationCommandOptionData, ApplicationCommandType, ChatInputApplicationCommandData} from "discord.js";
+import {ResponseType} from "../../../utils/Properties";
 //import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 
 import CommandHandler from "./Manager";
-import Bot from "../../../../Bot";
-
-export enum ResponseType {
-    Defer = 0,
-    EphemeralDefer = 1,
-    Modal = 2
-}
+import Bot from "../../../Bot";
 
 type CustomApplicationCommandData = ChatInputApplicationCommandData & {
 //    restriction: RestrictionLevel;
     defer: ResponseType;
 }
 
-export default class Command {
+export default class ChatInputCommand {
     client: Bot;
     manager: CommandHandler;
 //    restriction: RestrictionLevel;
@@ -26,7 +21,7 @@ export default class Command {
 
     constructor(client: Bot, data: CustomApplicationCommandData) {
         this.client = client;
-        this.manager = client.application_commands;
+        this.manager = client.commands;
 //        this.restriction = data.restriction;
         this.defer = data.defer;
         this.name = data.name;
@@ -35,7 +30,7 @@ export default class Command {
 
         try {
             // noinspection JSIgnoredPromiseFromCall
-            this.client.application_commands.register(this);
+            this.client.commands.register(this);
         } catch (err) {
             console.error(err);
             return;
@@ -46,7 +41,7 @@ export default class Command {
         return {
             name: this.name,
             description: this.description,
-            options: this.options ?? [],
+            options: this.options ?? []
         };
     }
 }

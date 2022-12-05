@@ -1,10 +1,11 @@
-import Command, {ResponseType} from "../../../handlers/interactions/commands/application/Command";
+import ChatInputCommand from "../../../handlers/interactions/commands/ChatInputCommand";
 import Bot from "../../../Bot";
 
 import {ChatInputCommandInteraction, ApplicationCommandType} from "discord.js";
-//import {RestrictionLevel} from "../../utils/RestrictionUtils";
+//import {RestrictionLevel} from "../../../utils/RestrictionUtils";
+import {ResponseType} from "../../../utils/Properties";
 
-export default class SampleCommand extends Command {
+export default class SampleCommand extends ChatInputCommand {
     constructor(client: Bot) {
         super(client, {
             name: "sample",
