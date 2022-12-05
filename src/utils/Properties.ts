@@ -22,7 +22,8 @@ export default class Properties {
         internalAffairs: "",
         infrastructure: "",
         management: "",
-        seniorModerators: ""
+        seniorModerators: "",
+        trialModerator: ""
     }
 
     public static noLogsChannels = [

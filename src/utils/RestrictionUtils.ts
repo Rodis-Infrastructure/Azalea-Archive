@@ -43,6 +43,10 @@ export default class RestrictionUtils {
         }
     }
 
+    public static isStaff(member: GuildMember): boolean {
+        return member.roles.cache.has(Properties.roles.trialModerator) || this.isModerator(member);
+    }
+
     public static isTrialStage1(member: GuildMember): boolean {
         return member.roles.cache.has(Properties.roles.trialStageOne) || this.isTrialStage2(member);
     }
