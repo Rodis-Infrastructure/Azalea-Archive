@@ -32,7 +32,7 @@ export default class CommandHandler {
     }
 
     public async load() {
-        const directories = ["application", "message", "user"];
+        const directories = ["chat_input", "message", "user"];
 
         for (const directory of directories) {
             const files = readdirSync(join(__dirname, `../../../interactions/commands/${directory}`));
@@ -64,7 +64,7 @@ export default class CommandHandler {
     }
 
     public async handle(interaction: CommandInteraction) {
-        const command = this.list.get(`${interaction.commandName}_${interaction.type}`);
+        const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
         if (!command) return;
 
         switch (command.defer) {

@@ -20,7 +20,7 @@ export default class SampleCommand extends ContextMenuCommand {
     * @returns {Promise<void>}
     */
     async execute(interaction: ContextMenuCommandInteraction): Promise<void> {
-        await interaction.editReply("This is a sample command.");
+        await interaction.editReply("This is a sample **USER** command.");
         return;
     }
 }

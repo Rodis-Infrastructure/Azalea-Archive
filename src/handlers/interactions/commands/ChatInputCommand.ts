@@ -44,7 +44,8 @@ export default class ChatInputCommand {
         return {
             name: this.name,
             description: this.description,
-            options: this.options ?? []
+            options: this.options ?? [],
+            type: this.type
         };
     }
 }

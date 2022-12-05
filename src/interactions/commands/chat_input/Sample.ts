@@ -21,7 +21,7 @@ export default class SampleCommand extends ChatInputCommand {
     * @returns {Promise<void>}
     */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.editReply("This is a sample command.");
+        await interaction.editReply("This is a sample **CHAT_INPUT** command.");
         return;
     }
 }
