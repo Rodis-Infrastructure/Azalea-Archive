@@ -45,16 +45,27 @@ export default class CommandHandler {
         });
 
         if (!modal) return;
-        await interaction.deferReply({ephemeral: modal.ephemeral});
 
         if (!await RestrictionUtils.verifyAccess(modal.restriction, interaction.member as GuildMember)) {
-            await interaction.editReply({
-                content:
-                    `You are **below** the required restriction level for this modal: \`${RestrictionLevel[modal.restriction]}\`\n`
-                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-            });
+            await interaction.reply(
+                {
+                    content:
+                        `You are **below** the required restriction level for this modal: \`${RestrictionLevel[modal.restriction]}\`\n`
+                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+                    ephemeral: true
+                }
+            );
             return;
         }
+
+        let {ephemeral} = modal;
+
+        if (
+            !modal.skipInternalUsageCheck &&
+            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
+        ) ephemeral = true;
+
+        await interaction.deferReply({ephemeral});
 
         try {
             if (

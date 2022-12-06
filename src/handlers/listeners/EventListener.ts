@@ -1,13 +1,13 @@
 import Bot from "../../Bot";
 
 export default class EventListener {
-    client: Bot;
-    name: string;
     once?: boolean;
+    name: string;
+    client: Bot;
 
     constructor(client: Bot, data: { name: string; once?: boolean; }) {
-        this.client = client;
-        this.name = data.name;
         this.once = data.once ?? false;
+        this.name = data.name;
+        this.client = client;
     }
 }

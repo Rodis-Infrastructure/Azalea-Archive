@@ -8,7 +8,7 @@ import Properties, {ResponseType} from "../../../utils/Properties";
 import {readdirSync} from "fs";
 import {join} from "path";
 
-export default class CommandHandler {
+export default class ButtonHandler {
     client: Bot;
     buttons: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Button>;
 
@@ -49,7 +49,25 @@ export default class CommandHandler {
             button.name :
             Object.values(button.name)[0];
 
-        switch (button.defer) {
+        if (!await RestrictionUtils.verifyAccess(button.restriction, interaction.member as GuildMember)) {
+            await interaction.reply(
+                {
+                    content:
+                        `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[button.restriction]}\`\n`
+                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+                    ephemeral: true
+                }
+            );
+            return;
+        }
+
+        let responseType = button.defer;
+        if (
+            !button.skipInternalUsageCheck &&
+            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
+        ) responseType = ResponseType.EphemeralDefer;
+
+        switch (responseType) {
             case ResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -57,20 +75,14 @@ export default class CommandHandler {
 
             case ResponseType.EphemeralDefer: {
                 await interaction.deferReply({ephemeral: true});
-                break;
             }
         }
 
-        if (!await RestrictionUtils.verifyAccess(button.restriction, interaction.member as GuildMember)) {
-            await interaction.editReply({
-                content:
-                    `You are **below** the required restriction level for this button: \`${RestrictionLevel[button.restriction]}\`\n`
-                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-            });
-            return;
-        }
-
         try {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            await button.execute(interaction, this.client);
+
             if (
                 !Properties.preventLoggingEventsChannels.includes(interaction.channelId) &&
                 !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
@@ -88,10 +100,6 @@ export default class CommandHandler {
                     }]
                 });
             }
-
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await button.execute(interaction, this.client);
         } catch (err) {
             console.log(`Failed to execute button: ${buttonName}`);
             console.error(err);

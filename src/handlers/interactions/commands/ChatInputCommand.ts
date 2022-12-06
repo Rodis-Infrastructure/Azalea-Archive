@@ -2,34 +2,34 @@ import {ApplicationCommandOptionData, ApplicationCommandType, ChatInputApplicati
 import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {ResponseType} from "../../../utils/Properties";
 
-import CommandHandler from "./Manager";
 import Bot from "../../../Bot";
 
 type CustomApplicationCommandData = ChatInputApplicationCommandData & {
+    skipInternalUsageCheck?: boolean;
     restriction: RestrictionLevel;
     type: ApplicationCommandType;
     defer: ResponseType;
 }
 
 export default class ChatInputCommand {
-    client: Bot;
-    manager: CommandHandler;
-    restriction: RestrictionLevel;
-    defer: ResponseType;
-    name: string;
-    description: string;
     options?: ApplicationCommandOptionData[];
     type: ApplicationCommandType.ChatInput;
+    skipInternalUsageCheck?: boolean;
+    restriction: RestrictionLevel;
+    defer: ResponseType;
+    description: string;
+    name: string;
+    client: Bot;
 
     constructor(client: Bot, data: CustomApplicationCommandData) {
-        this.client = client;
-        this.manager = client.commands;
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
         this.restriction = data.restriction;
+        this.description = data.description;
+        this.options = data.options ?? [];
         this.defer = data.defer;
         this.name = data.name;
-        this.description = data.description;
         this.type = data.type;
-        this.options = data.options ?? [];
+        this.client = client;
 
         try {
             // noinspection JSIgnoredPromiseFromCall

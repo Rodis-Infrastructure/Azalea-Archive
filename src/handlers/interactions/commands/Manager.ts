@@ -1,30 +1,28 @@
 import ContextMenuCommand from "./ContextMenuCommand";
-import Properties from "../../../utils/Properties";
+import Properties, {ResponseType} from "../../../utils/Properties";
 import ChatInputCommand from "./ChatInputCommand";
 import LoggingUtils from "../../../utils/LoggingUtils";
 import Bot from "../../../Bot";
 
 import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ResponseType} from "../../../utils/Properties";
 
 import {
     ApplicationCommandDataResolvable,
+    ChatInputCommandInteraction,
     Collection,
     GuildMember,
-    ChatInputCommandInteraction,
-    UserContextMenuCommandInteraction,
     MessageContextMenuCommandInteraction,
-    TextChannel
+    TextChannel,
+    UserContextMenuCommandInteraction
 } from "discord.js";
+import {readdirSync} from "fs";
+import {join} from "path";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
     ChatInputCommandInteraction
     | UserContextMenuCommandInteraction
     | MessageContextMenuCommandInteraction;
-
-import {readdirSync} from "fs";
-import {join} from "path";
 
 export default class CommandHandler {
     client: Bot;
@@ -71,7 +69,25 @@ export default class CommandHandler {
         const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
         if (!command) return;
 
-        switch (command.defer) {
+        if (!await RestrictionUtils.verifyAccess(command.restriction, interaction.member as GuildMember)) {
+            await interaction.reply(
+                {
+                    content:
+                        `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[command.restriction]}\`\n`
+                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+                    ephemeral: true
+                }
+            );
+            return;
+        }
+
+        let responseType = command.defer;
+        if (
+            !command.skipInternalUsageCheck &&
+            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
+        ) responseType = ResponseType.EphemeralDefer;
+
+        switch (responseType) {
             case ResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -82,16 +98,11 @@ export default class CommandHandler {
             }
         }
 
-        if (!await RestrictionUtils.verifyAccess(command.restriction, interaction.member as GuildMember)) {
-            await interaction.editReply({
-                content:
-                    `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[command.restriction]}\`\n`
-                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-            });
-            return;
-        }
-
         try {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            await command.execute(interaction, this.client);
+
             if (
                 !Properties.preventLoggingEventsChannels.includes(interaction.channelId) &&
                 !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
@@ -109,10 +120,6 @@ export default class CommandHandler {
                     }]
                 });
             }
-
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await command.execute(interaction, this.client);
         } catch (err) {
             console.log(`Failed to execute command: ${command.name}`);
             console.error(err);

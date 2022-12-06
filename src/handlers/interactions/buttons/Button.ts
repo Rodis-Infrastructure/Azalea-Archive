@@ -1,24 +1,28 @@
 import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 import {ResponseType} from "../../../utils/Properties";
+
 import Bot from "../../../Bot";
 
 type CustomButtonComponentData = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }
+    skipInternalUsageCheck?: boolean;
     restriction: RestrictionLevel;
     defer: ResponseType;
 }
 
 export default class Button {
-    client: Bot;
+    name: string | { startsWith: string } | { endsWith: string } | { includes: string };
+    skipInternalUsageCheck?: boolean;
     restriction: RestrictionLevel;
     defer: ResponseType;
-    name: string | { startsWith: string } | { endsWith: string } | { includes: string };
+    client: Bot;
 
     constructor(client: Bot, data: CustomButtonComponentData) {
-        this.client = client;
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
         this.restriction = data.restriction;
         this.defer = data.defer;
         this.name = data.name;
+        this.client = client;
 
         try {
             // noinspection JSIgnoredPromiseFromCall

@@ -9,7 +9,7 @@ import LoggingUtils from "../../../utils/LoggingUtils";
 import SelectMenu from "./SelectMenu";
 import Bot from "../../../Bot";
 
-export default class CommandHandler {
+export default class SelectMenuHandler {
     client: Bot;
     select_menus: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, SelectMenu>;
 
@@ -50,7 +50,25 @@ export default class CommandHandler {
             selectMenu.name :
             Object.values(selectMenu.name)[0];
 
-        switch (selectMenu.defer) {
+        if (!await RestrictionUtils.verifyAccess(selectMenu.restriction, interaction.member as GuildMember)) {
+            await interaction.reply(
+                {
+                    content:
+                        `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[selectMenu.restriction]}\`\n`
+                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+                    ephemeral: true
+                }
+            );
+            return;
+        }
+
+        let responseType = selectMenu.defer;
+        if (
+            !selectMenu.skipInternalUsageCheck &&
+            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
+        ) responseType = ResponseType.EphemeralDefer;
+
+        switch (responseType) {
             case ResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -58,20 +76,14 @@ export default class CommandHandler {
 
             case ResponseType.EphemeralDefer: {
                 await interaction.deferReply({ephemeral: true});
-                break;
             }
         }
 
-        if (!await RestrictionUtils.verifyAccess(selectMenu.restriction, interaction.member as GuildMember)) {
-            await interaction.editReply({
-                content:
-                    `You are **below** the required restriction level for this select menu: \`${RestrictionLevel[selectMenu.restriction]}\`\n`
-                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-            });
-            return;
-        }
-
         try {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            await selectMenu.execute(interaction, this.client);
+
             if (
                 !Properties.preventLoggingEventsChannels.includes(interaction.channelId) &&
                 !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
@@ -89,10 +101,6 @@ export default class CommandHandler {
                     }]
                 });
             }
-
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await selectMenu.execute(interaction, this.client);
         } catch (err) {
             console.log(`Failed to execute select menu: ${selectMenuName}`);
             console.error(err);

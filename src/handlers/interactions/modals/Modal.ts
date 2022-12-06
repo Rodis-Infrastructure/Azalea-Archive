@@ -4,24 +4,27 @@ import Bot from "../../../Bot";
 import {RestrictionLevel} from "../../../utils/RestrictionUtils";
 
 type CustomModalComponent = {
-    name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }
+    name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; };
+    skipInternalUsageCheck?: boolean;
     restriction: RestrictionLevel;
     ephemeral: boolean;
 }
 
 export default class Modal {
-    client: Bot;
-    manager: ModalHandler;
-    restriction: RestrictionLevel;
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
+    skipInternalUsageCheck?: boolean;
+    restriction: RestrictionLevel;
+    manager: ModalHandler;
     ephemeral: boolean;
+    client: Bot;
 
     constructor(client: Bot, data: CustomModalComponent) {
-        this.client = client;
-        this.manager = client.modals;
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
         this.restriction = data.restriction;
-        this.name = data.name;
         this.ephemeral = data.ephemeral
+        this.manager = client.modals;
+        this.name = data.name;
+        this.client = client;
 
         try {
             // noinspection JSIgnoredPromiseFromCall

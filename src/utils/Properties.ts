@@ -11,24 +11,34 @@ export default class Properties {
 
     public static roles = {
         trialModerator: "",
-        trialStageOne: "",
-        trialStageTwo: "",
-        moderator: "",
-        seniorModerator: "",
-        manager: ""
+        trialStageOne: "1048341889067270256",
+        trialStageTwo: "1048341947695247420",
+        moderator: "998008300698341416",
+        seniorModerator: "998008318364758147",
+        manager: "998008333103534130"
     }
 
     public static channels = {
-        commandUseLogs: "",
-        internalAffairs: "",
+        commandUseLogs: "1049379240623226890",
+        internalAffairs: "1049379300501114942",
         infrastructure: "",
         management: "",
         seniorModerators: ""
     }
 
     public static categories = {
-        internalLogs: ""
+        publicSector: "",
+        internalChannels: "",
+        internalLogs: "",
+        internalMisc: ""
     }
+
+    public static internalCategories = [
+        this.categories.internalChannels,
+        this.categories.publicSector,
+        this.categories.internalLogs,
+        this.categories.internalMisc
+    ]
 
     public static preventLoggingEventsChannels = [
         this.channels.internalAffairs,
