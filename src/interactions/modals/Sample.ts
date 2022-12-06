@@ -9,7 +9,7 @@ export default class SampleModal extends Modal {
     constructor(client: Bot) {
         super(client, {
             name: "sample-modal",
-            restriction: RestrictionLevel.Public,
+            restriction: RestrictionLevel.Everyone,
             ephemeral: true
         });
     }

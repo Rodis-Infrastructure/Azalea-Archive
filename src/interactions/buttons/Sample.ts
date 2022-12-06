@@ -9,7 +9,7 @@ export default class SampleButton extends Button {
     constructor(client: Bot) {
         super(client, {
             name: "sample-button",
-            restriction: RestrictionLevel.Public,
+            restriction: RestrictionLevel.Everyone,
             defer: ResponseType.EphemeralDefer
         });
     }

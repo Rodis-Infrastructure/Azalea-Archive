@@ -9,7 +9,7 @@ export default class SampleCommand extends ContextMenuCommand {
     constructor(client: Bot) {
         super(client, {
             name: "Sample",
-            restriction: RestrictionLevel.Public,
+            restriction: RestrictionLevel.Everyone,
             defer: ResponseType.EphemeralDefer,
             type: ApplicationCommandType.User
         });

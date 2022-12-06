@@ -50,14 +50,17 @@ export default class CommandHandler {
         if (!await RestrictionUtils.verifyAccess(modal.restriction, interaction.member as GuildMember)) {
             await interaction.editReply({
                 content:
-                `You are **below** the required restriction level for this modal: \`${RestrictionLevel[modal.restriction]}\`\n`
-                + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
+                    `You are **below** the required restriction level for this modal: \`${RestrictionLevel[modal.restriction]}\`\n`
+                    + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
             });
             return;
         }
 
         try {
-            if (!Properties.noLogsChannels.includes(interaction.channelId as string)) {
+            if (
+                !Properties.preventLoggingEventsChannels.includes(interaction.channelId as string) &&
+                !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
+            ) {
                 const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
                 await LoggingUtils.log({
                     action: "Interaction Used",

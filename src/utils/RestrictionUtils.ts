@@ -2,7 +2,7 @@ import {GuildMember, PermissionFlagsBits} from "discord.js";
 import Properties from "./Properties";
 
 export enum RestrictionLevel {
-    Public = 0,
+    Everyone = 0,
     TrialStage1 = 1,
     TrialStage2 = 2,
     Moderator = 3,
@@ -28,12 +28,12 @@ export default class RestrictionUtils {
         if (this.isTrialStage2(member)) return RestrictionLevel.TrialStage1;
         if (this.isTrialStage1(member)) return RestrictionLevel.TrialStage2;
 
-        return RestrictionLevel.Public;
+        return RestrictionLevel.Everyone;
     }
 
     public static async verifyAccess(level: RestrictionLevel, member: GuildMember): Promise<boolean> {
         switch (level) {
-            case RestrictionLevel.Public: return true;
+            case RestrictionLevel.Everyone: return true;
             case RestrictionLevel.TrialStage1: return this.isTrialStage1(member);
             case RestrictionLevel.TrialStage2: return this.isTrialStage2(member);
             case RestrictionLevel.Moderator: return this.isModerator(member);

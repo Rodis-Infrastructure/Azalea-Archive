@@ -16,7 +16,7 @@ export default class SampleCommand extends ChatInputCommand {
         super(client, {
             name: "sample-command",
             description: "This is a sample application command.",
-            restriction: RestrictionLevel.Public,
+            restriction: RestrictionLevel.Everyone,
             type: ApplicationCommandType.ChatInput,
             defer: ResponseType.EphemeralDefer
         });

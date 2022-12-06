@@ -26,10 +26,18 @@ export default class Properties {
         seniorModerators: ""
     }
 
-    public static noLogsChannels = [
+    public static categories = {
+        internalLogs: ""
+    }
+
+    public static preventLoggingEventsChannels = [
         this.channels.internalAffairs,
         this.channels.infrastructure,
         this.channels.management,
         this.channels.seniorModerators
+    ]
+
+    public static preventLoggingEventsCategories = [
+        this.categories.internalLogs
     ]
 }

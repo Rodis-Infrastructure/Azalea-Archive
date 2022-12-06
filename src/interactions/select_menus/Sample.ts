@@ -9,7 +9,7 @@ export default class SampleSelectMenu extends SelectMenu {
     constructor(client: Bot) {
         super(client, {
             name: "sample-select-menu",
-            restriction: RestrictionLevel.Public,
+            restriction: RestrictionLevel.Everyone,
             defer: ResponseType.EphemeralDefer
         });
     }
