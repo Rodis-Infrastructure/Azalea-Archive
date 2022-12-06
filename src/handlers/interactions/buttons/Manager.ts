@@ -74,12 +74,14 @@ export default class CommandHandler {
             if (!Properties.noLogsChannels.includes(interaction.channelId)) {
                 const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
                 await LoggingUtils.log({
-                    action: "Button Usage",
+                    action: "Interaction Used",
                     author: interaction.user,
                     logsChannel: commandUseLogsChannel,
+                    icon: "InteractionIcon",
+                    content: `Button \`${interaction.customId}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
                     fields: [{
-                        name: "Button ID",
-                        value: `\`${interaction.customId}\``
+                        name: "Channel",
+                        value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
                     }]
                 });
             }

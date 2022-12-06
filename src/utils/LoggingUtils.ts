@@ -1,4 +1,4 @@
-import {ColorResolvable, EmbedBuilder, GuildMember, TextChannel, User} from "discord.js";
+import {AttachmentBuilder, ColorResolvable, EmbedBuilder, GuildMember, TextChannel, User} from "discord.js";
 import Properties from "./Properties";
 
 export default class LoggingUtils {
@@ -6,27 +6,36 @@ export default class LoggingUtils {
         action: string,
         author: User,
         logsChannel: TextChannel,
+        icon?: string,
         color?: ColorResolvable,
+        content?: string,
         fields?: {
             name: string,
             value: string
         }[]
     }): Promise<void> {
         const {action, author, logsChannel} = data;
-        const fields = [{
-            name: "Author",
-            value: `${author} (\`${author.id}\`)`
-        }];
-
-        if (data.fields) fields.push(...data.fields);
+        if (!data.content && data.fields?.length === 0) return;
 
         const embed = new EmbedBuilder()
             .setColor(data.color ?? Properties.colors.default)
             .setAuthor({name: action})
-            .setFields(fields)
             .setFooter({text: author.tag, iconURL: author.displayAvatarURL()})
             .setTimestamp()
 
-        await logsChannel.send({embeds: [embed]});
+        if (data.fields) embed.setFields(data.fields);
+        if (data.content) embed.setDescription(data.content);
+
+        const attachments: AttachmentBuilder[] = [];
+
+        if (data.icon) {
+            attachments.push(new AttachmentBuilder(`assets/${data.icon}.png`, {name: `${data.icon}.png`}));
+            embed.data.author!.icon_url = `attachment://${data.icon}.png`;
+        }
+
+        await logsChannel.send({
+            embeds: [embed],
+            files: attachments
+        });
     }
 }
