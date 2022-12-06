@@ -18,7 +18,7 @@ export default class RestrictionUtils {
         if (this.isTrialStage2(member)) return "Trial Stage 1";
         if (this.isTrialStage1(member)) return "Trial Stage 2";
 
-        return "Public";
+        return "Everyone";
     }
 
     public static getRestrictionLevel(member: GuildMember): RestrictionLevel {
