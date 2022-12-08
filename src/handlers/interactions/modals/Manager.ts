@@ -5,7 +5,6 @@ import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 
-import Properties from "../../../utils/Properties";
 import Modal from "./Modal";
 
 export default class ModalHandler {
@@ -80,8 +79,10 @@ export default class ModalHandler {
         let {ephemeral} = modal;
 
         if (
+            config.force_ephemeral_response &&
             !modal.skipInternalUsageCheck &&
-            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
+            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
+            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
         ) ephemeral = true;
 
         await interaction.deferReply({ephemeral});

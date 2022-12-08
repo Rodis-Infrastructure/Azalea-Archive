@@ -6,7 +6,6 @@ import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 
-import Properties from "../../../utils/Properties";
 import SelectMenu from "./SelectMenu";
 
 export default class SelectMenuHandler {

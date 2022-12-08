@@ -1,5 +1,4 @@
 import {AttachmentBuilder, ColorResolvable, EmbedBuilder, TextChannel, User} from "discord.js";
-import Properties from "./Properties";
 
 export async function createLog(data: {
     action: string,
@@ -17,7 +16,7 @@ export async function createLog(data: {
     if (!data.content && data.fields?.length === 0) return;
 
     const embed = new EmbedBuilder()
-        .setColor(data.color ?? Properties.colors.default)
+        .setColor("DarkButNotBlack")
         .setAuthor({name: action})
         .setFooter({text: author.tag, iconURL: author.displayAvatarURL()})
         .setTimestamp()
