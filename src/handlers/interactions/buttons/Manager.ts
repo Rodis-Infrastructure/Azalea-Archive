@@ -118,6 +118,7 @@ export default class ButtonHandler {
                 action: "Interaction Used",
                 author: interaction.user,
                 logsChannel: commandUseLogsChannel,
+                color: config.colors?.default,
                 icon: "InteractionIcon",
                 content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
                 fields: [{

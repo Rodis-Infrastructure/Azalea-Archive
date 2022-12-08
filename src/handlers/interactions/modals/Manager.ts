@@ -107,6 +107,7 @@ export default class ModalHandler {
             await createLog({
                 action: "Interaction Used",
                 author: interaction.user,
+                color: config.colors?.default,
                 logsChannel: commandUseLogsChannel,
                 icon: "InteractionIcon",
                 content: `Modal \`${modalName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,

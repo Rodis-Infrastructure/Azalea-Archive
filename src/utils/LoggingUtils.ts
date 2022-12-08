@@ -12,11 +12,11 @@ export async function createLog(data: {
         value: string
     }[]
 }): Promise<void> {
-    const {action, author, logsChannel} = data;
+    const {action, author, logsChannel, color} = data;
     if (!data.content && data.fields?.length === 0) return;
 
     const embed = new EmbedBuilder()
-        .setColor("DarkButNotBlack")
+        .setColor(color ?? "DarkButNotBlack")
         .setAuthor({name: action})
         .setFooter({text: author.tag, iconURL: author.displayAvatarURL()})
         .setTimestamp()

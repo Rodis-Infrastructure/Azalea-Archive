@@ -117,6 +117,7 @@ export default class SelectMenuHandler {
             await createLog({
                 action: "Interaction Used",
                 author: interaction.user,
+                color: config.colors?.default,
                 logsChannel: commandUseLogsChannel,
                 icon: "InteractionIcon",
                 content: `Select Menu \`${selectMenuName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
