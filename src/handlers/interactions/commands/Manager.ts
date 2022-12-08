@@ -1,22 +1,24 @@
+import {InteractionResponseType} from "../../../utils/Types";
 import ContextMenuCommand from "./ContextMenuCommand";
-import Properties, {ResponseType} from "../../../utils/Properties";
 import ChatInputCommand from "./ChatInputCommand";
-import LoggingUtils from "../../../utils/LoggingUtils";
-import Bot from "../../../Bot";
 
-import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
 
 import {
+    MessageContextMenuCommandInteraction,
+    UserContextMenuCommandInteraction,
     ApplicationCommandDataResolvable,
     ChatInputCommandInteraction,
-    Collection,
-    GuildMember,
-    MessageContextMenuCommandInteraction,
+    ApplicationCommandType,
     TextChannel,
-    UserContextMenuCommandInteraction
+    Collection,
+    Client
 } from "discord.js";
-import {readdirSync} from "fs";
-import {join} from "path";
+
+import {commandManager, globalGuildConfigs} from "../../../Client";
+import {createLog} from "../../../utils/LoggingUtils";
+import {readdir} from "node:fs/promises";
+import {join} from "node:path";
+import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
@@ -25,25 +27,25 @@ type CommandInteraction =
     | MessageContextMenuCommandInteraction;
 
 export default class CommandHandler {
-    client: Bot;
+    client: Client;
     list: Collection<string, Command>;
 
-    constructor(client: Bot) {
+    constructor(client: Client) {
         this.client = client;
         this.list = new Collection();
     }
 
     public async load() {
-        const directories = readdirSync(join(__dirname, "../../../interactions/commands"));
+        const directories = await readdir(join(__dirname, "../../../interactions/commands"));
 
         for (const directory of directories) {
-            const files = readdirSync(join(__dirname, `../../../interactions/commands/${directory}`));
+            const files = await readdir(join(__dirname, `../../../interactions/commands/${directory}`));
             for (const file of files) {
                 if (!file.endsWith(".js")) continue;
 
                 // eslint-disable-next-line @typescript-eslint/no-var-requires
                 const command = require(join(__dirname, `../../../interactions/commands/${directory}`, file)).default;
-                new command(this.client);
+                await this.register(new command());
             }
         }
     }
@@ -53,47 +55,97 @@ export default class CommandHandler {
     }
 
     public async publish() {
-        const commands: ApplicationCommandDataResolvable[] = await Promise.all(
-            this.client.commands.list.map(command => command.build())
+        const commandData: ApplicationCommandDataResolvable[] = await Promise.all(
+            commandManager.list.map(command => command.build())
         );
 
         try {
-            await this.client.application?.commands.set(commands);
-            console.log(`Successfully loaded ${this.client.commands.list.size} commands!`);
+            await this.client.application?.commands.set(commandData);
+            console.log(`Successfully loaded ${commandManager.list.size} commands!`);
         } catch (err) {
             console.error(err);
         }
     }
 
     public async handle(interaction: CommandInteraction) {
-        const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
-        if (!command) return;
+        const config = globalGuildConfigs.get(interaction.guildId as string);
 
-        if (!await RestrictionUtils.verifyAccess(command.restriction, interaction.member as GuildMember)) {
-            await interaction.reply(
-                {
-                    content:
-                        `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[command.restriction]}\`\n`
-                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-                    ephemeral: true
-                }
-            );
+        if (!config) {
+            await interaction.reply({
+                content: "Guild not configured.",
+                ephemeral: true
+            });
             return;
         }
 
-        let responseType = command.defer;
-        if (
-            !command.skipInternalUsageCheck &&
-            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
-        ) responseType = ResponseType.EphemeralDefer;
+        let stringCommandType: "slash_commands" | "message_commands" | "user_commands";
+        let logCommandName: "Slash" | "Message" | "User";
+        let memberUsedOnId = "";
 
-        switch (responseType) {
-            case ResponseType.Defer: {
+        switch (interaction.commandType) {
+            case ApplicationCommandType.ChatInput: {
+                stringCommandType = "slash_commands";
+                logCommandName = "Slash";
+                break;
+            }
+
+            case ApplicationCommandType.Message: {
+                memberUsedOnId = interaction.targetMessage.member?.id as string;
+                stringCommandType = "message_commands";
+                logCommandName = "Message";
+                break;
+            }
+
+            case ApplicationCommandType.User: {
+                memberUsedOnId = interaction.targetId;
+                stringCommandType = "user_commands";
+                logCommandName = "User";
+                break;
+            }
+        }
+
+        let memberRoles = interaction.member?.roles;
+        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
+
+        const hasPermission = verifyInteractionPermissions({
+            interactionCustomId: interaction.commandName,
+            memberRoles: memberRoles as string[],
+            interactionType: stringCommandType,
+            config
+        });
+
+        if (!hasPermission) {
+            await interaction.reply({
+                content: "You do not have permission to use this command.",
+                ephemeral: true
+            });
+            return;
+        }
+
+        const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
+        if (!command) {
+            await interaction.reply({
+                content: "Unable to execute command.",
+                ephemeral: true
+            });
+            return;
+        }
+
+        let ResponseType = command.defer;
+        if (
+            config.force_ephemeral_response &&
+            !command.skipInternalUsageCheck &&
+            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
+            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+        ) ResponseType = InteractionResponseType.EphemeralDefer;
+
+        switch (ResponseType) {
+            case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
             }
 
-            case ResponseType.EphemeralDefer: {
+            case InteractionResponseType.EphemeralDefer: {
                 await interaction.deferReply({ephemeral: true});
             }
         }
@@ -102,27 +154,43 @@ export default class CommandHandler {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             await command.execute(interaction, this.client);
-
-            if (
-                !Properties.preventLoggingEventsChannels.includes(interaction.channelId) &&
-                !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
-            ) {
-                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LoggingUtils.log({
-                    action: "Interaction Used",
-                    author: interaction.user,
-                    logsChannel: commandUseLogsChannel,
-                    icon: "InteractionIcon",
-                    content: `Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-                    fields: [{
-                        name: "Channel",
-                        value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-                    }]
-                });
-            }
         } catch (err) {
             console.log(`Failed to execute command: ${command.name}`);
             console.error(err);
+            return;
+        }
+
+        if (
+            config.logging?.command_usage?.enabled &&
+            config.logging.command_usage.channel_id &&
+            !config.logging.excluded_channels?.includes(interaction.channelId) &&
+            !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+        ) {
+            const contextCommandField = [];
+
+            if (
+                interaction.commandType === ApplicationCommandType.User ||
+                interaction.commandType === ApplicationCommandType.Message
+            ) contextCommandField.push({
+                name: "Used On",
+                value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
+            });
+
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
+            await createLog({
+                action: "Interaction Used",
+                author: interaction.user,
+                logsChannel: commandUseLogsChannel,
+                icon: "InteractionIcon",
+                content: `${logCommandName} Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
+                fields: [
+                    {
+                        name: "Channel",
+                        value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
+                    },
+                    ...contextCommandField
+                ]
+            });
         }
     }
 }

@@ -1,21 +1,21 @@
-import Bot from "../../Bot";
-
-import {readdirSync} from "fs";
-import {join} from "path";
+import {readdir} from "node:fs/promises";
+import {Client} from "discord.js";
+import {join} from "node:path";
 
 export default class ListenerLoader {
-    client: Bot;
+    client: Client;
 
-    constructor(client: Bot) {
+    constructor(client: Client) {
         this.client = client;
     }
 
     public async load() {
-        const files = readdirSync(join(__dirname, "../../listeners")).filter(file => file.endsWith(".js"));
+        let files = await readdir(join(__dirname, "../../listeners"))
+        files = files.filter(file => file.endsWith(".js"));
 
         for (const file of files) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const EventListener = require(join(__dirname, "../../listeners", file));
+            const EventListener = require(join(__dirname, "../../listeners", file)).default;
             const listener = new EventListener(this.client);
 
             if (listener.once) {

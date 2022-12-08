@@ -1,15 +1,10 @@
 import Modal from "../../handlers/interactions/modals/Modal";
-import Bot from "../../Bot";
-
-import {RestrictionLevel} from "../../utils/RestrictionUtils";
-import {ModalSubmitInteraction} from "discord.js";
-
+import {Client, ModalSubmitInteraction} from "discord.js";
 
 export default class SampleModal extends Modal {
-    constructor(client: Bot) {
+    constructor(client: Client) {
         super(client, {
             name: "sample-modal",
-            restriction: RestrictionLevel.Everyone,
             ephemeral: true
         });
     }

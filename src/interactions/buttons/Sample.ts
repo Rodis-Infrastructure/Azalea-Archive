@@ -1,16 +1,13 @@
 import Button from "../../handlers/interactions/buttons/Button";
-import Bot from "../../Bot";
 
-import {RestrictionLevel} from "../../utils/RestrictionUtils";
-import {ResponseType} from "../../utils/Properties";
-import {ButtonInteraction} from "discord.js";
+import {InteractionResponseType} from "../../utils/Types";
+import {ButtonInteraction, Client} from "discord.js";
 
 export default class SampleButton extends Button {
-    constructor(client: Bot) {
+    constructor(client: Client) {
         super(client, {
             name: "sample-button",
-            restriction: RestrictionLevel.Everyone,
-            defer: ResponseType.EphemeralDefer
+            defer: InteractionResponseType.EphemeralDefer
         });
     }
 

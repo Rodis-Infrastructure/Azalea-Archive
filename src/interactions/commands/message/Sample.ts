@@ -1,16 +1,13 @@
 import ContextMenuCommand from "../../../handlers/interactions/commands/ContextMenuCommand";
-import Bot from "../../../Bot";
 
-import {ApplicationCommandType, ContextMenuCommandInteraction} from "discord.js";
-import {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ResponseType} from "../../../utils/Properties";
+import {ApplicationCommandType, Client, ContextMenuCommandInteraction} from "discord.js";
+import {InteractionResponseType} from "../../../utils/Types";
 
 export default class SampleCommand extends ContextMenuCommand {
-    constructor(client: Bot) {
+    constructor(client: Client) {
         super(client, {
             name: "Sample",
-            restriction: RestrictionLevel.Everyone,
-            defer: ResponseType.EphemeralDefer,
+            defer: InteractionResponseType.EphemeralDefer,
             type: ApplicationCommandType.Message
         });
     }

@@ -1,24 +1,22 @@
 import EventListener from "../handlers/listeners/EventListener";
-import Bot from "../Bot";
 
-import {Interaction, InteractionType} from "discord.js";
+import {selectMenuManager, commandManager, buttonManager, modalManager} from "../Client";
+import {Client, Interaction, InteractionType} from "discord.js";
 
-module.exports = class InteractionCreateEventListener extends EventListener {
-    constructor(client: Bot) {
+export default class InteractionCreateEventListener extends EventListener {
+    constructor(client: Client) {
         super(client, {name: "interactionCreate"});
     }
 
-    public async execute(interaction: Interaction) {
+    async execute(interaction: Interaction): Promise<void> {
         if (
             interaction.isChatInputCommand() ||
             interaction.isMessageContextMenuCommand() ||
             interaction.isUserContextMenuCommand()
-        ) {
-            await this.client.commands.handle(interaction);
-        }
+        ) await commandManager.handle(interaction);
 
-        if (interaction.isButton()) await this.client.buttons.handle(interaction);
-        if (interaction.isModalSubmit()) await this.client.modals.handle(interaction);
-        if (interaction.isStringSelectMenu()) await this.client.select_menus.handle(interaction);
+        if (interaction.isButton()) await buttonManager.handle(interaction);
+        if (interaction.isModalSubmit()) await modalManager.handle(interaction);
+        if (interaction.isStringSelectMenu()) await selectMenuManager.handle(interaction);
     }
 };

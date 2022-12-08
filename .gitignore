@@ -1,6 +1,11 @@
 # Files
 .env
+.DS_Store
 
 # Directories
 node_modules
+config/guilds/*
 dist
+
+# Files excluded from being ignored
+!config/guilds/150074202727251969.yaml

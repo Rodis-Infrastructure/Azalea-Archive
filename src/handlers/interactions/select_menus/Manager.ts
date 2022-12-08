@@ -1,40 +1,50 @@
-import {Collection, GuildMember, StringSelectMenuInteraction, TextChannel} from "discord.js";
-import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ResponseType} from "../../../utils/Properties";
-import {readdirSync} from "fs";
-import {join} from "path";
+import {Collection, GuildMember, StringSelectMenuInteraction, TextChannel, Client} from "discord.js";
+import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
+import {InteractionResponseType} from "../../../utils/Types";
+import {createLog} from "../../../utils/LoggingUtils";
+import {globalGuildConfigs} from "../../../Client";
+import {readdir} from "node:fs/promises";
+import {join} from "node:path";
 
 import Properties from "../../../utils/Properties";
-import LoggingUtils from "../../../utils/LoggingUtils";
 import SelectMenu from "./SelectMenu";
-import Bot from "../../../Bot";
 
 export default class SelectMenuHandler {
-    client: Bot;
-    select_menus: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, SelectMenu>;
+    client: Client;
+    list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, SelectMenu>;
 
-    constructor(client: Bot) {
+    constructor(client: Client) {
         this.client = client;
-        this.select_menus = new Collection();
+        this.list = new Collection();
     }
 
     public async load() {
-        const files = readdirSync(join(__dirname, "../../../interactions/select_menus"))
-            .filter(file => file.endsWith(".js"));
+        let files = await readdir(join(__dirname, "../../../interactions/select_menus"))
+        files = files.filter(file => file.endsWith(".js"));
 
         for (const file of files) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const select_menu = require(join(__dirname, "../../../interactions/select_menus", file)).default;
-            new select_menu(this.client);
+            await this.register(new select_menu(this.client));
         }
     }
 
     public async register(select_menu: SelectMenu) {
-        this.select_menus.set(select_menu.name, select_menu);
+        this.list.set(select_menu.name, select_menu);
     }
 
     public async handle(interaction: StringSelectMenuInteraction) {
-        const selectMenu = this.select_menus.find(s => {
+        const config = globalGuildConfigs.get(interaction.guildId as string);
+
+        if (!config) {
+            await interaction.reply({
+                content: "Guild not configured.",
+                ephemeral: true
+            });
+            return;
+        }
+
+        const selectMenu = this.list.find(s => {
             if (typeof s.name === "string") return s.name === interaction.customId;
 
             if ((s.name as { startsWith: string }).startsWith) return interaction.customId.startsWith((s.name as { startsWith: string }).startsWith);
@@ -50,31 +60,40 @@ export default class SelectMenuHandler {
             selectMenu.name :
             Object.values(selectMenu.name)[0];
 
-        if (!await RestrictionUtils.verifyAccess(selectMenu.restriction, interaction.member as GuildMember)) {
-            await interaction.reply(
-                {
-                    content:
-                        `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[selectMenu.restriction]}\`\n`
-                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-                    ephemeral: true
-                }
-            );
+        let memberRoles = interaction.member?.roles;
+        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
+
+        const hasPermission = verifyInteractionPermissions({
+            memberRoles: memberRoles as string[],
+            interactionCustomId: selectMenuName,
+            interactionType: "select_menus",
+            config
+        });
+
+        if (!hasPermission) {
+            await interaction.reply({
+                content: "You do not have permission to use this command.",
+                ephemeral: true
+            });
             return;
         }
 
-        let responseType = selectMenu.defer;
-        if (
-            !selectMenu.skipInternalUsageCheck &&
-            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
-        ) responseType = ResponseType.EphemeralDefer;
 
-        switch (responseType) {
-            case ResponseType.Defer: {
+        let ResponseType = selectMenu.defer;
+        if (
+            config.force_ephemeral_response &&
+            !selectMenu.skipInternalUsageCheck &&
+            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
+            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+        ) ResponseType = InteractionResponseType.EphemeralDefer;
+
+        switch (ResponseType) {
+            case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
             }
 
-            case ResponseType.EphemeralDefer: {
+            case InteractionResponseType.EphemeralDefer: {
                 await interaction.deferReply({ephemeral: true});
             }
         }
@@ -82,28 +101,31 @@ export default class SelectMenuHandler {
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            await selectMenu.execute(interaction, this.client);
-
-            if (
-                !Properties.preventLoggingEventsChannels.includes(interaction.channelId) &&
-                !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
-            ) {
-                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LoggingUtils.log({
-                    action: "Interaction Used",
-                    author: interaction.user,
-                    logsChannel: commandUseLogsChannel,
-                    icon: "InteractionIcon",
-                    content: `Select menu \`${interaction.customId}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-                    fields: [{
-                        name: "Channel",
-                        value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-                    }]
-                });
-            }
+            await command.execute(interaction, this.client);
         } catch (err) {
             console.log(`Failed to execute select menu: ${selectMenuName}`);
             console.error(err);
+            return;
+        }
+
+        if (
+            config.logging?.command_usage?.enabled &&
+            config.logging.command_usage.channel_id &&
+            !config.logging.excluded_channels?.includes(interaction.channelId) &&
+            !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+        ) {
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
+            await createLog({
+                action: "Interaction Used",
+                author: interaction.user,
+                logsChannel: commandUseLogsChannel,
+                icon: "InteractionIcon",
+                content: `Select Menu \`${selectMenuName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
+                fields: [{
+                    name: "Channel",
+                    value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
+                }]
+            });
         }
     }
 }

@@ -1,46 +1,33 @@
-import {ApplicationCommandType, UserApplicationCommandData, MessageApplicationCommandData} from "discord.js";
-import {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ResponseType} from "../../../utils/Properties";
-
-import Bot from "../../../Bot";
+import {ApplicationCommandType, UserApplicationCommandData, MessageApplicationCommandData, Client} from "discord.js";
+import {InteractionResponseType} from "../../../utils/Types";
 
 type ContextMenuCommandData = MessageApplicationCommandData | UserApplicationCommandData;
 
 type CustomApplicationCommandData = ContextMenuCommandData & {
     skipInternalUsageCheck?: boolean;
-    restriction: RestrictionLevel;
-    defer: ResponseType;
+    defer: InteractionResponseType;
 }
 
 export default class ContextMenuCommand {
     type: ApplicationCommandType.User | ApplicationCommandType.Message;
     skipInternalUsageCheck?: boolean;
-    restriction: RestrictionLevel;
-    defer: ResponseType;
+    defer: InteractionResponseType;
+    client: Client;
     name: string;
-    client: Bot;
 
-    constructor(client: Bot, data: CustomApplicationCommandData) {
+    constructor(client: Client, data: CustomApplicationCommandData) {
         this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
-        this.restriction = data.restriction;
         this.defer = data.defer;
         this.name = data.name;
         this.type = data.type;
         this.client = client;
-
-        try {
-            // noinspection JSIgnoredPromiseFromCall
-            this.client.commands.register(this);
-        } catch (err) {
-            console.error(err);
-            return;
-        }
     }
 
     build(): ContextMenuCommandData {
         return {
             name: this.name,
-            type: this.type
+            dmPermission: false,
+            type: this.type,
         };
     }
 }

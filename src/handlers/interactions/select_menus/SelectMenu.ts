@@ -1,35 +1,22 @@
-import {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ResponseType} from "../../../utils/Properties";
-
-import Bot from "../../../Bot";
+import {InteractionResponseType} from "../../../utils/Types";
+import {Client} from "discord.js";
 
 type CustomSelectMenuComponent = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; };
     skipInternalUsageCheck?: boolean;
-    restriction: RestrictionLevel;
-    defer: ResponseType;
+    defer: InteractionResponseType;
 }
 
 export default class SelectMenu {
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
     skipInternalUsageCheck?: boolean;
-    restriction: RestrictionLevel;
-    defer: ResponseType;
-    client: Bot;
+    defer: InteractionResponseType;
+    client: Client;
 
-    constructor(client: Bot, data: CustomSelectMenuComponent) {
+    constructor(client: Client, data: CustomSelectMenuComponent) {
         this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
-        this.restriction = data.restriction;
         this.defer = data.defer;
         this.name = data.name;
         this.client = client;
-
-        try {
-            // noinspection JSIgnoredPromiseFromCall
-            this.client.select_menus.register(this);
-        } catch (err) {
-            console.error(err);
-            return;
-        }
     }
 }

@@ -1,16 +1,13 @@
 import SelectMenu from "../../handlers/interactions/select_menus/SelectMenu";
-import Bot from "../../Bot";
 
-import {RestrictionLevel} from "../../utils/RestrictionUtils";
-import {ResponseType} from "../../utils/Properties";
-import {SelectMenuInteraction} from "discord.js";
+import {InteractionResponseType} from "../../utils/Types";
+import {Client, SelectMenuInteraction} from "discord.js";
 
 export default class SampleSelectMenu extends SelectMenu {
-    constructor(client: Bot) {
+    constructor(client: Client) {
         super(client, {
             name: "sample-select-menu",
-            restriction: RestrictionLevel.Everyone,
-            defer: ResponseType.EphemeralDefer
+            defer: InteractionResponseType.EphemeralDefer
         });
     }
 

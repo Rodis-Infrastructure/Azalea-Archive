@@ -1,30 +1,30 @@
-import LoggingUtils from "../../../utils/LoggingUtils";
-import Bot from "../../../Bot";
 import Button from "./Button";
 
-import RestrictionUtils, {RestrictionLevel} from "../../../utils/RestrictionUtils";
-import {ButtonInteraction, Collection, GuildMember, TextChannel} from "discord.js";
-import Properties, {ResponseType} from "../../../utils/Properties";
-import {readdirSync} from "fs";
-import {join} from "path";
+import {ButtonInteraction, Client, Collection, TextChannel} from "discord.js";
+import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
+import {InteractionResponseType} from "../../../utils/Types";
+import {createLog} from "../../../utils/LoggingUtils";
+import {globalGuildConfigs} from "../../../Client";
+import {readdir} from "node:fs/promises";
+import {join} from "node:path";
 
 export default class ButtonHandler {
-    client: Bot;
+    client: Client;
     buttons: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Button>;
 
-    constructor(client: Bot) {
+    constructor(client: Client) {
         this.client = client;
         this.buttons = new Collection();
     }
 
     public async load() {
-        const files = readdirSync(join(__dirname, "../../../interactions/buttons"))
-            .filter(file => file.endsWith(".js"));
+        let files = await readdir(join(__dirname, "../../../interactions/buttons"))
+        files = files.filter(file => file.endsWith(".js"));
 
         for (const file of files) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const button = require(join(__dirname, "../../../interactions/buttons", file)).default;
-            new button(this.client);
+            await this.register(new button(this.client));
         }
     }
 
@@ -33,6 +33,16 @@ export default class ButtonHandler {
     }
 
     public async handle(interaction: ButtonInteraction) {
+        const config = globalGuildConfigs.get(interaction.guildId as string);
+
+        if (!config) {
+            await interaction.reply({
+                content: "Guild not configured.",
+                ephemeral: true
+            });
+            return;
+        }
+
         const button = this.buttons.find(b => {
             if (typeof b.name === "string") return b.name === interaction.customId;
 
@@ -49,31 +59,40 @@ export default class ButtonHandler {
             button.name :
             Object.values(button.name)[0];
 
-        if (!await RestrictionUtils.verifyAccess(button.restriction, interaction.member as GuildMember)) {
-            await interaction.reply(
-                {
-                    content:
-                        `You are **below** the required restriction level for this interaction: \`${RestrictionLevel[button.restriction]}\`\n`
-                        + `Your restriction level: \`${RestrictionUtils.getRestrictionLabel(interaction.member as GuildMember)}\``,
-                    ephemeral: true
-                }
-            );
+        let memberRoles = interaction.member?.roles;
+        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
+
+        const hasPermission = verifyInteractionPermissions({
+            memberRoles: memberRoles as string[],
+            interactionCustomId: buttonName,
+            interactionType: "buttons",
+            config
+        });
+
+        if (!hasPermission) {
+            await interaction.reply({
+                content: "You do not have permission to use this command.",
+                ephemeral: true
+            });
             return;
         }
 
-        let responseType = button.defer;
-        if (
-            !button.skipInternalUsageCheck &&
-            Properties.internalCategories.includes((interaction.channel as TextChannel).parentId as string)
-        ) responseType = ResponseType.EphemeralDefer;
 
-        switch (responseType) {
-            case ResponseType.Defer: {
+        let ResponseType = button.defer;
+        if (
+            config.force_ephemeral_response &&
+            !button.skipInternalUsageCheck &&
+            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
+            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+        ) ResponseType = InteractionResponseType.EphemeralDefer;
+
+        switch (ResponseType) {
+            case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
             }
 
-            case ResponseType.EphemeralDefer: {
+            case InteractionResponseType.EphemeralDefer: {
                 await interaction.deferReply({ephemeral: true});
             }
         }
@@ -81,28 +100,31 @@ export default class ButtonHandler {
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            await button.execute(interaction, this.client);
-
-            if (
-                !Properties.preventLoggingEventsChannels.includes(interaction.channelId) &&
-                !Properties.preventLoggingEventsCategories.includes((interaction.channel as TextChannel).parentId as string)
-            ) {
-                const commandUseLogsChannel = await interaction.guild?.channels.fetch(Properties.channels.commandUseLogs) as TextChannel;
-                await LoggingUtils.log({
-                    action: "Interaction Used",
-                    author: interaction.user,
-                    logsChannel: commandUseLogsChannel,
-                    icon: "InteractionIcon",
-                    content: `Button \`${interaction.customId}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-                    fields: [{
-                        name: "Channel",
-                        value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-                    }]
-                });
-            }
+            await command.execute(interaction, this.client);
         } catch (err) {
             console.log(`Failed to execute button: ${buttonName}`);
             console.error(err);
+            return;
+        }
+
+        if (
+            config.logging?.command_usage?.enabled &&
+            config.logging.command_usage.channel_id &&
+            !config.logging.excluded_channels?.includes(interaction.channelId) &&
+            !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+        ) {
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
+            await createLog({
+                action: "Interaction Used",
+                author: interaction.user,
+                logsChannel: commandUseLogsChannel,
+                icon: "InteractionIcon",
+                content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
+                fields: [{
+                    name: "Channel",
+                    value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
+                }]
+            });
         }
     }
 }

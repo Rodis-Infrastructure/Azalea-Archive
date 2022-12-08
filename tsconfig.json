@@ -20,7 +20,7 @@
         "baseUrl": "./"
     },
     "files": [
-        "src/Bot.ts"
+        "src/Client.ts"
     ],
     "include": [
         "./**/*.ts"
