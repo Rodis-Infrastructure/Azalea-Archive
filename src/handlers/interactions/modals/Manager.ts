@@ -1,6 +1,6 @@
 import {Collection, ModalSubmitInteraction, TextChannel, Client} from "discord.js";
-import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
-import {createLog} from "../../../utils/LoggingUtils";
+import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
+import {sendLog} from "../../../utils/LoggingUtils";
 import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
@@ -61,7 +61,7 @@ export default class ModalHandler {
         let memberRoles = interaction.member?.roles;
         if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
 
-        const hasPermission = verifyInteractionPermissions({
+        const hasPermission = hasInteractionPermission({
             memberRoles: memberRoles as string[],
             interactionCustomId: modalName,
             interactionType: "modals",
@@ -104,7 +104,7 @@ export default class ModalHandler {
             !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
             const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
-            await createLog({
+            await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,
                 color: config.colors?.default,

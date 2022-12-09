@@ -1,9 +1,9 @@
 import Button from "./Button";
 
 import {ButtonInteraction, Client, Collection, TextChannel} from "discord.js";
-import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
+import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 import {InteractionResponseType} from "../../../utils/Types";
-import {createLog} from "../../../utils/LoggingUtils";
+import {sendLog} from "../../../utils/LoggingUtils";
 import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
@@ -62,7 +62,7 @@ export default class ButtonHandler {
         let memberRoles = interaction.member?.roles;
         if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
 
-        const hasPermission = verifyInteractionPermissions({
+        const hasPermission = hasInteractionPermission({
             memberRoles: memberRoles as string[],
             interactionCustomId: buttonName,
             interactionType: "buttons",
@@ -114,7 +114,7 @@ export default class ButtonHandler {
             !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
             const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
-            await createLog({
+            await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,
                 logsChannel: commandUseLogsChannel,

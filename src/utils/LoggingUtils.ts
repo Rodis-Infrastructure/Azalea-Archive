@@ -1,6 +1,6 @@
 import {AttachmentBuilder, ColorResolvable, EmbedBuilder, TextChannel, User} from "discord.js";
 
-export async function createLog(data: {
+export async function sendLog(data: {
     action: string,
     author: User,
     logsChannel: TextChannel,

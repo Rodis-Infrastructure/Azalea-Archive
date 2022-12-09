@@ -15,10 +15,10 @@ import {
 } from "discord.js";
 
 import {commandManager, globalGuildConfigs} from "../../../Client";
-import {createLog} from "../../../utils/LoggingUtils";
+import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
-import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
+import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
@@ -107,7 +107,7 @@ export default class CommandHandler {
         let memberRoles = interaction.member?.roles;
         if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
 
-        const hasPermission = verifyInteractionPermissions({
+        const hasPermission = hasInteractionPermission({
             interactionCustomId: interaction.commandName,
             memberRoles: memberRoles as string[],
             interactionType: stringCommandType,
@@ -177,7 +177,7 @@ export default class CommandHandler {
             });
 
             const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
-            await createLog({
+            await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,
                 logsChannel: commandUseLogsChannel,

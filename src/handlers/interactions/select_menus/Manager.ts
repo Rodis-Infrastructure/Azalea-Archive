@@ -1,7 +1,7 @@
 import {Collection, GuildMember, StringSelectMenuInteraction, TextChannel, Client} from "discord.js";
-import {verifyInteractionPermissions} from "../../../utils/RestrictionUtils";
+import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 import {InteractionResponseType} from "../../../utils/Types";
-import {createLog} from "../../../utils/LoggingUtils";
+import {sendLog} from "../../../utils/LoggingUtils";
 import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
@@ -62,7 +62,7 @@ export default class SelectMenuHandler {
         let memberRoles = interaction.member?.roles;
         if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
 
-        const hasPermission = verifyInteractionPermissions({
+        const hasPermission = hasInteractionPermission({
             memberRoles: memberRoles as string[],
             interactionCustomId: selectMenuName,
             interactionType: "select_menus",
@@ -114,7 +114,7 @@ export default class SelectMenuHandler {
             !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
             const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
-            await createLog({
+            await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,
                 color: config.colors?.default,

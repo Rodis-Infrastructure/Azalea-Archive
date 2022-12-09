@@ -1,6 +1,6 @@
 import {GuildConfig, StringInteractionType} from "./Types";
 
-export function verifyInteractionPermissions(data: {
+export function hasInteractionPermission(data: {
     memberRoles: string[],
     config: GuildConfig,
     interactionType: StringInteractionType,
