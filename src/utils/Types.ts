@@ -33,7 +33,7 @@ export type GuildConfig = {
     logging?: {
         excludedChannels?: string[],
         excludedCategories?: string[],
-        commandUsage?: LoggingEventData
+        interactionUsage?: LoggingEventData
     }
 }
 

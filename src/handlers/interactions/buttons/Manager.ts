@@ -111,17 +111,17 @@ export default class ButtonHandler {
         }
 
         if (
-            config.logging?.commandUsage?.isEnabled &&
-            config.logging.commandUsage.channelId &&
+            config.logging?.interactionUsage?.isEnabled &&
+            config.logging.interactionUsage.channelId &&
             !config.logging.excludedChannels?.includes(interaction.channelId) &&
             !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
-            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.commandUsage.channelId) as TextChannel;
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.interactionUsage.channelId) as TextChannel;
             await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,
                 logsChannel: commandUseLogsChannel,
-                embedColor: config.logging.commandUsage.embedColor ?? config.colors?.embedDefault,
+                embedColor: config.logging.interactionUsage.embedColor ?? config.colors?.embedDefault,
                 icon: "InteractionIcon",
                 content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
                 fields: [{

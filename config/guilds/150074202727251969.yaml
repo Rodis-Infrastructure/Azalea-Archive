@@ -33,6 +33,6 @@ logging:
         - "temp" #management
         - "temp" #internal-affairs
 
-    commandUsage:
+    interactionUsage:
         isEnabled: true
         channelId: "" #command-use-logs
