@@ -5,18 +5,18 @@ export async function sendLog(data: {
     author: User,
     logsChannel: TextChannel,
     icon?: "InteractionIcon", // Types to be expanded as more logging is implemented
-    color?: ColorResolvable,
+    embedColor?: ColorResolvable,
     content?: string,
     fields?: {
         name: string,
         value: string
     }[]
 }): Promise<void> {
-    const {action, author, logsChannel, color} = data;
+    const {action, author, logsChannel, embedColor} = data;
     if (!data.content && data.fields?.length === 0) return;
 
     const embed = new EmbedBuilder()
-        .setColor(color ?? "DarkButNotBlack")
+        .setColor(embedColor ?? "DarkButNotBlack")
         .setAuthor({name: action})
         .setFooter({text: author.tag, iconURL: author.displayAvatarURL()})
         .setTimestamp()

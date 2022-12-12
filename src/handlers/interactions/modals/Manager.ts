@@ -110,7 +110,7 @@ export default class ModalHandler {
             await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,
-                color: config.colors?.default,
+                embedColor: config.logging.commandUsage.embedColor ?? config.colors?.embedDefault,
                 logsChannel: commandUseLogsChannel,
                 icon: "InteractionIcon",
                 content: `Modal \`${modalName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,

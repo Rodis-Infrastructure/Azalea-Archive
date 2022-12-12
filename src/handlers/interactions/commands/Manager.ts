@@ -183,7 +183,7 @@ export default class CommandHandler {
                 action: "Interaction Used",
                 author: interaction.user,
                 logsChannel: commandUseLogsChannel,
-                color: config.colors?.default,
+                embedColor: config.logging.commandUsage.embedColor ?? config.colors?.embedDefault,
                 icon: "InteractionIcon",
                 content: `${logCommandName} Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
                 fields: [

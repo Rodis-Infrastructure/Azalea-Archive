@@ -1,5 +1,5 @@
 colors:
-    default: 0x2e3136
+    embedDefault: 0x2e3136
 
 forceEphemeralResponse:
     isEnabled: true

@@ -20,12 +20,13 @@ type RoleProperties = {
 }
 
 type LoggingEventData = ChannelToggleableFeatureData & {
+    embedColor?: ColorResolvable,
     channelId?: string
 }
 
 export type GuildConfig = {
     colors?: {
-        default?: ColorResolvable
+        embedDefault?: ColorResolvable
     }
     forceEphemeralResponse?: ChannelToggleableFeatureData,
     roles?: { [key: string]: RoleProperties },

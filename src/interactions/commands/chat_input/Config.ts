@@ -43,7 +43,7 @@ export default class SampleCommand extends ChatInputCommand {
         }
 
         const embed = new EmbedBuilder()
-            .setColor(config?.colors?.default ?? "NotQuiteBlack")
+            .setColor(config?.colors?.embedDefault ?? "NotQuiteBlack")
             .setTitle("Guild Configuration")
             .setDescription(`\`\`\`json\n${JSON.stringify(config, null, 4)}\`\`\``)
             .setFooter({text: `Guild ID: ${guildId}`})
