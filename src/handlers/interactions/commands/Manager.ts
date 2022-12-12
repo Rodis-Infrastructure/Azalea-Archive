@@ -1,7 +1,5 @@
-import {InteractionResponseType} from "../../../utils/Types";
 import ContextMenuCommand from "./ContextMenuCommand";
 import ChatInputCommand from "./ChatInputCommand";
-
 
 import {
     MessageContextMenuCommandInteraction,
@@ -14,11 +12,12 @@ import {
     Client
 } from "discord.js";
 
+import {InteractionResponseType, StringCommandType} from "../../../utils/Types";
+import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 import {commandManager, globalGuildConfigs} from "../../../Client";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
-import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
@@ -78,27 +77,27 @@ export default class CommandHandler {
             return;
         }
 
-        let stringCommandType: "slash_commands" | "message_commands" | "user_commands";
+        let stringCommandType: StringCommandType;
         let logCommandName: "Slash" | "Message" | "User";
         let memberUsedOnId = "";
 
         switch (interaction.commandType) {
             case ApplicationCommandType.ChatInput: {
-                stringCommandType = "slash_commands";
+                stringCommandType = "slashCommands";
                 logCommandName = "Slash";
                 break;
             }
 
             case ApplicationCommandType.Message: {
                 memberUsedOnId = interaction.targetMessage.member?.id as string;
-                stringCommandType = "message_commands";
+                stringCommandType = "messageCommands";
                 logCommandName = "Message";
                 break;
             }
 
             case ApplicationCommandType.User: {
                 memberUsedOnId = interaction.targetId;
-                stringCommandType = "user_commands";
+                stringCommandType = "userCommands";
                 logCommandName = "User";
                 break;
             }
@@ -133,10 +132,10 @@ export default class CommandHandler {
 
         let ResponseType = command.defer;
         if (
-            config.force_ephemeral_response &&
+            config.forceEphemeralResponse &&
             !command.skipInternalUsageCheck &&
-            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
-            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
+            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) ResponseType = InteractionResponseType.EphemeralDefer;
 
         switch (ResponseType) {
@@ -161,10 +160,10 @@ export default class CommandHandler {
         }
 
         if (
-            config.logging?.command_usage?.enabled &&
-            config.logging.command_usage.channel_id &&
-            !config.logging.excluded_channels?.includes(interaction.channelId) &&
-            !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+            config.logging?.commandUsage?.enabled &&
+            config.logging.commandUsage.channelId &&
+            !config.logging.excludedChannels?.includes(interaction.channelId) &&
+            !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
             const contextCommandField = [];
 
@@ -176,7 +175,7 @@ export default class CommandHandler {
                 value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
             });
 
-            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.commandUsage.channelId) as TextChannel;
             await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,

@@ -79,10 +79,10 @@ export default class ModalHandler {
         let {ephemeral} = modal;
 
         if (
-            config.force_ephemeral_response &&
+            config.forceEphemeralResponse &&
             !modal.skipInternalUsageCheck &&
-            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
-            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
+            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) ephemeral = true;
 
         await interaction.deferReply({ephemeral});
@@ -98,12 +98,12 @@ export default class ModalHandler {
         }
 
         if (
-            config.logging?.command_usage?.enabled &&
-            config.logging.command_usage.channel_id &&
-            !config.logging.excluded_channels?.includes(interaction.channelId as string) &&
-            !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+            config.logging?.commandUsage?.enabled &&
+            config.logging.commandUsage.channelId &&
+            !config.logging.excludedChannels?.includes(interaction.channelId as string) &&
+            !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
-            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.commandUsage.channelId) as TextChannel;
             await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,

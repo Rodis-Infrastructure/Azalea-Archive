@@ -1,9 +1,9 @@
 import EventListener from "../handlers/listeners/EventListener";
-import {parse} from "yaml";
 
 import {selectMenuManager, commandManager, buttonManager, modalManager, globalGuildConfigs} from "../Client";
-import {readFileSync} from "node:fs";
+import {readFile} from "node:fs/promises";
 import {Client} from "discord.js";
+import {parse} from "yaml";
 
 export default class ReadyEventListener extends EventListener {
     constructor(client: Client) {
@@ -18,7 +18,7 @@ export default class ReadyEventListener extends EventListener {
         const guilds = await client.guilds.fetch();
 
         for (const [guildId] of guilds) {
-            const config = parse(readFileSync(`config/guilds/${guildId}.yaml`, "utf-8"));
+            const config = parse(await readFile(`config/guilds/${guildId}.yaml`, "utf-8"));
             globalGuildConfigs.set(guildId, config);
         }
 

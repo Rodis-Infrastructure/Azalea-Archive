@@ -65,7 +65,7 @@ export default class SelectMenuHandler {
         const hasPermission = hasInteractionPermission({
             memberRoles: memberRoles as string[],
             interactionCustomId: selectMenuName,
-            interactionType: "select_menus",
+            interactionType: "selectMenus",
             config
         });
 
@@ -80,10 +80,10 @@ export default class SelectMenuHandler {
 
         let ResponseType = selectMenu.defer;
         if (
-            config.force_ephemeral_response &&
+            config.forceEphemeralResponse &&
             !selectMenu.skipInternalUsageCheck &&
-            !config.force_ephemeral_response.excluded_channels?.includes(interaction.channelId as string) &&
-            !config.force_ephemeral_response.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
+            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) ResponseType = InteractionResponseType.EphemeralDefer;
 
         switch (ResponseType) {
@@ -108,12 +108,12 @@ export default class SelectMenuHandler {
         }
 
         if (
-            config.logging?.command_usage?.enabled &&
-            config.logging.command_usage.channel_id &&
-            !config.logging.excluded_channels?.includes(interaction.channelId) &&
-            !config.logging.excluded_categories?.includes((interaction.channel as TextChannel).parentId as string)
+            config.logging?.commandUsage?.enabled &&
+            config.logging.commandUsage.channelId &&
+            !config.logging.excludedChannels?.includes(interaction.channelId) &&
+            !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) {
-            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.command_usage.channel_id) as TextChannel;
+            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.commandUsage.channelId) as TextChannel;
             await sendLog({
                 action: "Interaction Used",
                 author: interaction.user,

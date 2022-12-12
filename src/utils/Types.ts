@@ -1,37 +1,38 @@
 import {ColorResolvable} from "discord.js";
 
-export type StringInteractionType = "slash_commands" | "message_commands" | "user_commands" | "buttons" | "modals" | "select_menus"; 
+export type StringCommandType = "slashCommands" | "messageCommands" | "userCommands";
+export type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
 
 type ChannelToggleableFeatureData = {
     enabled?: boolean,
-    excluded_channels?: string[],
-    excluded_categories?: string[]
+    excludedChannels?: string[],
+    excludedCategories?: string[]
 }
 
 type RoleProperties = {
     id?: string,
-    slash_commands?: string[],
-    message_commands?: string[],
-    user_commands?: string[],
-    select_menus?: string[],
+    slashCommands?: string[],
+    messageCommands?: string[],
+    userCommands?: string[],
+    selectMenus?: string[],
     buttons?: string[],
     modals?: string[]
 }
 
 type LoggingEventData = ChannelToggleableFeatureData & {
-    channel_id?: string
+    channelId?: string
 }
 
 export type GuildConfig = {
     colors?: {
         default?: ColorResolvable
     }
-    force_ephemeral_response?: ChannelToggleableFeatureData,
+    forceEphemeralResponse?: ChannelToggleableFeatureData,
     roles?: { [key: string]: RoleProperties },
     logging?: {
-        excluded_channels?: string[],
-        excluded_categories?: string[],
-        command_usage?: LoggingEventData
+        excludedChannels?: string[],
+        excludedCategories?: string[],
+        commandUsage?: LoggingEventData
     }
 }
 
