@@ -7,8 +7,11 @@ import {
     EmbedBuilder,
     ApplicationCommandOptionType
 } from "discord.js";
-import {InteractionResponseType} from "../../../utils/Types";
+
+import {GuildConfig, InteractionResponseType} from "../../../utils/Types";
 import {globalGuildConfigs} from "../../../Client";
+import {readFile} from "node:fs/promises";
+import {parse} from "yaml";
 
 export default class SampleCommand extends ChatInputCommand {
     constructor(client: Client) {
@@ -32,7 +35,12 @@ export default class SampleCommand extends ChatInputCommand {
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId as string;
-        const config = globalGuildConfigs.get(guildId);
+        const config: GuildConfig | undefined = globalGuildConfigs.get(guildId) ?? parse(await readFile(`config/guilds/${guildId}.yaml`, "utf-8"));
+
+        if (!config) {
+            await interaction.editReply(`Unable to find the configuration for guild with ID \`${guildId}\``);
+            return;
+        }
 
         const embed = new EmbedBuilder()
             .setColor(config?.colors?.default ?? "NotQuiteBlack")
