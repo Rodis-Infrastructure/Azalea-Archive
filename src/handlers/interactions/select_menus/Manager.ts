@@ -70,8 +70,11 @@ export default class SelectMenuHandler {
         });
 
         if (!hasPermission) {
+            const requiredRoles = Object.keys(config.roles || {})
+                .filter(role => config.roles?.[role].selectMenus?.includes(selectMenuName));
+
             await interaction.reply({
-                content: "You do not have permission to use this command.",
+                content: `You do not have permission to use this command, you must have one of the following roles: \`${requiredRoles.join("` `") ?? "N/A"}\``,
                 ephemeral: true
             });
             return;

@@ -70,8 +70,11 @@ export default class ButtonHandler {
         });
 
         if (!hasPermission) {
+            const requiredRoles = Object.keys(config.roles || {})
+                .filter(role => config.roles?.[role].buttons?.includes(buttonName));
+
             await interaction.reply({
-                content: "You do not have permission to use this command.",
+                content: `You do not have permission to use this button, you must have one of the following roles: \`${requiredRoles.join("` `") ?? "N/A"}\``,
                 ephemeral: true
             });
             return;
