@@ -2,20 +2,20 @@ colors:
     default: 0x2e3136
 
 forceEphemeralResponse:
-    enabled: true
+    isEnabled: true
     excludedCategories:
         - "360904621524385792" # Internal Channels
 
 roles:
     # Staff roles
     manager:
-        id: "150074509393788929"
+        roleId: "150074509393788929"
         slashCommands:
             - config
 
     # Department roles
     infrastructure:
-        id: "366311313875533824"
+        roleId: "366311313875533824"
         slashCommands:
             - config
 
@@ -28,11 +28,11 @@ logging:
         - "328272679188561920" # Management
 
         # Text channels
-        - "" #lead-commands
-        - "" #management-commands
-        - "" #management
-        - "" #internal-affairs
+        - "temp" #lead-commands
+        - "temp" #management-commands
+        - "temp" #management
+        - "temp" #internal-affairs
 
     commandUsage:
-        enabled: true
+        isEnabled: true
         channelId: "" #command-use-logs

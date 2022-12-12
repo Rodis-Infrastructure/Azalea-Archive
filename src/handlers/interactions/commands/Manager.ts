@@ -163,7 +163,7 @@ export default class CommandHandler {
         }
 
         if (
-            config.logging?.commandUsage?.enabled &&
+            config.logging?.commandUsage?.isEnabled &&
             config.logging.commandUsage.channelId &&
             !config.logging.excludedChannels?.includes(interaction.channelId) &&
             !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)

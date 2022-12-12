@@ -101,7 +101,7 @@ export default class ModalHandler {
         }
 
         if (
-            config.logging?.commandUsage?.enabled &&
+            config.logging?.commandUsage?.isEnabled &&
             config.logging.commandUsage.channelId &&
             !config.logging.excludedChannels?.includes(interaction.channelId as string) &&
             !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)

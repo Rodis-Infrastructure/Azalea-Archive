@@ -4,13 +4,13 @@ export type StringCommandType = "slashCommands" | "messageCommands" | "userComma
 export type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
 
 type ChannelToggleableFeatureData = {
-    enabled?: boolean,
+    isEnabled?: boolean,
     excludedChannels?: string[],
     excludedCategories?: string[]
 }
 
 type RoleProperties = {
-    id?: string,
+    roleId?: string,
     slashCommands?: string[],
     messageCommands?: string[],
     userCommands?: string[],

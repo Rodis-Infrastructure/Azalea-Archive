@@ -11,7 +11,7 @@ export function hasInteractionPermission(data: {
     return memberRoles?.some(memberRoleId => {
         if (!config.roles) return;
 
-        const roleName = Object.keys(config.roles).find(role => config.roles![role]?.id === memberRoleId);
+        const roleName = Object.keys(config.roles).find(role => config.roles![role]?.roleId === memberRoleId);
         if (!roleName) return;
 
         return config.roles[roleName]?.[interactionType]?.includes(interactionCustomId) ||
