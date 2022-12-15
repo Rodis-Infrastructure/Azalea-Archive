@@ -1,22 +1,22 @@
 import {InteractionResponseType} from "../../../utils/Types";
-import {Client} from "discord.js";
+import {SelectMenuInteraction} from "discord.js";
 
 type CustomSelectMenuComponent = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; };
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
 }
 
-export default class SelectMenu {
+export default abstract class SelectMenu {
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
-    client: Client;
 
-    constructor(client: Client, data: CustomSelectMenuComponent) {
-        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
+    abstract execute(interaction: SelectMenuInteraction): Promise<void>;
+
+    protected constructor(data: CustomSelectMenuComponent) {
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck;
         this.defer = data.defer;
         this.name = data.name;
-        this.client = client;
     }
 }

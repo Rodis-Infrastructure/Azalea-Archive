@@ -1,26 +1,31 @@
-import {ApplicationCommandType, UserApplicationCommandData, MessageApplicationCommandData, Client} from "discord.js";
+import {
+    MessageApplicationCommandData,
+    UserApplicationCommandData,
+    ApplicationCommandType,
+    CommandInteraction
+} from "discord.js";
+
 import {InteractionResponseType} from "../../../utils/Types";
 
 type ContextMenuCommandData = MessageApplicationCommandData | UserApplicationCommandData;
-
 type CustomApplicationCommandData = ContextMenuCommandData & {
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
 }
 
-export default class ContextMenuCommand {
+export default abstract class ContextMenuCommand {
     type: ApplicationCommandType.User | ApplicationCommandType.Message;
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
-    client: Client;
     name: string;
 
-    constructor(client: Client, data: CustomApplicationCommandData) {
-        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
+    abstract execute(interaction: CommandInteraction): Promise<void>;
+
+    protected constructor(data: CustomApplicationCommandData) {
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck;
         this.defer = data.defer;
         this.name = data.name;
         this.type = data.type;
-        this.client = client;
     }
 
     build(): ContextMenuCommandData {

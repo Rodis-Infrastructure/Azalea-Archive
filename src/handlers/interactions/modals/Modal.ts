@@ -1,21 +1,21 @@
-import {Client} from "discord.js";
+import {ModalSubmitInteraction} from "discord.js";
 
 type CustomModalComponent = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; };
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     ephemeral: boolean;
 }
 
-export default class Modal {
+export default abstract class Modal {
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     ephemeral: boolean;
-    client: Client;
 
-    constructor(client: Client, data: CustomModalComponent) {
-        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
+    abstract execute(interaction: ModalSubmitInteraction): Promise<void>;
+
+    protected constructor(data: CustomModalComponent) {
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck;
         this.ephemeral = data.ephemeral;
         this.name = data.name;
-        this.client = client;
     }
 }

@@ -1,11 +1,14 @@
 import EventListener from "../handlers/listeners/EventListener";
+import ClientManager from "../Client";
 
-import {selectMenuManager, commandManager, buttonManager, modalManager} from "../Client";
-import {Client, Interaction, InteractionType} from "discord.js";
+import {Interaction, InteractionType} from "discord.js";
 
 export default class InteractionCreateEventListener extends EventListener {
-    constructor(client: Client) {
-        super(client, {name: "interactionCreate"});
+    constructor() {
+        super({
+            name: "interactionCreate",
+            once: false
+        });
     }
 
     async execute(interaction: Interaction): Promise<void> {
@@ -13,10 +16,10 @@ export default class InteractionCreateEventListener extends EventListener {
             interaction.isChatInputCommand() ||
             interaction.isMessageContextMenuCommand() ||
             interaction.isUserContextMenuCommand()
-        ) await commandManager.handle(interaction);
+        ) await ClientManager.commands.handle(interaction);
 
-        if (interaction.isButton()) await buttonManager.handle(interaction);
-        if (interaction.isModalSubmit()) await modalManager.handle(interaction);
-        if (interaction.isStringSelectMenu()) await selectMenuManager.handle(interaction);
+        if (interaction.isButton()) await ClientManager.buttons.handle(interaction);
+        if (interaction.isModalSubmit()) await ClientManager.modals.handle(interaction);
+        if (interaction.isStringSelectMenu()) await ClientManager.selectMenus.handle(interaction);
     }
 };

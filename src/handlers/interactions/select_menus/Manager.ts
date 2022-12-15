@@ -1,19 +1,18 @@
-import {Collection, GuildMember, StringSelectMenuInteraction, TextChannel, Client} from "discord.js";
+import ClientManager from "../../../Client";
+
+import {Collection, StringSelectMenuInteraction, TextChannel} from "discord.js";
 import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 import {InteractionResponseType} from "../../../utils/Types";
 import {sendLog} from "../../../utils/LoggingUtils";
-import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 
 import SelectMenu from "./SelectMenu";
 
 export default class SelectMenuHandler {
-    client: Client;
     list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, SelectMenu>;
 
-    constructor(client: Client) {
-        this.client = client;
+    constructor() {
         this.list = new Collection();
     }
 
@@ -22,9 +21,10 @@ export default class SelectMenuHandler {
         files = files.filter(file => file.endsWith(".js"));
 
         for (const file of files) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const select_menu = require(join(__dirname, "../../../interactions/select_menus", file)).default;
-            await this.register(new select_menu(this.client));
+            if (!file.endsWith(".js")) continue;
+
+            const selectMenu = (await import(join(__dirname, "../../../interactions/select_menus", file))).default;
+            await this.register(new selectMenu());
         }
     }
 
@@ -33,7 +33,7 @@ export default class SelectMenuHandler {
     }
 
     public async handle(interaction: StringSelectMenuInteraction) {
-        const config = globalGuildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -101,9 +101,7 @@ export default class SelectMenuHandler {
         }
 
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await command.execute(interaction, this.client);
+            await selectMenu.execute(interaction);
         } catch (err) {
             console.log(`Failed to execute select menu: ${selectMenuName}`);
             console.error(err);

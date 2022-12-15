@@ -1,14 +1,15 @@
 import ContextMenuCommand from "../../../handlers/interactions/commands/ContextMenuCommand";
 
-import {ApplicationCommandType, Client, ContextMenuCommandInteraction} from "discord.js";
+import {ApplicationCommandType, ContextMenuCommandInteraction} from "discord.js";
 import {InteractionResponseType} from "../../../utils/Types";
 
 export default class SampleCommand extends ContextMenuCommand {
-    constructor(client: Client) {
-        super(client, {
+    constructor() {
+        super({
             name: "Sample",
             defer: InteractionResponseType.EphemeralDefer,
-            type: ApplicationCommandType.Message
+            type: ApplicationCommandType.Message,
+            skipInternalUsageCheck: false
         });
     }
 

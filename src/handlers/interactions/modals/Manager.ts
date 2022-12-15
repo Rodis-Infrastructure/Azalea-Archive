@@ -1,18 +1,17 @@
-import {Collection, ModalSubmitInteraction, TextChannel, Client} from "discord.js";
+import ClientManager from "../../../Client";
+
+import {Collection, ModalSubmitInteraction, TextChannel} from "discord.js";
 import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 import {sendLog} from "../../../utils/LoggingUtils";
-import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 
 import Modal from "./Modal";
 
 export default class ModalHandler {
-    client: Client;
     list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Modal>;
 
-    constructor(client: Client) {
-        this.client = client;
+    constructor() {
         this.list = new Collection();
     }
 
@@ -21,9 +20,10 @@ export default class ModalHandler {
         files = files.filter(file => file.endsWith(".js"));
 
         for (const file of files) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const modal = require(join(__dirname, "../../../interactions/modals", file)).default;
-            await this.register(new modal(this.client));
+            if (!file.endsWith(".js")) continue;
+
+            const modal = (await import(join(__dirname, "../../../interactions/modals", file))).default;
+            await this.register(new modal());
         }
     }
 
@@ -32,7 +32,7 @@ export default class ModalHandler {
     }
 
     public async handle(interaction: ModalSubmitInteraction) {
-        const config = globalGuildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -91,9 +91,7 @@ export default class ModalHandler {
         await interaction.deferReply({ephemeral});
 
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await command.execute(interaction, this.client);
+            await modal.execute(interaction);
         } catch (err) {
             console.log(`Failed to execute modal: ${modal.name}`);
             console.error(err);

@@ -1,32 +1,35 @@
 import EventListener from "../handlers/listeners/EventListener";
+import ClientManager from "../Client";
 
-import {selectMenuManager, commandManager, buttonManager, modalManager, globalGuildConfigs} from "../Client";
-import {readFile} from "node:fs/promises";
-import {Client} from "discord.js";
+import {readFile, readdir} from "node:fs/promises";
+import {GuildConfig} from "../utils/Types";
 import {parse} from "yaml";
 
 export default class ReadyEventListener extends EventListener {
-    constructor(client: Client) {
-        super(client, {
+    constructor() {
+        super({
             name: "ready",
             once: true
         });
     }
 
-    async execute(client: Client): Promise<void> {
-        console.log(`${client.user?.tag} is online!`);
-        const guilds = await client.guilds.fetch();
+    async execute(): Promise<void> {
+        console.log(`${ClientManager.client.user?.tag} is online!`);
+        const configFiles = await readdir("config/guilds/");
 
-        for (const [guildId] of guilds) {
-            const config = parse(await readFile(`config/guilds/${guildId}.yaml`, "utf-8"));
-            globalGuildConfigs.set(guildId, config);
+        for (const file of configFiles) {
+            const guildId = file.split(".")[0];
+            if (guildId === "example") continue;
+
+            const config: GuildConfig = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
+            ClientManager.guildConfigs.set(guildId, config);
         }
 
-        await selectMenuManager.load();
-        await buttonManager.load();
-        await modalManager.load();
+        await ClientManager.selectMenus.load();
+        await ClientManager.buttons.load();
+        await ClientManager.modals.load();
 
-        await commandManager.load();
-        await commandManager.publish();
+        await ClientManager.commands.load();
+        await ClientManager.commands.publish();
     }
 };

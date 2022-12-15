@@ -1,22 +1,22 @@
 import {InteractionResponseType} from "../../../utils/Types";
-import {Client} from "discord.js";
+import {ButtonInteraction} from "discord.js";
 
 type CustomButtonComponentData = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
 }
 
-export default class Button {
+export default abstract class Button {
     name: string | { startsWith: string } | { endsWith: string } | { includes: string };
-    skipInternalUsageCheck?: boolean;
+    skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
-    client: Client;
 
-    constructor(client: Client, data: CustomButtonComponentData) {
-        this.skipInternalUsageCheck = data.skipInternalUsageCheck ?? false;
+    abstract execute(interaction: ButtonInteraction): Promise<void>;
+
+    protected constructor(data: CustomButtonComponentData) {
+        this.skipInternalUsageCheck = data.skipInternalUsageCheck;
         this.defer = data.defer;
         this.name = data.name;
-        this.client = client;
     }
 }

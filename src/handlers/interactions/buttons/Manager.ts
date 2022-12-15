@@ -1,19 +1,17 @@
+import ClientManager from "../../../Client";
 import Button from "./Button";
 
-import {ButtonInteraction, Client, Collection, TextChannel} from "discord.js";
+import {ButtonInteraction, Collection, TextChannel} from "discord.js";
 import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
 import {InteractionResponseType} from "../../../utils/Types";
 import {sendLog} from "../../../utils/LoggingUtils";
-import {globalGuildConfigs} from "../../../Client";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 
 export default class ButtonHandler {
-    client: Client;
     buttons: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Button>;
 
-    constructor(client: Client) {
-        this.client = client;
+    constructor() {
         this.buttons = new Collection();
     }
 
@@ -22,9 +20,10 @@ export default class ButtonHandler {
         files = files.filter(file => file.endsWith(".js"));
 
         for (const file of files) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const button = require(join(__dirname, "../../../interactions/buttons", file)).default;
-            await this.register(new button(this.client));
+            if (!file.endsWith(".js")) continue;
+
+            const button = (await import(join(__dirname, "../../../interactions/buttons", file))).default;
+            await this.register(new button());
         }
     }
 
@@ -33,7 +32,7 @@ export default class ButtonHandler {
     }
 
     public async handle(interaction: ButtonInteraction) {
-        const config = globalGuildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -101,9 +100,7 @@ export default class ButtonHandler {
         }
 
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await command.execute(interaction, this.client);
+            await button.execute(interaction);
         } catch (err) {
             console.log(`Failed to execute button: ${buttonName}`);
             console.error(err);

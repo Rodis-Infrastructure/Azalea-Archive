@@ -1,5 +1,6 @@
 import ContextMenuCommand from "./ContextMenuCommand";
 import ChatInputCommand from "./ChatInputCommand";
+import ClientManager from "../../../Client";
 
 import {
     MessageContextMenuCommandInteraction,
@@ -8,13 +9,11 @@ import {
     ChatInputCommandInteraction,
     ApplicationCommandType,
     TextChannel,
-    Collection,
-    Client
+    Collection
 } from "discord.js";
 
 import {InteractionResponseType, StringCommandType} from "../../../utils/Types";
 import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
-import {commandManager, globalGuildConfigs} from "../../../Client";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
@@ -26,11 +25,9 @@ type CommandInteraction =
     | MessageContextMenuCommandInteraction;
 
 export default class CommandHandler {
-    client: Client;
     list: Collection<string, Command>;
 
-    constructor(client: Client) {
-        this.client = client;
+    constructor() {
         this.list = new Collection();
     }
 
@@ -38,12 +35,12 @@ export default class CommandHandler {
         const directories = await readdir(join(__dirname, "../../../interactions/commands"));
 
         for (const directory of directories) {
-            const files = await readdir(join(__dirname, `../../../interactions/commands/${directory}`));
+            const files = await readdir(join(__dirname, "../../../interactions/commands", directory));
+
             for (const file of files) {
                 if (!file.endsWith(".js")) continue;
 
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const command = require(join(__dirname, `../../../interactions/commands/${directory}`, file)).default;
+                const command = (await import(join(__dirname, "../../../interactions/commands", directory, file))).default;
                 await this.register(new command());
             }
         }
@@ -55,19 +52,19 @@ export default class CommandHandler {
 
     public async publish() {
         const commandData: ApplicationCommandDataResolvable[] = await Promise.all(
-            commandManager.list.map(command => command.build())
+            ClientManager.commands.list.map(command => command.build())
         );
 
         try {
-            await this.client.application?.commands.set(commandData);
-            console.log(`Successfully loaded ${commandManager.list.size} commands!`);
+            await ClientManager.client.application?.commands.set(commandData);
+            console.log(`Successfully loaded ${ClientManager.commands.list.size} commands!`);
         } catch (err) {
             console.error(err);
         }
     }
 
     public async handle(interaction: CommandInteraction) {
-        const config = globalGuildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -153,9 +150,7 @@ export default class CommandHandler {
         }
 
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await command.execute(interaction, this.client);
+            await command.execute(interaction);
         } catch (err) {
             console.log(`Failed to execute command: ${command.name}`);
             console.error(err);

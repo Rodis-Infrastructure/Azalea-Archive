@@ -1,13 +1,14 @@
 import SelectMenu from "../../handlers/interactions/select_menus/SelectMenu";
 
 import {InteractionResponseType} from "../../utils/Types";
-import {Client, SelectMenuInteraction} from "discord.js";
+import {SelectMenuInteraction} from "discord.js";
 
 export default class SampleSelectMenu extends SelectMenu {
-    constructor(client: Client) {
-        super(client, {
+    constructor() {
+        super({
             name: "sample-select-menu",
-            defer: InteractionResponseType.EphemeralDefer
+            defer: InteractionResponseType.EphemeralDefer,
+            skipInternalUsageCheck: false
         });
     }
 

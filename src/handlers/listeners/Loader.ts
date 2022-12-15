@@ -1,27 +1,25 @@
+import ClientManager from "../../Client";
+
 import {readdir} from "node:fs/promises";
-import {Client} from "discord.js";
 import {join} from "node:path";
 
 export default class ListenerLoader {
-    client: Client;
-
-    constructor(client: Client) {
-        this.client = client;
+    constructor() {
     }
 
     public async load() {
-        let files = await readdir(join(__dirname, "../../listeners"))
-        files = files.filter(file => file.endsWith(".js"));
+        const files = await readdir(join(__dirname, "../../listeners"));
 
         for (const file of files) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const EventListener = require(join(__dirname, "../../listeners", file)).default;
-            const listener = new EventListener(this.client);
+            if (!file.endsWith(".js")) continue;
+
+            const EventListener = (await import(join(__dirname, "../../listeners", file))).default;
+            const listener = new EventListener();
 
             if (listener.once) {
-                this.client.once(listener.name, (...args) => listener.execute(...args));
+                ClientManager.client.once(listener.name, (...args) => listener.execute(...args));
             } else {
-                this.client.on(listener.name, (...args) => listener.execute(...args));
+                ClientManager.client.on(listener.name, (...args) => listener.execute(...args));
             }
         }
     }
