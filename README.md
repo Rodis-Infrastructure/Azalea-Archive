@@ -43,9 +43,9 @@ logging:
     excludedCategories: [] # A list of category IDs not affected by ANY logging events
     excludedChannels: [] # A list of channel IDs not affected by ANY logging events
 
-loggingEvent:
-    isEnabled: true
-    channelId: "CHANNEL_ID" # The channel in which the logs are send
-    excludedCategories: [] # A list of category IDs not affected by this logging event
-    excludedChannels: [] # A list of channel IDs not affected by this logging event
+    loggingEvent:
+        isEnabled: true
+        channelId: "CHANNEL_ID" # The channel in which the logs are send
+        excludedCategories: [] # A list of category IDs not affected by this logging event
+        excludedChannels: [] # A list of channel IDs not affected by this logging event
 ```
