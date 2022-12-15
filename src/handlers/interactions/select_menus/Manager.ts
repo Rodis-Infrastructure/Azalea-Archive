@@ -17,12 +17,9 @@ export default class SelectMenuHandler {
     }
 
     public async load() {
-        let files = await readdir(join(__dirname, "../../../interactions/select_menus"))
-        files = files.filter(file => file.endsWith(".js"));
+        const files = await readdir(join(__dirname, "../../../interactions/select_menus"))
 
         for (const file of files) {
-            if (!file.endsWith(".js")) continue;
-
             const selectMenu = (await import(join(__dirname, "../../../interactions/select_menus", file))).default;
             await this.register(new selectMenu());
         }

@@ -38,8 +38,6 @@ export default class CommandHandler {
             const files = await readdir(join(__dirname, "../../../interactions/commands", directory));
 
             for (const file of files) {
-                if (!file.endsWith(".js")) continue;
-
                 const command = (await import(join(__dirname, "../../../interactions/commands", directory, file))).default;
                 await this.register(new command());
             }

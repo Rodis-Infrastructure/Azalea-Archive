@@ -11,8 +11,6 @@ export default class ListenerLoader {
         const files = await readdir(join(__dirname, "../../listeners"));
 
         for (const file of files) {
-            if (!file.endsWith(".js")) continue;
-
             const EventListener = (await import(join(__dirname, "../../listeners", file))).default;
             const listener = new EventListener();
 

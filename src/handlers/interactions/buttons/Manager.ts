@@ -16,12 +16,9 @@ export default class ButtonHandler {
     }
 
     public async load() {
-        let files = await readdir(join(__dirname, "../../../interactions/buttons"))
-        files = files.filter(file => file.endsWith(".js"));
+        const files = await readdir(join(__dirname, "../../../interactions/buttons"))
 
         for (const file of files) {
-            if (!file.endsWith(".js")) continue;
-
             const button = (await import(join(__dirname, "../../../interactions/buttons", file))).default;
             await this.register(new button());
         }

@@ -16,12 +16,9 @@ export default class ModalHandler {
     }
 
     public async load() {
-        let files = await readdir(join(__dirname, "../../../interactions/modals"))
-        files = files.filter(file => file.endsWith(".js"));
+        const files = await readdir(join(__dirname, "../../../interactions/modals"));
 
         for (const file of files) {
-            if (!file.endsWith(".js")) continue;
-
             const modal = (await import(join(__dirname, "../../../interactions/modals", file))).default;
             await this.register(new modal());
         }
