@@ -70,7 +70,7 @@ export default class ButtonHandler {
                 .filter(role => config.roles?.[role].buttons?.includes(buttonName));
 
             await interaction.reply({
-                content: `You do not have permission to use this button, you must have one of the following roles: \`${requiredRoles.join("` `") ?? "N/A"}\``,
+                content: `You do not have permission to use this button, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
                 ephemeral: true
             });
             return;

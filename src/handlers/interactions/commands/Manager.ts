@@ -113,7 +113,7 @@ export default class CommandHandler {
                 .filter(role => config.roles?.[role][stringCommandType]?.includes(interaction.commandName));
 
             await interaction.reply({
-                content: `You do not have permission to use this command, you must have one of the following roles: \`${requiredRoles.join("` `") ?? "N/A"}\``,
+                content: `You do not have permission to use this command, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
                 ephemeral: true
             });
             return;

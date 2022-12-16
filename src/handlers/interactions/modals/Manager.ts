@@ -70,7 +70,7 @@ export default class ModalHandler {
                 .filter(role => config.roles?.[role].modals?.includes(modalName));
 
             await interaction.reply({
-                content: `You do not have permission to use this modal, you must have one of the following roles: \`${requiredRoles.join("` `") ?? "N/A"}\``,
+                content: `You do not have permission to use this modal, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
                 ephemeral: true
             });
             return;
