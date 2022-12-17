@@ -9,7 +9,7 @@ import {
 } from "discord.js";
 
 import {GuildConfig, InteractionResponseType} from "../../../utils/Types";
-import {stringify} from "yaml";
+import {JsonMap, stringify} from "@iarna/toml";
 
 export default class SampleCommand extends ChatInputCommand {
     constructor() {
@@ -39,7 +39,7 @@ export default class SampleCommand extends ChatInputCommand {
         const embed = new EmbedBuilder()
             .setColor(config?.colors?.embedDefault ?? "NotQuiteBlack")
             .setTitle("Guild Configuration")
-            .setDescription(`\`\`\`yaml\n${stringify(config, null, 4)}\`\`\``)
+            .setDescription(`\`\`\`toml\n${stringify(config as JsonMap)}\`\`\``)
             .setFooter({text: `Guild ID: ${guildId}`})
             .setAuthor({
                 name: interaction.guild?.name as string,

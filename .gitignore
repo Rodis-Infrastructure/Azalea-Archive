@@ -8,4 +8,4 @@ config/guilds/*
 dist
 
 # Files excluded from being ignored
-!config/guilds/example.yaml
+!config/guilds/example.*

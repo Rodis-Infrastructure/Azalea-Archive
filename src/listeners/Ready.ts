@@ -3,7 +3,7 @@ import ClientManager from "../Client";
 
 import {readFile, readdir} from "node:fs/promises";
 import {GuildConfig} from "../utils/Types";
-import {parse} from "yaml";
+import {parse} from "@iarna/toml";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {

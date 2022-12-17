@@ -18,12 +18,11 @@
     },
     "homepage": "https://github.com/Rodis-Infrastructure/moderation-bot#readme",
     "dependencies": {
+        "@iarna/toml": "^2.2.5",
         "discord.js": "^14.7.1",
-        "dotenv": "^16.0.3",
-        "yaml": "^2.1.3"
+        "dotenv": "^16.0.3"
     },
     "devDependencies": {
-        "@types/yaml": "^1.9.7",
         "@typescript-eslint/eslint-plugin": "^5.46.1",
         "@typescript-eslint/parser": "^5.46.1",
         "eslint": "^8.29.0",
