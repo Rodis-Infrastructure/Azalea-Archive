@@ -1,10 +1,11 @@
 import {AttachmentBuilder, ColorResolvable, EmbedBuilder, TextChannel, User} from "discord.js";
+import {LogIcon} from "./Types";
 
 export async function sendLog(data: {
     action: string,
     author: User,
     logsChannel: TextChannel,
-    icon?: "InteractionIcon", // Types to be expanded as more logging is implemented
+    icon?: LogIcon,
     embedColor?: ColorResolvable,
     content?: string,
     fields?: {

@@ -1,5 +1,6 @@
 import {ColorResolvable} from "discord.js";
 
+export type LogIcon = "InteractionIcon";
 export type StringCommandType = "slashCommands" | "messageCommands" | "userCommands";
 export type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
 
