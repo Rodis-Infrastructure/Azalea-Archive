@@ -13,7 +13,7 @@ import {
 } from "discord.js";
 
 import {InteractionResponseType, StringCommandType} from "../../../utils/Types";
-import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
+import {hasInteractionPermission} from "../../../utils/PermissionUtils";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";

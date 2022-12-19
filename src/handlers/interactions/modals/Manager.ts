@@ -1,7 +1,7 @@
 import ClientManager from "../../../Client";
 
 import {Collection, ModalSubmitInteraction, TextChannel} from "discord.js";
-import {hasInteractionPermission} from "../../../utils/RestrictionUtils";
+import {hasInteractionPermission} from "../../../utils/PermissionUtils";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
