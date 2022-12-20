@@ -9,12 +9,12 @@ export function hasInteractionPermission(data: {
     const {memberRoles, config, interactionType, interactionCustomId} = data;
 
     return memberRoles?.some(memberRoleId => {
-        if (!config.roles) return;
+        if (!config.rolePermissions) return;
 
-        const roleName = Object.keys(config.roles).find(role => config.roles![role]?.roleId === memberRoleId);
+        const roleName = Object.keys(config.rolePermissions).find(role => config.rolePermissions![role]?.roleId === memberRoleId);
         if (!roleName) return;
 
-        return config.roles[roleName]?.[interactionType]?.includes(interactionCustomId) ||
-            config.roles.everyone?.[interactionType]?.includes(interactionCustomId);
+        return config.rolePermissions[roleName]?.[interactionType]?.includes(interactionCustomId) ||
+            config.rolePermissions.everyone?.[interactionType]?.includes(interactionCustomId);
     });
 }

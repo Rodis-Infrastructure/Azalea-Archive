@@ -6,7 +6,7 @@ isEnabled = true
 excludedCategories = ["012345678912345678"]
 excludedChannels = ["012345678912345678"]
 
-[roles.roleName]
+[rolePermissions.roleName]
 roleId = "012345678912345678"
 slashCommands = ["interaction-name"]
 messageCommands = ["interaction-name"]

@@ -66,8 +66,8 @@ export default class ModalHandler {
         });
 
         if (!hasPermission) {
-            const requiredRoles = Object.keys(config.roles || {})
-                .filter(role => config.roles?.[role].modals?.includes(modalName));
+            const requiredRoles = Object.keys(config.rolePermissions || {})
+                .filter(role => config.rolePermissions?.[role].modals?.includes(modalName));
 
             await interaction.reply({
                 content: `You do not have permission to use this modal, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,

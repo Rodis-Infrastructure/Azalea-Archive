@@ -23,7 +23,7 @@ excludedChannels = [] # A list of channel IDs not affected by this rule
 
 Role configuration, the names of the roles do not affect the code, they are there to improve readability and to accommodate potential usage by anyone who chooses to host this bot. Each role would have an ID (`roleId`) and permitted interactions as specified below. **Each permitted interaction's custom ID must be added as an array item**.
 ```toml
-[roles.roleName]
+[rolePermissions.roleName]
 roleId = "ROLE_ID"
 messageCommands = [] # A list of message context menu command names
 slashCommands = [] # A list of slash command names

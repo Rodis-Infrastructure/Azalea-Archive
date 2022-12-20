@@ -10,7 +10,7 @@ type ChannelToggleableFeatureData = {
     excludedCategories?: string[]
 }
 
-type RoleProperties = {
+type RolePermissionProperties = {
     roleId?: string,
     slashCommands?: string[],
     messageCommands?: string[],
@@ -30,7 +30,7 @@ export type GuildConfig = {
         embedDefault?: ColorResolvable
     }
     forceEphemeralResponse?: ChannelToggleableFeatureData,
-    roles?: { [key: string]: RoleProperties },
+    rolePermissions?: { [key: string]: RolePermissionProperties },
     logging?: {
         excludedChannels?: string[],
         excludedCategories?: string[],
