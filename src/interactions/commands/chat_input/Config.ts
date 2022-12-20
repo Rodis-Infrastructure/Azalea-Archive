@@ -34,12 +34,13 @@ export default class SampleCommand extends ChatInputCommand {
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId as string;
-        const config = ClientManager.guildConfigs.get(guildId) as GuildConfig;
+        const config = ClientManager.guildConfigs.get(guildId) as GuildConfig | undefined;
+        const formattedConfig = stringify(config as JsonMap || {});
 
         const embed = new EmbedBuilder()
             .setColor(config?.colors?.embedDefault ?? "NotQuiteBlack")
             .setTitle("Guild Configuration")
-            .setDescription(`\`\`\`toml\n${stringify(config as JsonMap)}\`\`\``)
+            .setDescription(`\`\`\`toml\n${formattedConfig || "N/A"}\`\`\``)
             .setFooter({text: `Guild ID: ${guildId}`})
             .setAuthor({
                 name: interaction.guild?.name as string,
