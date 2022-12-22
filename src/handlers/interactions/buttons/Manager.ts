@@ -3,7 +3,7 @@ import Button from "./Button";
 
 import {ButtonInteraction, Collection, TextChannel} from "discord.js";
 import {hasInteractionPermission} from "../../../utils/PermissionUtils";
-import {InteractionResponseType} from "../../../utils/Types";
+import {InteractionResponseType, LogType} from "../../../utils/Types";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
@@ -104,25 +104,16 @@ export default class ButtonHandler {
             return;
         }
 
-        if (
-            config.logging?.interactionUsage?.isEnabled &&
-            config.logging.interactionUsage.channelId &&
-            !config.logging.excludedChannels?.includes(interaction.channelId) &&
-            !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
-        ) {
-            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.interactionUsage.channelId) as TextChannel;
-            await sendLog({
-                action: "Interaction Used",
-                author: interaction.user,
-                logsChannel: commandUseLogsChannel,
-                embedColor: config.logging.interactionUsage.embedColor ?? config.colors?.embedDefault,
-                icon: "InteractionIcon",
-                content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-                fields: [{
-                    name: "Channel",
-                    value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-                }]
-            });
-        }
+        await sendLog({
+            config,
+            interaction,
+            type: LogType.interactionUsage,
+            icon: "InteractionIcon",
+            content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
+            fields: [{
+                name: "Channel",
+                value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
+            }]
+        });
     }
 }

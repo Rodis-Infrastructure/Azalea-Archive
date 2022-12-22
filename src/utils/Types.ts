@@ -4,6 +4,10 @@ export type LogIcon = "InteractionIcon";
 export type StringCommandType = "slashCommands" | "messageCommands" | "userCommands";
 export type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
 
+export enum LogType {
+    interactionUsage = "Interaction Used"
+}
+
 type ChannelToggleableFeatureData = {
     isEnabled?: boolean,
     excludedChannels?: string[],

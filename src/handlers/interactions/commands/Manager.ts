@@ -12,7 +12,7 @@ import {
     Collection
 } from "discord.js";
 
-import {InteractionResponseType, StringCommandType} from "../../../utils/Types";
+import {InteractionResponseType, LogType, StringCommandType} from "../../../utils/Types";
 import {hasInteractionPermission} from "../../../utils/PermissionUtils";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
@@ -154,39 +154,29 @@ export default class CommandHandler {
             console.error(err);
             return;
         }
+        const contextCommandField = [];
 
         if (
-            config.logging?.interactionUsage?.isEnabled &&
-            config.logging.interactionUsage.channelId &&
-            !config.logging.excludedChannels?.includes(interaction.channelId) &&
-            !config.logging.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
-        ) {
-            const contextCommandField = [];
+            interaction.commandType === ApplicationCommandType.User ||
+            interaction.commandType === ApplicationCommandType.Message
+        ) contextCommandField.push({
+            name: "Used On",
+            value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
+        });
 
-            if (
-                interaction.commandType === ApplicationCommandType.User ||
-                interaction.commandType === ApplicationCommandType.Message
-            ) contextCommandField.push({
-                name: "Used On",
-                value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
-            });
-
-            const commandUseLogsChannel = await interaction.guild?.channels.fetch(config.logging.interactionUsage.channelId) as TextChannel;
-            await sendLog({
-                action: "Interaction Used",
-                author: interaction.user,
-                logsChannel: commandUseLogsChannel,
-                embedColor: config.logging.interactionUsage.embedColor ?? config.colors?.embedDefault,
-                icon: "InteractionIcon",
-                content: `${logCommandName} Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-                fields: [
-                    {
-                        name: "Channel",
-                        value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-                    },
-                    ...contextCommandField
-                ]
-            });
-        }
+        await sendLog({
+            config,
+            interaction,
+            type: LogType.interactionUsage,
+            icon: "InteractionIcon",
+            content: `${logCommandName} Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
+            fields: [
+                {
+                    name: "Channel",
+                    value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
+                },
+                ...contextCommandField
+            ]
+        });
     }
 }
