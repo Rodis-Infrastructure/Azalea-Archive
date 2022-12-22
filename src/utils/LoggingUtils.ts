@@ -8,7 +8,7 @@ import {
 
 import {GuildConfig, LogIcon, LogType} from "./Types";
 
-function isLoggingEnabled(data: {
+function isLoggingAllowed(data: {
     type: keyof typeof LogType,
     config: GuildConfig | undefined,
     interactionChannelId: string | null,
@@ -42,7 +42,7 @@ export async function sendLog(data: {
     const logTypeName = Object.keys(LogType)[Object.values(LogType).indexOf(type)] as keyof typeof LogType;
     const embedColor = config?.logging?.[logTypeName]?.embedColor || config?.colors?.embedDefault || "NotQuiteBlack";
 
-    if (!isLoggingEnabled({
+    if (!isLoggingAllowed({
         type: logTypeName,
         interactionChannelId: interaction.channelId,
         interactionCategoryId: (interaction.channel as GuildChannel)?.parentId,
