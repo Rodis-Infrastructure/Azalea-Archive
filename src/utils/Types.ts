@@ -1,49 +1,68 @@
-import {ColorResolvable} from "discord.js";
+import {ColorResolvable, Interaction} from "discord.js";
 
-export type LogIcon = "InteractionIcon";
-export type StringCommandType = "slashCommands" | "messageCommands" | "userCommands";
-export type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
+enum InteractionResponseType {
+    Default = 0,
+    Defer = 1,
+    EphemeralDefer = 2,
+}
 
-export enum LogType {
+enum Icon {
+    Interaction = "InteractionIcon"
+}
+
+enum LogType {
     interactionUsage = "Interaction Used"
 }
 
-type ChannelToggleableFeatureData = {
-    isEnabled?: boolean,
-    excludedChannels?: string[],
-    excludedCategories?: string[]
-}
+type StringCommandType = "slashCommands" | "messageCommands" | "userCommands";
+type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
 
-type RolePermissionProperties = {
-    roleId?: string,
-    slashCommands?: string[],
-    messageCommands?: string[],
-    userCommands?: string[],
-    selectMenus?: string[],
-    buttons?: string[],
-    modals?: string[]
-}
+type ToggleablePropertyData = Partial<{
+    isEnabled: boolean,
+    excludedChannels: string[],
+    excludedCategories: string[]
+}>
 
-type LoggingEventData = ChannelToggleableFeatureData & {
-    embedColor?: ColorResolvable,
-    channelId?: string
-}
+type RolePermissionData = Partial<{
+    roleId: string,
+    slashCommands: string[],
+    messageCommands: string[],
+    userCommands: string[],
+    selectMenus: string[],
+    buttons: string[],
+    modals: string[]
+}>
 
-export type GuildConfig = {
-    colors?: {
-        embedDefault?: ColorResolvable
+type LoggingEventData = ToggleablePropertyData & Partial<{
+    embedColor: ColorResolvable,
+    channelId: string
+}>
+
+type GuildConfig = Partial<{
+    colors: {
+        embedDefault: ColorResolvable
     }
-    forceEphemeralResponse?: ChannelToggleableFeatureData,
-    rolePermissions?: { [key: string]: RolePermissionProperties },
-    logging?: {
-        excludedChannels?: string[],
-        excludedCategories?: string[],
-        interactionUsage?: LoggingEventData
+    forceEphemeralResponse: ToggleablePropertyData,
+    rolePermissions: { [key: string]: RolePermissionData },
+    logging: ToggleablePropertyData & {
+        interactionUsage: LoggingEventData
     }
+}>
+
+interface LogData {
+    type: LogType,
+    interaction: Interaction,
+    icon: Icon,
+    config: GuildConfig | undefined,
+    content?: string,
+    fields?: {
+        name: string,
+        value: string
+    }[]
 }
 
-export enum InteractionResponseType {
-    Defer = 0,
-    EphemeralDefer = 1,
-    Default = 2
-}
+// Enums
+export {Icon, LogType, InteractionResponseType}
+
+// Type Declarations
+export {StringCommandType, StringInteractionType, GuildConfig, LogData}

@@ -12,7 +12,7 @@ import {
     Collection
 } from "discord.js";
 
-import {InteractionResponseType, LogType, StringCommandType} from "../../../utils/Types";
+import {Icon, InteractionResponseType, LogType, StringCommandType} from "../../../utils/Types";
 import {hasInteractionPermission} from "../../../utils/PermissionUtils";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
@@ -168,7 +168,7 @@ export default class CommandHandler {
             config,
             interaction,
             type: LogType.interactionUsage,
-            icon: "InteractionIcon",
+            icon: Icon.Interaction,
             content: `${logCommandName} Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
             fields: [
                 {

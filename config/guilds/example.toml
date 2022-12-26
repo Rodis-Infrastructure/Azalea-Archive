@@ -16,6 +16,7 @@ buttons = ["interaction-name"]
 modals = ["interaction-name"]
 
 [logging]
+isEnabled = true
 excludedCategories = ["012345678912345678"]
 excludedChannels = ["012345678912345678"]
 

@@ -1,13 +1,13 @@
 import ClientManager from "../../../Client";
+import Modal from "./Modal";
 
 import {Collection, ModalSubmitInteraction, TextChannel} from "discord.js";
 import {hasInteractionPermission} from "../../../utils/PermissionUtils";
 import {sendLog} from "../../../utils/LoggingUtils";
+import {Icon, LogType} from "../../../utils/Types";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 
-import Modal from "./Modal";
-import {LogType} from "../../../utils/Types";
 
 export default class ModalHandler {
     list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Modal>;
@@ -100,7 +100,7 @@ export default class ModalHandler {
             config,
             interaction,
             type: LogType.interactionUsage,
-            icon: "InteractionIcon",
+            icon: Icon.Interaction,
             content: `Modal \`${modalName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
             fields: [{
                 name: "Channel",

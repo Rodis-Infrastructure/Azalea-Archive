@@ -1,9 +1,9 @@
 import ClientManager from "../../../Client";
 import Button from "./Button";
 
-import {ButtonInteraction, Collection, TextChannel} from "discord.js";
+import {Icon, InteractionResponseType, LogType} from "../../../utils/Types";
 import {hasInteractionPermission} from "../../../utils/PermissionUtils";
-import {InteractionResponseType, LogType} from "../../../utils/Types";
+import {ButtonInteraction, Collection, TextChannel} from "discord.js";
 import {sendLog} from "../../../utils/LoggingUtils";
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
@@ -108,7 +108,7 @@ export default class ButtonHandler {
             config,
             interaction,
             type: LogType.interactionUsage,
-            icon: "InteractionIcon",
+            icon: Icon.Interaction,
             content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
             fields: [{
                 name: "Channel",

@@ -2,11 +2,10 @@ import {
     AttachmentBuilder,
     EmbedBuilder,
     GuildChannel,
-    Interaction,
     TextChannel
 } from "discord.js";
 
-import {GuildConfig, LogIcon, LogType} from "./Types";
+import {GuildConfig, LogData, LogType} from "./Types";
 
 function isLoggingAllowed(data: {
     type: keyof typeof LogType,
@@ -18,7 +17,8 @@ function isLoggingAllowed(data: {
     if (!interactionChannelId) return false;
 
     return (
-        config?.logging?.[type]?.isEnabled &&
+        config?.logging?.isEnabled &&
+        config.logging[type]?.isEnabled &&
         config.logging[type]?.channelId &&
         !config.logging[type]?.excludedChannels?.includes(interactionChannelId) &&
         !config.logging[type]?.excludedCategories?.includes(interactionCategoryId || "N/A") &&
@@ -27,17 +27,7 @@ function isLoggingAllowed(data: {
     ) as boolean;
 }
 
-export async function sendLog(data: {
-    type: LogType,
-    interaction: Interaction,
-    config: GuildConfig | undefined,
-    icon?: LogIcon,
-    content?: string,
-    fields?: {
-        name: string,
-        value: string
-    }[]
-}): Promise<void> {
+export async function sendLog(data: LogData): Promise<void> {
     const {type, interaction, config} = data;
     const logTypeName = Object.keys(LogType)[Object.values(LogType).indexOf(type)] as keyof typeof LogType;
     const embedColor = config?.logging?.[logTypeName]?.embedColor || config?.colors?.embedDefault || "NotQuiteBlack";

@@ -39,6 +39,7 @@ Logging configuration, all of the logging events are managed in this rule. Below
 * `interactionUsage` Triggered when an interaction is used, whether it is a command, button, modal, or select menu.
 ```toml
 [logging]
+isEnabled = true # Disables all logging events if set to false
 excludedCategories = [] # A list of category IDs not affected by ANY logging events
 excludedChannels = [] # A list of channel IDs not affected by ANY logging events
 
