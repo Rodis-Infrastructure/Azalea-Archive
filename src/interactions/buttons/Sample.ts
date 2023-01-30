@@ -1,7 +1,7 @@
 import Button from "../../handlers/interactions/buttons/Button";
 
-import {InteractionResponseType} from "../../utils/Types";
-import {ButtonInteraction} from "discord.js";
+import { InteractionResponseType } from "../../utils/Types";
+import { ButtonInteraction } from "discord.js";
 
 export default class SampleButton extends Button {
     constructor() {

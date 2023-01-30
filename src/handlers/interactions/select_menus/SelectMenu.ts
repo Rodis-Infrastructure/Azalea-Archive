@@ -1,5 +1,5 @@
-import {InteractionResponseType} from "../../../utils/Types";
-import {SelectMenuInteraction} from "discord.js";
+import { InteractionResponseType } from "../../../utils/Types";
+import { SelectMenuInteraction } from "discord.js";
 
 type CustomSelectMenuComponent = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; };

@@ -5,7 +5,7 @@ import {
     CommandInteraction
 } from "discord.js";
 
-import {InteractionResponseType} from "../../../utils/Types";
+import { InteractionResponseType } from "../../../utils/Types";
 
 type ContextMenuCommandData = MessageApplicationCommandData | UserApplicationCommandData;
 type CustomApplicationCommandData = ContextMenuCommandData & {
@@ -32,7 +32,7 @@ export default abstract class ContextMenuCommand {
         return {
             name: this.name,
             dmPermission: false,
-            type: this.type,
+            type: this.type
         };
     }
 }

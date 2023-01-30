@@ -1,7 +1,7 @@
 import ContextMenuCommand from "../../../handlers/interactions/commands/ContextMenuCommand";
 
-import {ApplicationCommandType, ContextMenuCommandInteraction} from "discord.js";
-import {InteractionResponseType} from "../../../utils/Types";
+import { ApplicationCommandType, ContextMenuCommandInteraction } from "discord.js";
+import { InteractionResponseType } from "../../../utils/Types";
 
 export default class SampleCommand extends ContextMenuCommand {
     constructor() {

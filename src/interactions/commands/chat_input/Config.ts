@@ -5,11 +5,11 @@ import {
     ApplicationCommandOptionType,
     ChatInputCommandInteraction,
     ApplicationCommandType,
-    EmbedBuilder,
+    EmbedBuilder
 } from "discord.js";
 
-import {GuildConfig, InteractionResponseType} from "../../../utils/Types";
-import {JsonMap, stringify} from "@iarna/toml";
+import { GuildConfig, InteractionResponseType } from "../../../utils/Types";
+import { JsonMap, stringify } from "@iarna/toml";
 
 export default class SampleCommand extends ChatInputCommand {
     constructor() {
@@ -41,12 +41,12 @@ export default class SampleCommand extends ChatInputCommand {
             .setColor(config?.colors?.embedDefault ?? "NotQuiteBlack")
             .setTitle("Guild Configuration")
             .setDescription(`\`\`\`toml\n${formattedConfig || "N/A"}\`\`\``)
-            .setFooter({text: `Guild ID: ${guildId}`})
+            .setFooter({ text: `Guild ID: ${guildId}` })
             .setAuthor({
                 name: interaction.guild?.name as string,
                 iconURL: interaction.guild?.iconURL() as string
-            })
+            });
 
-        await interaction.editReply({embeds: [embed]});
+        await interaction.editReply({ embeds: [embed] });
     }
 }

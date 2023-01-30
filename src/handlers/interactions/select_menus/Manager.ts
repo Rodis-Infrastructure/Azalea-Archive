@@ -1,11 +1,11 @@
 import ClientManager from "../../../Client";
 
-import {Collection, StringSelectMenuInteraction, TextChannel} from "discord.js";
-import {Icon, InteractionResponseType, LogType} from "../../../utils/Types";
-import {hasInteractionPermission} from "../../../utils/PermissionUtils";
-import {sendLog} from "../../../utils/LoggingUtils";
-import {readdir} from "node:fs/promises";
-import {join} from "node:path";
+import { Collection, StringSelectMenuInteraction, TextChannel } from "discord.js";
+import { Icon, InteractionResponseType, LogType } from "../../../utils/Types";
+import { hasInteractionPermission } from "../../../utils/PermissionUtils";
+import { sendLog } from "../../../utils/LoggingUtils";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 
 import SelectMenu from "./SelectMenu";
 
@@ -17,15 +17,15 @@ export default class SelectMenuHandler {
     }
 
     public async load() {
-        const files = await readdir(join(__dirname, "../../../interactions/select_menus"))
+        const files = await readdir(join(__dirname, "../../../interactions/select_menus"));
 
         for (const file of files) {
             const selectMenu = (await import(join(__dirname, "../../../interactions/select_menus", file))).default;
-            await this.register(new selectMenu());
+            this.register(new selectMenu());
         }
     }
 
-    public async register(select_menu: SelectMenu) {
+    public register(select_menu: SelectMenu) {
         this.list.set(select_menu.name, select_menu);
     }
 
@@ -93,7 +93,7 @@ export default class SelectMenuHandler {
             }
 
             case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ephemeral: true});
+                await interaction.deferReply({ ephemeral: true });
             }
         }
 

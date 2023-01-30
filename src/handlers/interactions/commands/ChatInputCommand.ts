@@ -5,7 +5,7 @@ import {
     CommandInteraction
 } from "discord.js";
 
-import {InteractionResponseType} from "../../../utils/Types";
+import { InteractionResponseType } from "../../../utils/Types";
 
 type CustomApplicationCommandData = ChatInputApplicationCommandData & {
     skipInternalUsageCheck: boolean;

@@ -1,12 +1,12 @@
 import ClientManager from "../../../Client";
 import Modal from "./Modal";
 
-import {Collection, ModalSubmitInteraction, TextChannel} from "discord.js";
-import {hasInteractionPermission} from "../../../utils/PermissionUtils";
-import {sendLog} from "../../../utils/LoggingUtils";
-import {Icon, LogType} from "../../../utils/Types";
-import {readdir} from "node:fs/promises";
-import {join} from "node:path";
+import { Collection, ModalSubmitInteraction, TextChannel } from "discord.js";
+import { hasInteractionPermission } from "../../../utils/PermissionUtils";
+import { sendLog } from "../../../utils/LoggingUtils";
+import { Icon, LogType } from "../../../utils/Types";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 
 
 export default class ModalHandler {
@@ -21,11 +21,11 @@ export default class ModalHandler {
 
         for (const file of files) {
             const modal = (await import(join(__dirname, "../../../interactions/modals", file))).default;
-            await this.register(new modal());
+            this.register(new modal());
         }
     }
 
-    public async register(modal: Modal) {
+    public register(modal: Modal) {
         this.list.set(modal.name, modal);
     }
 
@@ -77,7 +77,7 @@ export default class ModalHandler {
             return;
         }
 
-        let {ephemeral} = modal;
+        let { ephemeral } = modal;
 
         if (
             config.forceEphemeralResponse &&
@@ -86,7 +86,7 @@ export default class ModalHandler {
             !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
         ) ephemeral = true;
 
-        await interaction.deferReply({ephemeral});
+        await interaction.deferReply({ ephemeral });
 
         try {
             await modal.execute(interaction);

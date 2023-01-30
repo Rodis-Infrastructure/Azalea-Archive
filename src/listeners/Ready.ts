@@ -1,9 +1,9 @@
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 
-import {readFile, readdir} from "node:fs/promises";
-import {GuildConfig} from "../utils/Types";
-import {parse} from "@iarna/toml";
+import { readFile, readdir } from "node:fs/promises";
+import { GuildConfig } from "../utils/Types";
+import { parse } from "@iarna/toml";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -32,4 +32,4 @@ export default class ReadyEventListener extends EventListener {
         await ClientManager.commands.load();
         await ClientManager.commands.publish();
     }
-};
+}
