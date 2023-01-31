@@ -5,7 +5,7 @@ import {
     TextChannel
 } from "discord.js";
 
-import {GuildConfig, LogData, LogType} from "./Types";
+import { GuildConfig, LogData, LogType } from "./Types";
 
 function isLoggingAllowed(data: {
     type: keyof typeof LogType,
@@ -13,7 +13,7 @@ function isLoggingAllowed(data: {
     interactionChannelId: string | null,
     interactionCategoryId: string | null,
 }) {
-    const {type, config, interactionChannelId, interactionCategoryId} = data;
+    const { type, config, interactionChannelId, interactionCategoryId } = data;
     if (!interactionChannelId) return false;
 
     return (
@@ -28,7 +28,7 @@ function isLoggingAllowed(data: {
 }
 
 export async function sendLog(data: LogData): Promise<void> {
-    const {type, interaction, config} = data;
+    const { type, interaction, config } = data;
     const logTypeName = Object.keys(LogType)[Object.values(LogType).indexOf(type)] as keyof typeof LogType;
     const embedColor = config?.logging?.[logTypeName]?.embedColor || config?.colors?.embedDefault || "NotQuiteBlack";
 
@@ -47,9 +47,9 @@ export async function sendLog(data: LogData): Promise<void> {
 
     const embed = new EmbedBuilder()
         .setColor(embedColor)
-        .setAuthor({name: type})
-        .setFooter({text: interaction.user.tag, iconURL: interaction.user.displayAvatarURL()})
-        .setTimestamp()
+        .setAuthor({ name: type })
+        .setFooter({ text: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+        .setTimestamp();
 
     if (data.fields) embed.setFields(data.fields);
     if (data.content) embed.setDescription(data.content);
@@ -57,7 +57,7 @@ export async function sendLog(data: LogData): Promise<void> {
     const attachments: AttachmentBuilder[] = [];
 
     if (data.icon) {
-        attachments.push(new AttachmentBuilder(`assets/${data.icon}.png`, {name: `${data.icon}.png`}));
+        attachments.push(new AttachmentBuilder(`assets/${data.icon}.png`, { name: `${data.icon}.png` }));
         embed.data.author!.icon_url = `attachment://${data.icon}.png`;
     }
 

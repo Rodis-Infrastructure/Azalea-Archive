@@ -12,11 +12,11 @@ import {
     Collection
 } from "discord.js";
 
-import {Icon, InteractionResponseType, LogType, StringCommandType} from "../../../utils/Types";
-import {hasInteractionPermission} from "../../../utils/PermissionUtils";
-import {sendLog} from "../../../utils/LoggingUtils";
-import {readdir} from "node:fs/promises";
-import {join} from "node:path";
+import { Icon, InteractionResponseType, LogType, StringCommandType } from "../../../utils/Types";
+import { hasInteractionPermission } from "../../../utils/PermissionUtils";
+import { sendLog } from "../../../utils/LoggingUtils";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
@@ -39,12 +39,12 @@ export default class CommandHandler {
 
             for (const file of files) {
                 const command = (await import(join(__dirname, "../../../interactions/commands", directory, file))).default;
-                await this.register(new command());
+                this.register(new command());
             }
         }
     }
 
-    public async register(command: Command) {
+    public register(command: Command) {
         this.list.set(`${command.name}_${command.type}`, command);
     }
 
@@ -143,7 +143,7 @@ export default class CommandHandler {
             }
 
             case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ephemeral: true});
+                await interaction.deferReply({ ephemeral: true });
             }
         }
 
@@ -159,10 +159,12 @@ export default class CommandHandler {
         if (
             interaction.commandType === ApplicationCommandType.User ||
             interaction.commandType === ApplicationCommandType.Message
-        ) contextCommandField.push({
-            name: "Used On",
-            value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
-        });
+        ) {
+            contextCommandField.push({
+                name: "Used On",
+                value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
+            }); 
+        }
 
         await sendLog({
             config,

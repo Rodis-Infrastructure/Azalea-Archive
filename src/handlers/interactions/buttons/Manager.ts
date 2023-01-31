@@ -1,12 +1,12 @@
 import ClientManager from "../../../Client";
 import Button from "./Button";
 
-import {Icon, InteractionResponseType, LogType} from "../../../utils/Types";
-import {hasInteractionPermission} from "../../../utils/PermissionUtils";
-import {ButtonInteraction, Collection, TextChannel} from "discord.js";
-import {sendLog} from "../../../utils/LoggingUtils";
-import {readdir} from "node:fs/promises";
-import {join} from "node:path";
+import { Icon, InteractionResponseType, LogType } from "../../../utils/Types";
+import { hasInteractionPermission } from "../../../utils/PermissionUtils";
+import { ButtonInteraction, Collection, TextChannel } from "discord.js";
+import { sendLog } from "../../../utils/LoggingUtils";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 
 export default class ButtonHandler {
     buttons: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Button>;
@@ -16,15 +16,15 @@ export default class ButtonHandler {
     }
 
     public async load() {
-        const files = await readdir(join(__dirname, "../../../interactions/buttons"))
+        const files = await readdir(join(__dirname, "../../../interactions/buttons"));
 
         for (const file of files) {
             const button = (await import(join(__dirname, "../../../interactions/buttons", file))).default;
-            await this.register(new button());
+            this.register(new button());
         }
     }
 
-    public async register(button: Button) {
+    public register(button: Button) {
         this.buttons.set(button.name, button);
     }
 
@@ -92,7 +92,7 @@ export default class ButtonHandler {
             }
 
             case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ephemeral: true});
+                await interaction.deferReply({ ephemeral: true });
             }
         }
 

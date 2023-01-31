@@ -6,6 +6,7 @@
 node_modules
 config/guilds/*
 dist
+.idea
 
 # Files excluded from being ignored
 !config/guilds/example.*

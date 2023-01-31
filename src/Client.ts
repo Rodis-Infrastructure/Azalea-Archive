@@ -4,9 +4,9 @@ import ButtonHandler from "./handlers/interactions/buttons/Manager";
 import ModalHandler from "./handlers/interactions/modals/Manager";
 import "dotenv/config";
 
-import {Client, GatewayIntentBits, Partials, Collection} from "discord.js";
-import {loadListeners} from "./handlers/listeners/Loader";
-import {GuildConfig} from "./utils/Types";
+import { Client, GatewayIntentBits, Partials, Collection } from "discord.js";
+import { loadListeners } from "./handlers/listeners/Loader";
+import { GuildConfig } from "./utils/Types";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
@@ -40,7 +40,7 @@ class ClientManager {
 const manager = new ClientManager();
 export default manager;
 
-(async () => {
+(async() => {
     await loadListeners();
     await manager.client.login(process.env.BOT_TOKEN);
 })();

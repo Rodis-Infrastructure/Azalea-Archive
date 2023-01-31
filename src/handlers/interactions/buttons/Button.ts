@@ -1,5 +1,5 @@
-import {InteractionResponseType} from "../../../utils/Types";
-import {ButtonInteraction} from "discord.js";
+import { InteractionResponseType } from "../../../utils/Types";
+import { ButtonInteraction } from "discord.js";
 
 type CustomButtonComponentData = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }

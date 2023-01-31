@@ -1,7 +1,7 @@
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 
-import {Interaction, InteractionType} from "discord.js";
+import { Interaction } from "discord.js";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
@@ -22,4 +22,4 @@ export default class InteractionCreateEventListener extends EventListener {
         if (interaction.isModalSubmit()) await ClientManager.modals.handle(interaction);
         if (interaction.isStringSelectMenu()) await ClientManager.selectMenus.handle(interaction);
     }
-};
+}

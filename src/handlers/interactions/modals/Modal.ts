@@ -1,4 +1,4 @@
-import {ModalSubmitInteraction} from "discord.js";
+import { ModalSubmitInteraction } from "discord.js";
 
 type CustomModalComponent = {
     name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; };

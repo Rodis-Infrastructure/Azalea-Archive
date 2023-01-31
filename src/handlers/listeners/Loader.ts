@@ -1,7 +1,7 @@
 import ClientManager from "../../Client";
 
-import {readdir} from "node:fs/promises";
-import {join} from "node:path";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 
 export async function loadListeners() {
     const files = await readdir(join(__dirname, "../../listeners"));

@@ -1,4 +1,4 @@
-import {ColorResolvable, Interaction} from "discord.js";
+import { ColorResolvable, Interaction } from "discord.js";
 
 enum InteractionResponseType {
     Default = 0,
@@ -62,7 +62,7 @@ interface LogData {
 }
 
 // Enums
-export {Icon, LogType, InteractionResponseType}
+export { Icon, LogType, InteractionResponseType };
 
 // Type Declarations
-export {StringCommandType, StringInteractionType, GuildConfig, LogData}
+export { StringCommandType, StringInteractionType, GuildConfig, LogData };
