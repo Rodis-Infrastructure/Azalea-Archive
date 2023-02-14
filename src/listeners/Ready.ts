@@ -2,8 +2,9 @@ import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 
 import { readFile, readdir } from "node:fs/promises";
-import { GuildConfig } from "../utils/Types";
+import { ConfigData } from "../utils/Types";
 import { parse } from "@iarna/toml";
+import Config from "../utils/Config";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -21,8 +22,8 @@ export default class ReadyEventListener extends EventListener {
             const guildId = file.split(".")[0];
             if (guildId === "example") continue;
 
-            const config: GuildConfig = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            ClientManager.guildConfigs.set(guildId, config);
+            const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
+            new Config(guildId, config).save();
         }
 
         await ClientManager.selectMenus.load();

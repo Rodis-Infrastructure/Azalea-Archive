@@ -1,13 +1,12 @@
 import ClientManager from "../../../Client";
 
-import { Collection, StringSelectMenuInteraction, TextChannel } from "discord.js";
-import { Icon, InteractionResponseType, LogType } from "../../../utils/Types";
-import { hasInteractionPermission } from "../../../utils/PermissionUtils";
-import { sendLog } from "../../../utils/LoggingUtils";
+import { Collection, StringSelectMenuInteraction, GuildTextBasedChannel, EmbedBuilder } from "discord.js";
+import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 import SelectMenu from "./SelectMenu";
+import { sendLog } from "../../../utils/LoggingUtils";
 
 export default class SelectMenuHandler {
     list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, SelectMenu>;
@@ -30,7 +29,7 @@ export default class SelectMenuHandler {
     }
 
     public async handle(interaction: StringSelectMenuInteraction) {
-        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -56,37 +55,21 @@ export default class SelectMenuHandler {
             selectMenu.name :
             Object.values(selectMenu.name)[0];
 
-        let memberRoles = interaction.member?.roles;
-        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
-
-        const hasPermission = hasInteractionPermission({
-            memberRoles: memberRoles as string[],
-            interactionCustomId: selectMenuName,
-            interactionType: "selectMenus",
-            config
-        });
-
-        if (!hasPermission) {
-            const requiredRoles = Object.keys(config.rolePermissions || {})
-                .filter(role => config.rolePermissions?.[role].selectMenus?.includes(selectMenuName));
-
+        if (!config.interactionAllowed(interaction)) {
             await interaction.reply({
-                content: `You do not have permission to use this command, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
+                content: "You do not have permission to use this interaction",
                 ephemeral: true
             });
             return;
         }
 
+        const channel = interaction.channel as GuildTextBasedChannel;
 
-        let ResponseType = selectMenu.defer;
-        if (
-            config.forceEphemeralResponse &&
-            !selectMenu.skipInternalUsageCheck &&
-            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
-            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
-        ) ResponseType = InteractionResponseType.EphemeralDefer;
+        const responseType = config.ephemeralResponseIn(channel) ?
+            InteractionResponseType.EphemeralDefer :
+            selectMenu.defer;
 
-        switch (ResponseType) {
+        switch (responseType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -105,16 +88,20 @@ export default class SelectMenuHandler {
             return;
         }
 
-        await sendLog({
-            config,
-            interaction,
-            type: LogType.interactionUsage,
-            icon: Icon.Interaction,
-            content: `Select Menu \`${selectMenuName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-            fields: [{
+        const log = new EmbedBuilder()
+            .setColor(0x2e3136)
+            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .setDescription(`Selection \`${selectMenuName}\` used by ${interaction.user}`)
+            .setFields([{
                 name: "Channel",
-                value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-            }]
+                value: `${channel} (\`#${channel.name}\`)`
+            }])
+            .setTimestamp();
+
+        await sendLog({
+            event: LoggingEvent.InteractionUsage,
+            embed: log,
+            channel
         });
     }
 }

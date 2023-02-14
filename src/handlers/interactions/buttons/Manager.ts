@@ -1,12 +1,11 @@
 import ClientManager from "../../../Client";
 import Button from "./Button";
 
-import { Icon, InteractionResponseType, LogType } from "../../../utils/Types";
-import { hasInteractionPermission } from "../../../utils/PermissionUtils";
-import { ButtonInteraction, Collection, TextChannel } from "discord.js";
-import { sendLog } from "../../../utils/LoggingUtils";
+import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
+import { ButtonInteraction, Collection, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { sendLog } from "../../../utils/LoggingUtils";
 
 export default class ButtonHandler {
     buttons: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Button>;
@@ -29,7 +28,7 @@ export default class ButtonHandler {
     }
 
     public async handle(interaction: ButtonInteraction) {
-        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -55,37 +54,21 @@ export default class ButtonHandler {
             button.name :
             Object.values(button.name)[0];
 
-        let memberRoles = interaction.member?.roles;
-        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
-
-        const hasPermission = hasInteractionPermission({
-            memberRoles: memberRoles as string[],
-            interactionCustomId: buttonName,
-            interactionType: "buttons",
-            config
-        });
-
-        if (!hasPermission) {
-            const requiredRoles = Object.keys(config.rolePermissions || {})
-                .filter(role => config.rolePermissions?.[role].buttons?.includes(buttonName));
-
+        if (!config.interactionAllowed(interaction)) {
             await interaction.reply({
-                content: `You do not have permission to use this button, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
+                content: "You do not have permission to use this interaction",
                 ephemeral: true
             });
             return;
         }
 
+        const channel = interaction.channel as GuildTextBasedChannel;
 
-        let ResponseType = button.defer;
-        if (
-            config.forceEphemeralResponse &&
-            !button.skipInternalUsageCheck &&
-            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
-            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
-        ) ResponseType = InteractionResponseType.EphemeralDefer;
+        const responseType = config.ephemeralResponseIn(channel) ?
+            InteractionResponseType.EphemeralDefer :
+            button.defer;
 
-        switch (ResponseType) {
+        switch (responseType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -104,16 +87,20 @@ export default class ButtonHandler {
             return;
         }
 
-        await sendLog({
-            config,
-            interaction,
-            type: LogType.interactionUsage,
-            icon: Icon.Interaction,
-            content: `Button \`${buttonName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-            fields: [{
+        const log = new EmbedBuilder()
+            .setColor(0x2e3136)
+            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .setDescription(`Button \`${buttonName}\` used by ${interaction.user}`)
+            .setFields([{
                 name: "Channel",
-                value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-            }]
+                value: `${channel} (\`#${channel.name}\`)`
+            }])
+            .setTimestamp();
+
+        await sendLog({
+            event: LoggingEvent.InteractionUsage,
+            embed: log,
+            channel
         });
     }
 }

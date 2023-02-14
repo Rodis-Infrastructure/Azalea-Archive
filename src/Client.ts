@@ -4,15 +4,15 @@ import ButtonHandler from "./handlers/interactions/buttons/Manager";
 import ModalHandler from "./handlers/interactions/modals/Manager";
 import "dotenv/config";
 
-import { Client, GatewayIntentBits, Partials, Collection } from "discord.js";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { loadListeners } from "./handlers/listeners/Loader";
-import { GuildConfig } from "./utils/Types";
+import Config from "./utils/Config";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 class ClientManager {
-    public guildConfigs: Collection<string, GuildConfig> = new Collection();
+    public configs: Collection<string, Config> = new Collection();
     public selectMenus = new SelectMenuHandler();
     public commands = new CommandHandler();
     public buttons = new ButtonHandler();
@@ -35,6 +35,10 @@ class ClientManager {
             Partials.User
         ]
     });
+
+    config(guildId: string): Config | undefined {
+        return this.configs.get(guildId);
+    }
 }
 
 const manager = new ClientManager();
