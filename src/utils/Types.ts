@@ -10,45 +10,28 @@ enum LoggingEvent {
 
 type StringInteractionType = "buttons" | "modals" | "selections";
 
-type ToggleablePropertyData = Partial<{
+type InteractionPermissions = Partial<Record<StringInteractionType, string[]>>;
+type LoggingEventData = ToggleableProperty & Partial<Record<LoggingEvent, ToggleableProperty & Record<"channelId", string>>>
+
+interface ToggleableProperty {
     enabled: boolean
-    excludedChannels: string[]
-    excludedCategories: string[]
-}>
+    excludedChannels?: string[]
+    excludedCategories?: string[]
+}
 
-type LoggingEventData = ToggleablePropertyData & Partial<{
-    channelId: string
-}>
+interface PermissionData {
+    roles?: Record<string, InteractionPermissions>
+    groups?: Record<string, InteractionPermissions & Record<"roles", string[]>>
+}
 
-type LoggingData = ToggleablePropertyData & Partial<{
-    interactionUsage: LoggingEventData
-}>
-
-type InteractionPermissions = Partial<{
-    buttons: string[]
-    modals: string[]
-    selections: string[]
-}>
-
-type PermissionData = Partial<{
-    roles: Record<string, InteractionPermissions>
-    groups: Record<string, InteractionPermissions & Record<"roles", string[]>>
-}>
-
-type ConfigData = Partial<{
-    ephemeralResponses: ToggleablePropertyData
-    permissions: PermissionData
-    logging: LoggingData
-}>
+interface ConfigData {
+    ephemeralResponses?: ToggleableProperty
+    permissions?: PermissionData
+    logging?: LoggingEventData
+}
 
 // Enums
 export { LoggingEvent, InteractionResponseType };
 
 // Type Declarations
-export {
-    StringInteractionType,
-    ConfigData,
-    LoggingData,
-    ToggleablePropertyData,
-    PermissionData
-};
+export { StringInteractionType, ConfigData };

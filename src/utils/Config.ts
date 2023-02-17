@@ -1,8 +1,5 @@
 import {
     ConfigData,
-    LoggingData,
-    ToggleablePropertyData,
-    PermissionData,
     StringInteractionType,
     LoggingEvent
 } from "./Types";
@@ -20,15 +17,15 @@ import ClientManager from "../Client";
 
 export default class Config {
     guildId: string;
-    logging: LoggingData;
-    ephemeralResponses: ToggleablePropertyData;
-    permissions: PermissionData;
+    logging: ConfigData["logging"];
+    ephemeralResponses: ConfigData["ephemeralResponses"];
+    permissions: ConfigData["permissions"];
 
     constructor(guildId: string, data: ConfigData) {
         this.guildId = guildId;
-        this.logging = data.logging || {};
-        this.ephemeralResponses = data.ephemeralResponses || {};
-        this.permissions = data.permissions || {};
+        this.logging = data.logging;
+        this.ephemeralResponses = data.ephemeralResponses;
+        this.permissions = data.permissions;
     }
 
     save() {
@@ -36,10 +33,12 @@ export default class Config {
     }
 
     loggingChannel(event: LoggingEvent): string | undefined {
-        return this.logging[event]?.channelId;
+        return this.logging?.[event]?.channelId;
     }
 
     canLog(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
+        if (!this.logging) return false;
+
         const { [eventName]: event, enabled, excludedChannels, excludedCategories } = this.logging;
         const categoryId = channel.parentId ?? "None";
 
@@ -56,6 +55,8 @@ export default class Config {
     }
 
     ephemeralResponseIn(channel: GuildTextBasedChannel): boolean {
+        if (!this.ephemeralResponses) return false;
+
         const { enabled, excludedChannels, excludedCategories } = this.ephemeralResponses;
         const categoryId = channel.parentId ?? "None";
 
@@ -67,6 +68,8 @@ export default class Config {
     }
 
     interactionAllowed(interaction: MessageComponentInteraction | ModalSubmitInteraction): boolean {
+        if (!this.permissions) return false;
+
         const member = interaction.member as GuildMember;
         if (!member) return false;
 
