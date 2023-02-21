@@ -10,8 +10,8 @@ enum LoggingEvent {
 
 type StringInteractionType = "buttons" | "modals" | "selections";
 
-type InteractionPermissions = Partial<Record<StringInteractionType, string[]>>;
-type LoggingEventData = ToggleableProperty & Partial<Record<LoggingEvent, ToggleableProperty & Record<"channelId", string>>>
+type InteractionPermissions = Record<StringInteractionType, string[] | undefined>;
+type LoggingEventData = ToggleableProperty & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
 interface ToggleableProperty {
     enabled: boolean
