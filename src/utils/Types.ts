@@ -10,7 +10,7 @@ enum LoggingEvent {
 
 type StringInteractionType = "buttons" | "modals" | "selections";
 
-type InteractionPermissions = Record<StringInteractionType, string[] | undefined>;
+type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"staff", boolean | undefined>;
 type LoggingEventData = ToggleableProperty & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
 interface ToggleableProperty {
@@ -19,14 +19,10 @@ interface ToggleableProperty {
     excludedCategories?: string[]
 }
 
-interface PermissionData {
-    roles?: Record<string, InteractionPermissions>
-    groups?: Record<string, InteractionPermissions & Record<"roles", string[]>>
-}
-
 interface ConfigData {
     ephemeralResponses?: ToggleableProperty
-    permissions?: PermissionData
+    roles: Array<PermissionData & Record<"id", string>>,
+    groups: Array<PermissionData & Record<"roles", string[]>>,
     logging?: LoggingEventData
 }
 

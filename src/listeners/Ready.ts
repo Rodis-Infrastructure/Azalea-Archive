@@ -22,8 +22,8 @@ export default class ReadyEventListener extends EventListener {
             const guildId = file.split(".")[0];
             if (guildId === "example") continue;
 
-            const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            new Config(guildId, config).save();
+            const config = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
+            new Config(guildId, config as unknown as ConfigData).save();
         }
 
         await Promise.all([
