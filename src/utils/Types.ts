@@ -1,68 +1,37 @@
-import { ColorResolvable, Interaction } from "discord.js";
-
 enum InteractionResponseType {
     Default = 0,
     Defer = 1,
     EphemeralDefer = 2,
 }
 
-enum Icon {
-    Interaction = "InteractionIcon"
+enum LoggingEvent {
+    InteractionUsage = "interactionUsage"
 }
 
-enum LogType {
-    interactionUsage = "Interaction Used"
+type StringInteractionType = "buttons" | "modals" | "selections";
+
+type InteractionPermissions = Record<StringInteractionType, string[] | undefined>;
+type LoggingEventData = ToggleableProperty & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
+
+interface ToggleableProperty {
+    enabled: boolean
+    excludedChannels?: string[]
+    excludedCategories?: string[]
 }
 
-type StringCommandType = "slashCommands" | "messageCommands" | "userCommands";
-type StringInteractionType = StringCommandType | "buttons" | "modals" | "selectMenus";
+interface PermissionData {
+    roles?: Record<string, InteractionPermissions>
+    groups?: Record<string, InteractionPermissions & Record<"roles", string[]>>
+}
 
-type ToggleablePropertyData = Partial<{
-    isEnabled: boolean,
-    excludedChannels: string[],
-    excludedCategories: string[]
-}>
-
-type RolePermissionData = Partial<{
-    roleId: string,
-    slashCommands: string[],
-    messageCommands: string[],
-    userCommands: string[],
-    selectMenus: string[],
-    buttons: string[],
-    modals: string[]
-}>
-
-type LoggingEventData = ToggleablePropertyData & Partial<{
-    embedColor: ColorResolvable,
-    channelId: string
-}>
-
-type GuildConfig = Partial<{
-    colors: {
-        embedDefault: ColorResolvable
-    }
-    forceEphemeralResponse: ToggleablePropertyData,
-    rolePermissions: { [key: string]: RolePermissionData },
-    logging: ToggleablePropertyData & {
-        interactionUsage: LoggingEventData
-    }
-}>
-
-interface LogData {
-    type: LogType,
-    interaction: Interaction,
-    icon: Icon,
-    config: GuildConfig | undefined,
-    content?: string,
-    fields?: {
-        name: string,
-        value: string
-    }[]
+interface ConfigData {
+    ephemeralResponses?: ToggleableProperty
+    permissions?: PermissionData
+    logging?: LoggingEventData
 }
 
 // Enums
-export { Icon, LogType, InteractionResponseType };
+export { LoggingEvent, InteractionResponseType };
 
 // Type Declarations
-export { StringCommandType, StringInteractionType, GuildConfig, LogData };
+export { StringInteractionType, ConfigData };

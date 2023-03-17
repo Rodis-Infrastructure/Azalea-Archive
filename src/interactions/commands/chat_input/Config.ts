@@ -8,7 +8,7 @@ import {
     EmbedBuilder
 } from "discord.js";
 
-import { GuildConfig, InteractionResponseType } from "../../../utils/Types";
+import { InteractionResponseType } from "../../../utils/Types";
 import { JsonMap, stringify } from "@iarna/toml";
 
 export default class SampleCommand extends ChatInputCommand {
@@ -17,7 +17,7 @@ export default class SampleCommand extends ChatInputCommand {
             name: "config",
             description: "View guild configuration.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.EphemeralDefer,
+            defer: InteractionResponseType.Defer,
             skipInternalUsageCheck: false,
             options: [{
                 name: "guild_id",
@@ -34,11 +34,11 @@ export default class SampleCommand extends ChatInputCommand {
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId as string;
-        const config = ClientManager.guildConfigs.get(guildId) as GuildConfig | undefined;
-        const formattedConfig = stringify(config as JsonMap || {});
+        const config = ClientManager.config(guildId) as unknown as JsonMap;
+        const formattedConfig = stringify(config || {});
 
         const embed = new EmbedBuilder()
-            .setColor(config?.colors?.embedDefault ?? "NotQuiteBlack")
+            .setColor(0x2e3136)
             .setTitle("Guild Configuration")
             .setDescription(`\`\`\`toml\n${formattedConfig || "N/A"}\`\`\``)
             .setFooter({ text: `Guild ID: ${guildId}` })

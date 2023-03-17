@@ -1,18 +1,17 @@
-import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
-import CommandHandler from "./handlers/interactions/commands/Manager";
-import ButtonHandler from "./handlers/interactions/buttons/Manager";
-import ModalHandler from "./handlers/interactions/modals/Manager";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import "dotenv/config";
-
-import { Client, GatewayIntentBits, Partials, Collection } from "discord.js";
+import ButtonHandler from "./handlers/interactions/buttons/Manager";
+import CommandHandler from "./handlers/interactions/commands/Manager";
+import ModalHandler from "./handlers/interactions/modals/Manager";
+import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
 import { loadListeners } from "./handlers/listeners/Loader";
-import { GuildConfig } from "./utils/Types";
+import Config from "./utils/Config";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 class ClientManager {
-    public guildConfigs: Collection<string, GuildConfig> = new Collection();
+    public configs: Collection<string, Config> = new Collection();
     public selectMenus = new SelectMenuHandler();
     public commands = new CommandHandler();
     public buttons = new ButtonHandler();
@@ -35,12 +34,18 @@ class ClientManager {
             Partials.User
         ]
     });
+
+    config(guildId: string): Config | undefined {
+        return this.configs.get(guildId);
+    }
 }
 
 const manager = new ClientManager();
 export default manager;
 
 (async() => {
-    await loadListeners();
-    await manager.client.login(process.env.BOT_TOKEN);
+    await Promise.all([
+        loadListeners(),
+        manager.client.login(process.env.BOT_TOKEN)
+    ]);
 })();

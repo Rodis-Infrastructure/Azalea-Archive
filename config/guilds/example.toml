@@ -1,27 +1,26 @@
-[colors]
-embedDefault = "0x2e3136"
+[ephemeralResponses]
+enabled = true
+excludedCategories = ["category-id"]
+excludedChannels = ["channel-id"]
 
-[forceEphemeralResponse]
-isEnabled = true
-excludedCategories = ["012345678912345678"]
-excludedChannels = ["012345678912345678"]
+[permissions.groups.groupName]
+roles = ["role-id"]
+selections = ["interaction-name"]
+buttons = ["interaction-name"]
+modals = ["interaction-name"]
 
-[rolePermissions.roleName]
-roleId = "012345678912345678"
-slashCommands = ["interaction-name"]
-messageCommands = ["interaction-name"]
-userCommands = ["interaction-name"]
-selectMenus = ["interaction-name"]
+[permissions.roles.roleId]
+selections = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
 
 [logging]
-isEnabled = true
-excludedCategories = ["012345678912345678"]
-excludedChannels = ["012345678912345678"]
+enabled = true
+excludedCategories = ["category-id"]
+excludedChannels = ["channel-id"]
 
 [logging.loggingEvent]
-isEnabled = true
-channelId = "012345678912345678"
-excludedCategories = ["012345678912345678"]
-excludedChannels = ["012345678912345678"]
+enabled = true
+channelId = "channel-id"
+excludedCategories = ["category-id"]
+excludedChannels = ["channel-id"]

@@ -2,7 +2,8 @@ import {
     ChatInputApplicationCommandData,
     ApplicationCommandOptionData,
     ApplicationCommandType,
-    CommandInteraction
+    CommandInteraction,
+    PermissionFlagsBits
 } from "discord.js";
 
 import { InteractionResponseType } from "../../../utils/Types";
@@ -38,7 +39,8 @@ export default abstract class ChatInputCommand {
             description: this.description,
             options: this.options,
             dmPermission: false,
-            type: this.type
+            type: this.type,
+            defaultMemberPermissions: [PermissionFlagsBits.Administrator]
         };
     }
 }

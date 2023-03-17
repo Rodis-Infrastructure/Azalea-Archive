@@ -7,16 +7,14 @@ import {
     UserContextMenuCommandInteraction,
     ApplicationCommandDataResolvable,
     ChatInputCommandInteraction,
-    ApplicationCommandType,
-    TextChannel,
-    Collection
+    Collection,
+    GuildTextBasedChannel, EmbedBuilder, ApplicationCommandType
 } from "discord.js";
 
-import { Icon, InteractionResponseType, LogType, StringCommandType } from "../../../utils/Types";
-import { hasInteractionPermission } from "../../../utils/PermissionUtils";
-import { sendLog } from "../../../utils/LoggingUtils";
+import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { sendLog } from "../../../utils/LoggingUtils";
 
 type Command = ChatInputCommand | ContextMenuCommand;
 type CommandInteraction =
@@ -62,58 +60,11 @@ export default class CommandHandler {
     }
 
     public async handle(interaction: CommandInteraction) {
-        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
                 content: "Guild not configured.",
-                ephemeral: true
-            });
-            return;
-        }
-
-        let stringCommandType: StringCommandType;
-        let logCommandName: "Slash" | "Message" | "User";
-        let memberUsedOnId = "";
-
-        switch (interaction.commandType) {
-            case ApplicationCommandType.ChatInput: {
-                stringCommandType = "slashCommands";
-                logCommandName = "Slash";
-                break;
-            }
-
-            case ApplicationCommandType.Message: {
-                memberUsedOnId = interaction.targetMessage.member?.id as string;
-                stringCommandType = "messageCommands";
-                logCommandName = "Message";
-                break;
-            }
-
-            case ApplicationCommandType.User: {
-                memberUsedOnId = interaction.targetId;
-                stringCommandType = "userCommands";
-                logCommandName = "User";
-                break;
-            }
-        }
-
-        let memberRoles = interaction.member?.roles;
-        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
-
-        const hasPermission = hasInteractionPermission({
-            interactionCustomId: interaction.commandName,
-            memberRoles: memberRoles as string[],
-            interactionType: stringCommandType,
-            config
-        });
-
-        if (!hasPermission) {
-            const requiredRoles = Object.keys(config.rolePermissions || {})
-                .filter(role => config.rolePermissions?.[role][stringCommandType]?.includes(interaction.commandName));
-
-            await interaction.reply({
-                content: `You do not have permission to use this command, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
                 ephemeral: true
             });
             return;
@@ -128,15 +79,13 @@ export default class CommandHandler {
             return;
         }
 
-        let ResponseType = command.defer;
-        if (
-            config.forceEphemeralResponse &&
-            !command.skipInternalUsageCheck &&
-            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
-            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
-        ) ResponseType = InteractionResponseType.EphemeralDefer;
+        const channel = interaction.channel as GuildTextBasedChannel;
 
-        switch (ResponseType) {
+        const responseType = config.ephemeralResponseIn(channel) ?
+            InteractionResponseType.EphemeralDefer :
+            command.defer;
+
+        switch (responseType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -154,31 +103,34 @@ export default class CommandHandler {
             console.error(err);
             return;
         }
-        const contextCommandField = [];
 
-        if (
-            interaction.commandType === ApplicationCommandType.User ||
-            interaction.commandType === ApplicationCommandType.Message
-        ) {
-            contextCommandField.push({
-                name: "Used On",
-                value: `<@${memberUsedOnId}> (\`${memberUsedOnId}\`)`
-            }); 
+        const log = new EmbedBuilder()
+            .setColor(0x2e3136)
+            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .setDescription(`Command \`${command.name}\` used by ${interaction.user}`)
+            .setTimestamp();
+
+        const logEmbedFields = [{
+            name: "Channel",
+            value: `${channel} (\`#${channel.name}\`)`
+        }];
+
+        if (interaction.commandType !== ApplicationCommandType.ChatInput) {
+            let target = interaction.targetId;
+            if (interaction.commandType === ApplicationCommandType.Message) target = interaction.targetMessage.author.id;
+
+            logEmbedFields.push({
+                name: "Target",
+                value: `<@${target}> (\`${target}\`)`
+            });
         }
 
+        log.setFields(logEmbedFields);
+
         await sendLog({
-            config,
-            interaction,
-            type: LogType.interactionUsage,
-            icon: Icon.Interaction,
-            content: `${logCommandName} Command \`${interaction.commandName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-            fields: [
-                {
-                    name: "Channel",
-                    value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-                },
-                ...contextCommandField
-            ]
+            event: LoggingEvent.InteractionUsage,
+            channel: channel,
+            embed: log
         });
     }
 }

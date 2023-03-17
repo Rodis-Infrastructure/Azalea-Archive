@@ -1,12 +1,11 @@
 import ClientManager from "../../../Client";
 import Modal from "./Modal";
 
-import { Collection, ModalSubmitInteraction, TextChannel } from "discord.js";
-import { hasInteractionPermission } from "../../../utils/PermissionUtils";
-import { sendLog } from "../../../utils/LoggingUtils";
-import { Icon, LogType } from "../../../utils/Types";
+import { Collection, EmbedBuilder, GuildTextBasedChannel, ModalSubmitInteraction } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { sendLog } from "../../../utils/LoggingUtils";
+import { LoggingEvent } from "../../../utils/Types";
 
 
 export default class ModalHandler {
@@ -30,7 +29,7 @@ export default class ModalHandler {
     }
 
     public async handle(interaction: ModalSubmitInteraction) {
-        const config = ClientManager.guildConfigs.get(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId as string);
 
         if (!config) {
             await interaction.reply({
@@ -56,56 +55,44 @@ export default class ModalHandler {
             modal.name :
             Object.values(modal.name)[0];
 
-        let memberRoles = interaction.member?.roles;
-        if (memberRoles && !Array.isArray(memberRoles)) memberRoles = memberRoles?.cache.map(role => role.id);
-
-        const hasPermission = hasInteractionPermission({
-            memberRoles: memberRoles as string[],
-            interactionCustomId: modalName,
-            interactionType: "modals",
-            config
-        });
-
-        if (!hasPermission) {
-            const requiredRoles = Object.keys(config.rolePermissions || {})
-                .filter(role => config.rolePermissions?.[role].modals?.includes(modalName));
-
+        if (!config.interactionAllowed(interaction)) {
             await interaction.reply({
-                content: `You do not have permission to use this modal, you must have one of the following roles: \`${requiredRoles.join("` `") || "N/A"}\``,
+                content: "You do not have permission to use this interaction",
                 ephemeral: true
             });
             return;
         }
 
-        let { ephemeral } = modal;
+        const channel = interaction.channel as GuildTextBasedChannel;
 
-        if (
-            config.forceEphemeralResponse &&
-            !modal.skipInternalUsageCheck &&
-            !config.forceEphemeralResponse.excludedChannels?.includes(interaction.channelId as string) &&
-            !config.forceEphemeralResponse.excludedCategories?.includes((interaction.channel as TextChannel).parentId as string)
-        ) ephemeral = true;
+        const ephemeral = config.ephemeralResponseIn(channel) ?
+            true :
+            modal.ephemeral;
 
         await interaction.deferReply({ ephemeral });
 
         try {
             await modal.execute(interaction);
         } catch (err) {
-            console.log(`Failed to execute modal: ${modal.name}`);
+            console.log(`Failed to execute modal: ${modalName}`);
             console.error(err);
             return;
         }
 
-        await sendLog({
-            config,
-            interaction,
-            type: LogType.interactionUsage,
-            icon: Icon.Interaction,
-            content: `Modal \`${modalName}\` used by ${interaction.user} (\`${interaction.user.id}\`)`,
-            fields: [{
+        const log = new EmbedBuilder()
+            .setColor(0x2e3136)
+            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .setDescription(`Modal \`${modalName}\` used by ${interaction.user}`)
+            .setFields([{
                 name: "Channel",
-                value: `${interaction.channel} (\`#${(interaction.channel as TextChannel).name}\`)`
-            }]
+                value: `${channel} (\`#${channel.name}\`)`
+            }])
+            .setTimestamp();
+
+        await sendLog({
+            event: LoggingEvent.InteractionUsage,
+            embed: log,
+            channel
         });
     }
 }
