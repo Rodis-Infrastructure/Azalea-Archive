@@ -18,19 +18,22 @@ Permission configuration, interaction permissions may either be set for a role o
 
 **Role configuration**:
 ```toml
-[permissions.roles.roleId]
+[[roles]]
+id = "role-id"
 selections = [] # A list of select menu custom IDs
 buttons = [] # A list of button custom IDs
 modals = [] # A list of modal custom IDs
+staff = false # If set to true, the role will be considered as a staff role
 ```
 
 **Role group configuration**:
 ```toml
-[permissions.groups.groupName]
+[[groups]]
 roles = [] # A list of role IDs
 selections = [] # A list of select menu custom IDs
 buttons = [] # A list of button custom IDs
 modals = [] # A list of modal custom IDs
+staff = false # If set to true, the group's roles will be considered as a staff roles
 ```
 <br>
 

@@ -8,7 +8,7 @@ roles = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
-staff = true
+staff = false
 
 [[roles]]
 id = "role-id"
