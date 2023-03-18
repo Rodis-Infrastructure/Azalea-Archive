@@ -1,54 +1,59 @@
-# moderation-bot
-The Roblox Discord's Moderation Bot
+## moderation-bot
+This file serves as documentation for the moderation-bot, the Roblox Discord's moderation bot. Below are the available configuration options.
 
-<br>
+## Configuration
+For a full example of the configuration, you can view the [`example.toml`](config/guilds/example.toml) file in the repository
 
-### Configuration
+### Ephemeral Responses
+The `ephemeralResponses` section controls the behavior of the bot's interaction responses. If enabled, all interaction responses used outside excluded categories/channels will have an ephemeral response, even if an `InteractionResponseType` is specified.
 
-Ephemeral responses, if enabled, all interaction responses used outside excluded categories/channels will have a deferred ephemeral response, even if an `InteractionResponseType` is specified.
 ```toml
 [ephemeralResponses]
 enabled = true
-excludedCategories = [] # A list of category IDs not affected by this rule
-excludedChannels = [] # A list of channel IDs not affected by this rule
+excludedCategories = []
+excludedChannels = []
 ```
-<br>
 
-Permission configuration, interaction permissions may either be set for a role or a group of roles. As application commands are configurable natively, this configuration is only used for message components and modals.
+### Role and Group Configuration
+The `roles` and `groups` sections allow you to configure which roles have access to specific message components and modals.
 
-**Role configuration**:
+#### Role Configuration
+
 ```toml
 [[roles]]
 id = "role-id"
-selections = [] # A list of select menu custom IDs
-buttons = [] # A list of button custom IDs
-modals = [] # A list of modal custom IDs
-staff = false # If set to true, the role will be considered as a staff role
+staff = false
+# Interactions that can be used by users with this role (custom IDs)
+selections = []
+buttons = []
+modals = []
 ```
 
-**Role group configuration**:
+#### Role Group Configuration
+
 ```toml
 [[groups]]
-roles = [] # A list of role IDs
-selections = [] # A list of select menu custom IDs
-buttons = [] # A list of button custom IDs
-modals = [] # A list of modal custom IDs
-staff = false # If set to true, the group's roles will be considered as a staff roles
+staff = false
+roles = []
+selections = []
+buttons = []
+modals = []
 ```
-<br>
 
-Logging configuration, all the logging events are managed in this rule. Below is a list of supported logging events:
+### Logging Configuration
+The `logging` section controls all the logging events. Below is a list of supported logging events:
 
-* `interactionUsage` Triggered when an interaction is used, whether it is a command, button, modal, or select menu.
+* `interactionUsage` - Triggered when an interaction is used, whether it is a command, button, modal, or select menu.
+
 ```toml
 [logging]
-enabled = true # Disables all logging events if set to false
-excludedCategories = [] # A list of category IDs not affected by ANY logging events
-excludedChannels = [] # A list of channel IDs not affected by ANY logging events
+enabled = true
+excludedCategories = []
+excludedChannels = []
 
 [logging.loggingEvent]
 enabled = true
-channelId = "channel-id" # The channel in which the logs are send
-excludedCategories = [] # A list of category IDs not affected by this logging event
-excludedChannels = [] # A list of channel IDs not affected by this logging event
+channelId = "channel-id"
+excludedCategories = []
+excludedChannels = []
 ```
