@@ -85,7 +85,7 @@ export default class Config {
                     break;
 
                 case ComponentType.SelectMenu:
-                    interactionType = "selections";
+                    interactionType = "selectMenus";
                     break;
             }
         }

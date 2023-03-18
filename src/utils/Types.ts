@@ -8,7 +8,7 @@ enum LoggingEvent {
     InteractionUsage = "interactionUsage"
 }
 
-type StringInteractionType = "buttons" | "modals" | "selections";
+type StringInteractionType = "buttons" | "modals" | "selectMenus";
 
 type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"staff", boolean | undefined>;
 type LoggingEventData = ToggleableProperty & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>

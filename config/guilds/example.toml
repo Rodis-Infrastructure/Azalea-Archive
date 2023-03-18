@@ -4,18 +4,18 @@ excludedCategories = ["category-id"]
 excludedChannels = ["channel-id"]
 
 [[groups]]
+staff = false
 roles = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
-staff = false
 
 [[roles]]
 id = "role-id"
-selections = ["interaction-name"]
+staff = false
+selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
-staff = true
 
 [logging]
 enabled = true
