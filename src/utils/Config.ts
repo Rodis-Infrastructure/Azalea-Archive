@@ -19,8 +19,8 @@ export default class Config {
     guildId: string;
     logging: ConfigData["logging"];
     ephemeralResponses: ConfigData["ephemeralResponses"];
-    roles: ConfigData["roles"];
-    groups: ConfigData["groups"];
+    roles: NonNullable<ConfigData["roles"]>;
+    groups: NonNullable<ConfigData["groups"]>;
 
     constructor(guildId: string, data: ConfigData) {
         this.guildId = guildId;

@@ -21,8 +21,8 @@ interface ToggleableProperty {
 
 interface ConfigData {
     ephemeralResponses?: ToggleableProperty
-    roles: Array<PermissionData & Record<"id", string>>,
-    groups: Array<PermissionData & Record<"roles", string[]>>,
+    roles?: Array<PermissionData & Record<"id", string>>,
+    groups?: Array<PermissionData & Record<"roles", string[]>>,
     logging?: LoggingEventData
 }
 
