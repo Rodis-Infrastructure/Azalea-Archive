@@ -1,5 +1,5 @@
 ## moderation-bot
-This file serves as documentation for the Roblox Discord's moderation bot. Below are the available configuration options.
+This file serves as documentation for the Roblox Discord's moderation bot.
 
 ## Configuration
 For a full example of the configuration, you can view the [`example.toml`](config/guilds/example.toml) file in the repository
@@ -23,7 +23,6 @@ The `roles` and `groups` sections allow you to configure which roles have access
 [[roles]]
 id = "role-id"
 staff = false
-# Interactions that can be used by users with this role (custom IDs)
 selections = []
 buttons = []
 modals = []
