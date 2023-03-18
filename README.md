@@ -34,7 +34,7 @@ modals = []
 [[groups]]
 staff = false
 roles = []
-selections = []
+selectMenus = []
 buttons = []
 modals = []
 ```
