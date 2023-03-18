@@ -1,5 +1,5 @@
 ## moderation-bot
-This file serves as documentation for the moderation-bot, the Roblox Discord's moderation bot. Below are the available configuration options.
+This file serves as documentation for the Roblox Discord's moderation bot. Below are the available configuration options.
 
 ## Configuration
 For a full example of the configuration, you can view the [`example.toml`](config/guilds/example.toml) file in the repository
