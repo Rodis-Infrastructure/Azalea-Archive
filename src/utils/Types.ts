@@ -10,7 +10,7 @@ enum LoggingEvent {
 
 type StringInteractionType = "buttons" | "modals" | "selectMenus";
 
-type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"staff", boolean | undefined>;
+type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"guildStaff", boolean | undefined>;
 type LoggingEventData = ToggleableProperty & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
 interface ToggleableProperty {

@@ -4,7 +4,7 @@ excludedCategories = ["category-id"]
 excludedChannels = ["channel-id"]
 
 [[groups]]
-staff = false
+guildStaff = false
 roles = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
@@ -12,7 +12,7 @@ modals = ["interaction-name"]
 
 [[roles]]
 id = "role-id"
-staff = false
+guildStaff = false
 selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]

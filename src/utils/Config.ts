@@ -109,9 +109,9 @@ export default class Config {
         return false;
     }
 
-    staffRoles(): string[] {
-        const roles = this.roles.filter(role => role.staff).map(role => role.id);
-        const groups = this.groups.filter(group => group.staff).flatMap(group => group.roles);
+    guildStaffRoles(): string[] {
+        const roles = this.roles.filter(role => role.guildStaff).map(role => role.id);
+        const groups = this.groups.filter(group => group.guildStaff).flatMap(group => group.roles);
 
         return [...new Set([...roles, ...groups])];
     }
