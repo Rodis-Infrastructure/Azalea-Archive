@@ -3,14 +3,17 @@ enabled = true
 excludedCategories = ["category-id"]
 excludedChannels = ["channel-id"]
 
-[permissions.groups.groupName]
+[[groups]]
+guildStaff = false
 roles = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
 
-[permissions.roles.roleId]
-selections = ["interaction-name"]
+[[roles]]
+id = "role-id"
+guildStaff = false
+selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
 
