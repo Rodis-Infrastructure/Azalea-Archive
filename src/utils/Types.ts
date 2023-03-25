@@ -1,3 +1,5 @@
+import { EmbedBuilder, GuildTextBasedChannel } from "discord.js";
+
 enum InteractionResponseType {
     Default = 0,
     Defer = 1,
@@ -5,7 +7,8 @@ enum InteractionResponseType {
 }
 
 enum LoggingEvent {
-    InteractionUsage = "interactionUsage"
+    InteractionUsage = "interactionUsage",
+    MemberKick = "memberKick",
 }
 
 type StringInteractionType = "buttons" | "modals" | "selectMenus";
@@ -19,15 +22,26 @@ interface ToggleableProperty {
     excludedCategories?: string[]
 }
 
+type EmojiType = "success" | "error";
+
 interface ConfigData {
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
     groups?: Array<PermissionData & Record<"roles", string[]>>,
-    logging?: LoggingEventData
+    logging?: LoggingEventData,
+    emojis?: Partial<Record<EmojiType, string>>
 }
+
+type LogData = {
+    event: LoggingEvent,
+    embed: EmbedBuilder
+} & (
+    { channel: GuildTextBasedChannel, guildId?: never } |
+    { channel?: never, guildId: string }
+);
 
 // Enums
 export { LoggingEvent, InteractionResponseType };
 
 // Type Declarations
-export { StringInteractionType, ConfigData };
+export { StringInteractionType, ConfigData, LogData };

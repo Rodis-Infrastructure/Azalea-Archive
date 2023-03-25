@@ -1,19 +1,14 @@
 import {
-    ConfigData,
-    StringInteractionType,
-    LoggingEvent
-} from "./Types";
-
-import {
-    GuildMember,
-    InteractionType,
     ComponentType,
+    GuildMember,
+    GuildTextBasedChannel,
+    InteractionType,
     MessageComponentInteraction,
-    ModalSubmitInteraction,
-    GuildTextBasedChannel
+    ModalSubmitInteraction
 } from "discord.js";
 
 import ClientManager from "../Client";
+import { ConfigData, LoggingEvent, StringInteractionType } from "./Types";
 
 export default class Config {
     guildId: string;
@@ -21,6 +16,7 @@ export default class Config {
     ephemeralResponses: ConfigData["ephemeralResponses"];
     roles: NonNullable<ConfigData["roles"]>;
     groups: NonNullable<ConfigData["groups"]>;
+    emojis: NonNullable<ConfigData["emojis"]>;
 
     constructor(guildId: string, data: ConfigData) {
         this.guildId = guildId;
@@ -28,6 +24,10 @@ export default class Config {
         this.ephemeralResponses = data.ephemeralResponses;
         this.roles = data.roles ?? [];
         this.groups = data.groups ?? [];
+        this.emojis = data.emojis ?? {
+            success: "✅",
+            error: "❌"
+        };
     }
 
     save() {
@@ -114,5 +114,26 @@ export default class Config {
         const groups = this.groups.filter(group => group.guildStaff).flatMap(group => group.roles);
 
         return [...new Set([...roles, ...groups])];
+    }
+
+    isGuildStaff(member: GuildMember): boolean {
+        return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId)) ?? false;
+    }
+
+    validateModerationReason(data: {
+        staffId: string,
+        offender: GuildMember,
+        additionalValidation?: { condition: boolean, reason: string }[]
+    }): string | undefined {
+        const { staffId, offender, additionalValidation } = data;
+
+        if (!offender) return "The member provided is invalid.";
+        if (staffId === offender.id) return "You cannot moderate yourself.";
+        if (offender.user.bot) return "Bots cannot be moderated.";
+        if (this.isGuildStaff(offender)) return "Server staff cannot be moderated.";
+
+        additionalValidation?.forEach(check => {
+            if (check.condition) return check.reason;
+        });
     }
 }

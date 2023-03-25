@@ -11,7 +11,7 @@ import {
 import { InteractionResponseType } from "../../../utils/Types";
 import { JsonMap, stringify } from "@iarna/toml";
 
-export default class SampleCommand extends ChatInputCommand {
+export default class ConfigCommand extends ChatInputCommand {
     constructor() {
         super({
             name: "config",

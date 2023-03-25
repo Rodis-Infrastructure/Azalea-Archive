@@ -1,4 +1,5 @@
 import { parse } from "@iarna/toml";
+import { Events } from "discord.js";
 
 import { readdir, readFile } from "node:fs/promises";
 import ClientManager from "../Client";
@@ -9,7 +10,7 @@ import { ConfigData } from "../utils/Types";
 export default class ReadyEventListener extends EventListener {
     constructor() {
         super({
-            name: "ready",
+            name: Events.ClientReady,
             once: true
         });
     }

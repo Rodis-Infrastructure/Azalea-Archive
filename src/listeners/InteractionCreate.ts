@@ -1,12 +1,12 @@
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 
-import { Interaction } from "discord.js";
+import { Events, Interaction } from "discord.js";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
         super({
-            name: "interactionCreate",
+            name: Events.InteractionCreate,
             once: false
         });
     }
