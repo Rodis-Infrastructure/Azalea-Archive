@@ -121,14 +121,14 @@ export default class Config {
     }
 
     validateModerationReason(data: {
-        staffId: string,
+        moderatorId: string,
         offender: GuildMember,
         additionalValidation?: { condition: boolean, reason: string }[]
     }): string | undefined {
-        const { staffId, offender, additionalValidation } = data;
+        const { moderatorId, offender, additionalValidation } = data;
 
         if (!offender) return "The member provided is invalid.";
-        if (staffId === offender.id) return "You cannot moderate yourself.";
+        if (moderatorId === offender.id) return "You cannot moderate yourself.";
         if (offender.user.bot) return "Bots cannot be moderated.";
         if (this.isGuildStaff(offender)) return "Server staff cannot be moderated.";
 

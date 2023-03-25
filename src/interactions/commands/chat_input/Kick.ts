@@ -49,7 +49,7 @@ export default class KickCommand extends ChatInputCommand {
         const { success, error } = config!.emojis;
 
         const notModerateableReason = config?.validateModerationReason({
-            staffId: interaction.user.id,
+            moderatorId: interaction.user.id,
             offender: member,
             additionalValidation: [{
                 condition: !member.kickable,
