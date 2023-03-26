@@ -16,11 +16,13 @@ export async function resolveMemberKick(data: {
         .setFields([
             {
                 name: "Member",
-                value: `${offender} (\`${offender.id}\`)`
+                value: `${offender}`,
+                inline: true
             },
             {
                 name: "Moderator",
-                value: `${moderator} (\`${moderator.id}\`)`
+                value: `${moderator}`,
+                inline: true
             }
         ])
         .setTimestamp();
