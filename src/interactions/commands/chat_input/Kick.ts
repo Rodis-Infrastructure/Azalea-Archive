@@ -46,9 +46,14 @@ export default class KickCommand extends ChatInputCommand {
         const guildId = interaction.guildId as string;
         const config = ClientManager.config(guildId);
 
-        const { success, error } = config!.emojis;
+        if (!config) {
+            await interaction.editReply("Failed to fetch guild configuration");
+            return;
+        }
 
-        const notModerateableReason = config?.validateModerationReason({
+        const { success, error } = config.emojis;
+
+        const notModerateableReason = config.validateModerationReason({
             moderatorId: interaction.user.id,
             offender: member,
             additionalValidation: [{

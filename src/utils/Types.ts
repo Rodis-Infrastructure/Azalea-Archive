@@ -11,10 +11,12 @@ enum LoggingEvent {
     MemberKick = "memberKick",
 }
 
-type StringInteractionType = "buttons" | "modals" | "selectMenus";
+type StringInteractionType = "buttons" | "modals" | "selections";
 
 type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"guildStaff", boolean | undefined>;
-type LoggingEventData = ToggleableProperty & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
+type LoggingEventData =
+    ToggleableProperty
+    & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
 interface ToggleableProperty {
     enabled: boolean

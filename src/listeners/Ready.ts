@@ -21,14 +21,14 @@ export default class ReadyEventListener extends EventListener {
 
         for (const file of configFiles) {
             const guildId = file.split(".")[0];
-            if (guildId === "example") continue;
+            if (!guildId.match(/^\d{17,19}$/g)) continue;
 
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            new Config(guildId, config).save();
+            new Config(config).bind(guildId);
         }
 
         await Promise.all([
-            ClientManager.selectMenus.load(),
+            ClientManager.selections.load(),
             ClientManager.buttons.load(),
             ClientManager.modals.load(),
             ClientManager.commands.load()

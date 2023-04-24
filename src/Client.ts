@@ -12,7 +12,7 @@ process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 class ClientManager {
     public configs: Collection<string, Config> = new Collection();
-    public selectMenus = new SelectMenuHandler();
+    public selections = new SelectMenuHandler();
     public commands = new CommandHandler();
     public buttons = new ButtonHandler();
     public modals = new ModalHandler();

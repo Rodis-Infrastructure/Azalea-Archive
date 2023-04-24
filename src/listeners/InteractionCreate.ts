@@ -20,6 +20,6 @@ export default class InteractionCreateEventListener extends EventListener {
 
         if (interaction.isButton()) await ClientManager.buttons.handle(interaction);
         if (interaction.isModalSubmit()) await ClientManager.modals.handle(interaction);
-        if (interaction.isStringSelectMenu()) await ClientManager.selectMenus.handle(interaction);
+        if (interaction.isStringSelectMenu()) await ClientManager.selections.handle(interaction);
     }
 }
