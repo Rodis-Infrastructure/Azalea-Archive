@@ -3,12 +3,14 @@ import ChatInputCommand from "./ChatInputCommand";
 import ClientManager from "../../../Client";
 
 import {
-    MessageContextMenuCommandInteraction,
-    UserContextMenuCommandInteraction,
     ApplicationCommandDataResolvable,
+    ApplicationCommandType,
     ChatInputCommandInteraction,
     Collection,
-    GuildTextBasedChannel, EmbedBuilder, ApplicationCommandType
+    EmbedBuilder,
+    GuildTextBasedChannel,
+    MessageContextMenuCommandInteraction,
+    UserContextMenuCommandInteraction
 } from "discord.js";
 
 import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
@@ -30,15 +32,11 @@ export default class CommandHandler {
     }
 
     public async load() {
-        const directories = await readdir(join(__dirname, "../../../interactions/commands"));
+        const files = await readdir(join(__dirname, "../../../interactions/commands"));
 
-        for (const directory of directories) {
-            const files = await readdir(join(__dirname, "../../../interactions/commands", directory));
-
-            for (const file of files) {
-                const command = (await import(join(__dirname, "../../../interactions/commands", directory, file))).default;
-                this.register(new command());
-            }
+        for (const file of files) {
+            const command = (await import(join(__dirname, "../../../interactions/commands", file))).default;
+            this.register(new command());
         }
     }
 

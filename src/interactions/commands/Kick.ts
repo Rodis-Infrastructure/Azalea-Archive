@@ -5,10 +5,10 @@ import {
     GuildMember
 } from "discord.js";
 
-import ClientManager from "../../../Client";
-import ChatInputCommand from "../../../handlers/interactions/commands/ChatInputCommand";
-import { resolveMemberKick } from "../../../utils/ModerationUtils";
-import { InteractionResponseType } from "../../../utils/Types";
+import ClientManager from "../../Client";
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
+import { resolveMemberKick } from "../../utils/ModerationUtils";
+import { InteractionResponseType } from "../../utils/Types";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {

@@ -1,14 +1,14 @@
-import ChatInputCommand from "../../../handlers/interactions/commands/ChatInputCommand";
-import ClientManager from "../../../Client";
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
+import ClientManager from "../../Client";
 
 import {
     ApplicationCommandOptionType,
-    ChatInputCommandInteraction,
     ApplicationCommandType,
+    ChatInputCommandInteraction,
     EmbedBuilder
 } from "discord.js";
 
-import { InteractionResponseType } from "../../../utils/Types";
+import { InteractionResponseType } from "../../utils/Types";
 import { JsonMap, stringify } from "@iarna/toml";
 
 export default class ConfigCommand extends ChatInputCommand {

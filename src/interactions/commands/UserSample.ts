@@ -1,14 +1,14 @@
-import ContextMenuCommand from "../../../handlers/interactions/commands/ContextMenuCommand";
+import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
 
 import { ApplicationCommandType, ContextMenuCommandInteraction } from "discord.js";
-import { InteractionResponseType } from "../../../utils/Types";
+import { InteractionResponseType } from "../../utils/Types";
 
-export default class SampleCommand extends ContextMenuCommand {
+export default class UserSampleCommand extends ContextMenuCommand {
     constructor() {
         super({
             name: "Sample",
             defer: InteractionResponseType.EphemeralDefer,
-            type: ApplicationCommandType.Message,
+            type: ApplicationCommandType.User,
             skipInternalUsageCheck: false
         });
     }
@@ -18,6 +18,6 @@ export default class SampleCommand extends ContextMenuCommand {
      * @returns {Promise<void>}
      */
     async execute(interaction: ContextMenuCommandInteraction): Promise<void> {
-        await interaction.editReply("This is a sample **MESSAGE** command.");
+        await interaction.editReply("This is a sample **USER** command.");
     }
 }
