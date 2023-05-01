@@ -1,17 +1,17 @@
 import { EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 
-enum InteractionResponseType {
+export enum InteractionResponseType {
     Default = 0,
     Defer = 1,
     EphemeralDefer = 2,
 }
 
-enum LoggingEvent {
+export enum LoggingEvent {
     InteractionUsage = "interactionUsage",
     MemberKick = "memberKick",
 }
 
-type StringInteractionType = "buttons" | "modals" | "selections";
+export type StringInteractionType = "buttons" | "modals" | "selections";
 
 type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"guildStaff", boolean | undefined>;
 type LoggingEventData =
@@ -26,7 +26,7 @@ interface ToggleableProperty {
 
 type EmojiType = "success" | "error";
 
-interface ConfigData {
+export interface ConfigData {
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
     groups?: Array<PermissionData & Record<"roles", string[]>>,
@@ -34,16 +34,10 @@ interface ConfigData {
     emojis?: Partial<Record<EmojiType, string>>
 }
 
-type LogData = {
+export type LogData = {
     event: LoggingEvent,
     embed: EmbedBuilder
 } & (
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }
 );
-
-// Enums
-export { LoggingEvent, InteractionResponseType };
-
-// Type Declarations
-export { StringInteractionType, ConfigData, LogData };
