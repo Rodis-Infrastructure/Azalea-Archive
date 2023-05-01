@@ -74,6 +74,8 @@ category/channel configuration does not apply to moderation infraction logging):
 
 * `interactionUsage` - Triggered when an interaction is used, whether it is a command, button, modal, or select menu.
 * `memberKick` - Triggered when a member is kicked from the guild.
+* `memberBan` - Triggered when a member is banned from the guild.
+* `memberUnban` - Triggered when a member is unbanned from the guild.
 
 ```toml
 [logging]

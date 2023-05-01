@@ -30,6 +30,10 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             case AuditLogEvent.MemberBanAdd:
                 infractionType = LoggingEvent.MemberBan;
                 break;
+
+            case AuditLogEvent.MemberBanRemove:
+                infractionType = LoggingEvent.MemberUnban;
+                break;
         }
 
         if (infractionType) {

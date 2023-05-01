@@ -1,40 +1,6 @@
-import { Colors, EmbedBuilder, User } from "discord.js";
+import { ColorResolvable, Colors, EmbedBuilder, User } from "discord.js";
 import { sendLog } from "./LoggingUtils";
 import { LoggingEvent } from "./Types";
-
-export async function resolveMemberKick(data: {
-    moderator: User,
-    offender: User,
-    guildId: string,
-    reason: string | null
-}): Promise<void> {
-    const { moderator, offender, reason, guildId } = data;
-
-    const log = new EmbedBuilder()
-        .setColor(Colors.Red)
-        .setAuthor({ name: "Member Kicked" })
-        .setFields([
-            {
-                name: "Member",
-                value: `${offender}`,
-                inline: true
-            },
-            {
-                name: "Moderator",
-                value: `${moderator}`,
-                inline: true
-            }
-        ])
-        .setTimestamp();
-
-    if (reason) log.addFields([{ name: "Reason", value: reason }]);
-
-    await sendLog({
-        event: LoggingEvent.MemberKick,
-        embed: log,
-        guildId
-    });
-}
 
 export async function resolveInfraction(data: {
     moderator: User,
@@ -45,30 +11,36 @@ export async function resolveInfraction(data: {
 }): Promise<void> {
     const { moderator, offender, reason, guildId, infractionType } = data;
     let name!: string;
+    let color!: ColorResolvable;
 
     switch (infractionType) {
         case LoggingEvent.MemberBan:
             name = "Member Banned";
+            color = Colors.Purple;
             break;
 
         case LoggingEvent.MemberKick:
             name = "Member Kicked";
+            color = Colors.Red;
+            break;
+
+        case LoggingEvent.MemberUnban:
+            name = "Member Unbanned";
+            color = Colors.Blue;
             break;
     }
 
     const log = new EmbedBuilder()
-        .setColor(Colors.Blue)
+        .setColor(color)
         .setAuthor({ name })
         .setFields([
             {
                 name: "Member",
-                value: `${offender}`,
-                inline: true
+                value: `${offender} (\`${offender.id}\`)`
             },
             {
                 name: "Moderator",
-                value: `${moderator}`,
-                inline: true
+                value: `${moderator} (\`${moderator.id}\`)`
             }
         ])
         .setTimestamp();

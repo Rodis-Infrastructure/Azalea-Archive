@@ -10,6 +10,7 @@ export enum LoggingEvent {
     InteractionUsage = "interactionUsage",
     MemberKick = "memberKick",
     MemberBan = "memberBan",
+    MemberUnban = "memberUnban",
 }
 
 export type StringInteractionType = "buttons" | "modals" | "selections";
