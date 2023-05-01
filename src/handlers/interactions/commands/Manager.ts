@@ -62,7 +62,7 @@ export default class CommandHandler {
 
         if (!config) {
             await interaction.reply({
-                content: "Guild not configured.",
+                content: "Failed to fetch guild configuration.",
                 ephemeral: true
             });
             return;

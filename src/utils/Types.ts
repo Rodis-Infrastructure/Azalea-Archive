@@ -9,6 +9,7 @@ export enum InteractionResponseType {
 export enum LoggingEvent {
     InteractionUsage = "interactionUsage",
     MemberKick = "memberKick",
+    MemberBan = "memberBan",
 }
 
 export type StringInteractionType = "buttons" | "modals" | "selections";
@@ -27,6 +28,7 @@ interface ToggleableProperty {
 type EmojiType = "success" | "error";
 
 export interface ConfigData {
+    deleteMessageSecondsOnBan?: number
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
     groups?: Array<PermissionData & Record<"roles", string[]>>,

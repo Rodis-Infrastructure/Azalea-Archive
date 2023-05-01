@@ -33,7 +33,7 @@ export default class ModalHandler {
 
         if (!config) {
             await interaction.reply({
-                content: "Guild not configured.",
+                content: "Failed to fetch guild configuration.",
                 ephemeral: true
             });
             return;
@@ -42,9 +42,21 @@ export default class ModalHandler {
         const modal = this.list.find(m => {
             if (typeof m.name === "string") return m.name === interaction.customId;
 
-            if ((m.name as { startsWith: string }).startsWith) return interaction.customId.startsWith((m.name as { startsWith: string }).startsWith);
-            if ((m.name as { endsWith: string }).endsWith) return interaction.customId.endsWith((m.name as { endsWith: string }).endsWith);
-            if ((m.name as { includes: string }).includes) return interaction.customId.includes((m.name as { includes: string }).includes);
+            if ((m.name as { startsWith: string }).startsWith) {
+                return interaction.customId.startsWith((m.name as {
+                    startsWith: string
+                }).startsWith); 
+            }
+            if ((m.name as { endsWith: string }).endsWith) {
+                return interaction.customId.endsWith((m.name as {
+                    endsWith: string
+                }).endsWith); 
+            }
+            if ((m.name as { includes: string }).includes) {
+                return interaction.customId.includes((m.name as {
+                    includes: string
+                }).includes); 
+            }
 
             return false;
         });

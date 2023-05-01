@@ -32,7 +32,7 @@ export default class ButtonHandler {
 
         if (!config) {
             await interaction.reply({
-                content: "Guild not configured.",
+                content: "Failed to fetch guild configuration.",
                 ephemeral: true
             });
             return;
@@ -41,9 +41,21 @@ export default class ButtonHandler {
         const button = this.buttons.find(b => {
             if (typeof b.name === "string") return b.name === interaction.customId;
 
-            if ((b.name as { startsWith: string }).startsWith) return interaction.customId.startsWith((b.name as { startsWith: string }).startsWith);
-            if ((b.name as { endsWith: string }).endsWith) return interaction.customId.endsWith((b.name as { endsWith: string }).endsWith);
-            if ((b.name as { includes: string }).includes) return interaction.customId.includes((b.name as { includes: string }).includes);
+            if ((b.name as { startsWith: string }).startsWith) {
+                return interaction.customId.startsWith((b.name as {
+                    startsWith: string
+                }).startsWith); 
+            }
+            if ((b.name as { endsWith: string }).endsWith) {
+                return interaction.customId.endsWith((b.name as {
+                    endsWith: string
+                }).endsWith); 
+            }
+            if ((b.name as { includes: string }).includes) {
+                return interaction.customId.includes((b.name as {
+                    includes: string
+                }).includes); 
+            }
 
             return false;
         });

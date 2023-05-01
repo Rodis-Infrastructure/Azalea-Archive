@@ -8,7 +8,9 @@ export async function sendLog(data: LogData): Promise<void> {
     const config = ClientManager.config(channel?.guildId || guildId as string);
     if (channel && !config?.canLog(event, channel)) return;
 
-    const loggingChannelId = config?.loggingChannel(event) as string;
+    const loggingChannelId = config?.loggingChannel(event);
+    if (!loggingChannelId) return;
+
     const loggingChannel = await ClientManager.client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
 
     if (!loggingChannel) {

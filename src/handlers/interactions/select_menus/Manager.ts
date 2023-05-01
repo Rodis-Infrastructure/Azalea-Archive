@@ -1,6 +1,6 @@
 import ClientManager from "../../../Client";
 
-import { Collection, StringSelectMenuInteraction, GuildTextBasedChannel, EmbedBuilder } from "discord.js";
+import { Collection, EmbedBuilder, GuildTextBasedChannel, StringSelectMenuInteraction } from "discord.js";
 import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -33,7 +33,7 @@ export default class SelectMenuHandler {
 
         if (!config) {
             await interaction.reply({
-                content: "Guild not configured.",
+                content: "Failed to fetch guild configuration.",
                 ephemeral: true
             });
             return;
@@ -42,9 +42,21 @@ export default class SelectMenuHandler {
         const selectMenu = this.list.find(s => {
             if (typeof s.name === "string") return s.name === interaction.customId;
 
-            if ((s.name as { startsWith: string }).startsWith) return interaction.customId.startsWith((s.name as { startsWith: string }).startsWith);
-            if ((s.name as { endsWith: string }).endsWith) return interaction.customId.endsWith((s.name as { endsWith: string }).endsWith);
-            if ((s.name as { includes: string }).includes) return interaction.customId.includes((s.name as { includes: string }).includes);
+            if ((s.name as { startsWith: string }).startsWith) {
+                return interaction.customId.startsWith((s.name as {
+                    startsWith: string
+                }).startsWith); 
+            }
+            if ((s.name as { endsWith: string }).endsWith) {
+                return interaction.customId.endsWith((s.name as {
+                    endsWith: string
+                }).endsWith); 
+            }
+            if ((s.name as { includes: string }).includes) {
+                return interaction.customId.includes((s.name as {
+                    includes: string
+                }).includes); 
+            }
 
             return false;
         });

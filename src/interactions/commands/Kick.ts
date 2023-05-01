@@ -7,8 +7,8 @@ import {
 
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { resolveMemberKick } from "../../utils/ModerationUtils";
-import { InteractionResponseType } from "../../utils/Types";
+import { resolveInfraction } from "../../utils/ModerationUtils";
+import { InteractionResponseType, LoggingEvent } from "../../utils/Types";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -43,13 +43,8 @@ export default class KickCommand extends ChatInputCommand {
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const reason = interaction.options.getString("reason");
         const member = interaction.options.getMember("member") as GuildMember;
-        const guildId = interaction.guildId as string;
-        const config = ClientManager.config(guildId);
-
-        if (!config) {
-            await interaction.editReply("Failed to fetch guild configuration");
-            return;
-        }
+        const guildId = interaction.guildId!;
+        const config = ClientManager.config(guildId)!;
 
         const { success, error } = config.emojis;
 
@@ -69,7 +64,8 @@ export default class KickCommand extends ChatInputCommand {
 
         try {
             await member.kick(reason ?? undefined);
-            await resolveMemberKick({
+            await resolveInfraction({
+                infractionType: LoggingEvent.MemberKick,
                 moderator: interaction.user,
                 offender: member.user,
                 guildId,
@@ -78,7 +74,7 @@ export default class KickCommand extends ChatInputCommand {
 
             await interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${reason ? ` (\`${reason}\`)` : ""}`);
         } catch {
-            await interaction.editReply(`${error} An error occurred while trying to kick this member.`);
+            await interaction.editReply(`${error} An error has occurred while trying to kick this member.`);
         }
     }
 }

@@ -15,6 +15,10 @@ export default class Config {
     // eslint-disable-next-line no-empty-function
     constructor(private readonly data: ConfigData) {}
 
+    get deleteMessageSecondsOnBan() {
+        return this.data.deleteMessageSecondsOnBan ?? 0;
+    }
+
     get emojis() {
         return this.data.emojis ?? {
             success: "✅",
@@ -140,13 +144,12 @@ export default class Config {
     }): string | void {
         const { moderatorId, offender, additionalValidation } = data;
 
-        if (!offender) return "The member provided is invalid.";
         if (moderatorId === offender.id) return "You cannot moderate yourself.";
         if (offender.user.bot) return "Bots cannot be moderated.";
         if (this.isGuildStaff(offender)) return "Server staff cannot be moderated.";
 
-        additionalValidation?.forEach(check => {
+        for (const check of additionalValidation ?? []) {
             if (check.condition) return check.reason;
-        });
+        }
     }
 }

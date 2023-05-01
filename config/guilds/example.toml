@@ -1,3 +1,5 @@
+deleteMessageSecondsOnBan = 0
+
 [ephemeralResponses]
 enabled = true
 excludedCategories = ["category-id"]
