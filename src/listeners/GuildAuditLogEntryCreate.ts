@@ -1,6 +1,7 @@
-import { Events, GuildAuditLogsEntry, AuditLogEvent, User, Guild } from "discord.js";
+import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
 import EventListener from "../handlers/listeners/EventListener";
-import { resolveMemberKick } from "../utils/ModerationUtils";
+import { resolveInfraction } from "../utils/ModerationUtils";
+import { LoggingEvent } from "../utils/Types";
 
 export default class GuildAuditLogEntryCreateListener extends EventListener {
     constructor() {
@@ -19,16 +20,26 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         }
 
         if (executor.bot) return;
+        let infractionType: LoggingEvent | undefined;
 
         switch (log.action) {
-            case AuditLogEvent.MemberKick: {
-                await resolveMemberKick({
-                    moderator: executor,
-                    offender: target as User,
-                    guildId: guild.id,
-                    reason
-                });
-            }
+            case AuditLogEvent.MemberKick:
+                infractionType = LoggingEvent.MemberKick;
+                break;
+
+            case AuditLogEvent.MemberBanAdd:
+                infractionType = LoggingEvent.MemberBan;
+                break;
+        }
+
+        if (infractionType) {
+            await resolveInfraction({
+                moderator: executor,
+                offender: target as User,
+                guildId: guild.id,
+                infractionType,
+                reason
+            });
         }
     }
 }
