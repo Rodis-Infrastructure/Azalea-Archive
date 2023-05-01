@@ -1,13 +1,12 @@
-import { EmbedBuilder, GuildTextBasedChannel } from "discord.js";
-import { LoggingEvent } from "./Types";
+import { GuildTextBasedChannel } from "discord.js";
 import ClientManager from "../Client";
+import { LogData } from "./Types";
 
-export async function sendLog(data: { event: LoggingEvent, channel: GuildTextBasedChannel, embed: EmbedBuilder }): Promise<void> {
-    const { event, channel, embed } = data;
-    const { guildId } = channel;
+export async function sendLog(data: LogData): Promise<void> {
+    const { event, channel, guildId, embed } = data;
 
-    const config = ClientManager.config(guildId);
-    if (!config?.canLog(event, channel)) return;
+    const config = ClientManager.config(channel?.guildId || guildId as string);
+    if (channel && !config?.canLog(event, channel)) return;
 
     const loggingChannelId = config?.loggingChannel(event) as string;
     const loggingChannel = await ClientManager.client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;

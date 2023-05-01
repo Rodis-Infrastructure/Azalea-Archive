@@ -1,37 +1,45 @@
 import {
-    ConfigData,
-    StringInteractionType,
-    LoggingEvent
-} from "./Types";
-
-import {
-    GuildMember,
-    InteractionType,
     ComponentType,
+    GuildMember,
+    GuildTextBasedChannel,
+    InteractionType,
     MessageComponentInteraction,
-    ModalSubmitInteraction,
-    GuildTextBasedChannel
+    ModalSubmitInteraction
 } from "discord.js";
 
 import ClientManager from "../Client";
+import { ConfigData, LoggingEvent, StringInteractionType } from "./Types";
 
 export default class Config {
-    guildId: string;
-    logging: ConfigData["logging"];
-    ephemeralResponses: ConfigData["ephemeralResponses"];
-    roles: NonNullable<ConfigData["roles"]>;
-    groups: NonNullable<ConfigData["groups"]>;
+    // @formatter:off
+    // eslint-disable-next-line no-empty-function
+    constructor(private readonly data: ConfigData) {}
 
-    constructor(guildId: string, data: ConfigData) {
-        this.guildId = guildId;
-        this.logging = data.logging;
-        this.ephemeralResponses = data.ephemeralResponses;
-        this.roles = data.roles ?? [];
-        this.groups = data.groups ?? [];
+    get emojis() {
+        return this.data.emojis ?? {
+            success: "✅",
+            error: "❌"
+        };
     }
 
-    save() {
-        ClientManager.configs.set(this.guildId, this);
+    private get logging() {
+        return this.data.logging;
+    }
+
+    private get ephemeralResponses() {
+        return this.data.ephemeralResponses;
+    }
+
+    private get roles() {
+        return this.data.roles ?? [];
+    }
+
+    private get groups() {
+        return this.data.groups ?? [];
+    }
+
+    bind(guildId: string) {
+        ClientManager.configs.set(guildId, this);
     }
 
     loggingChannel(event: LoggingEvent): string | undefined {
@@ -41,8 +49,14 @@ export default class Config {
     canLog(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
         if (!this.logging) return false;
 
-        const { [eventName]: event, enabled, excludedChannels, excludedCategories } = this.logging;
-        const categoryId = channel.parentId ?? "None";
+        const {
+            [eventName]: event,
+            enabled,
+            excludedChannels,
+            excludedCategories
+        } = this.logging;
+
+        const categoryId = channel.parentId ?? "";
 
         return (
             enabled &&
@@ -70,12 +84,11 @@ export default class Config {
     }
 
     interactionAllowed(interaction: MessageComponentInteraction | ModalSubmitInteraction): boolean {
-        if (this.roles.length === 0 && this.groups.length === 0) return false;
+        if (!this.roles.length && !this.groups.length) return false;
 
         const member = interaction.member as GuildMember;
         if (!member) return false;
 
-        const { customId } = interaction;
         let interactionType: StringInteractionType = "modals";
 
         if (interaction.type === InteractionType.MessageComponent) {
@@ -85,13 +98,13 @@ export default class Config {
                     break;
 
                 case ComponentType.SelectMenu:
-                    interactionType = "selectMenus";
+                    interactionType = "selections";
                     break;
             }
         }
 
         for (const role of this.roles) {
-            if (role[interactionType]?.includes(customId)) {
+            if (role[interactionType]?.includes(interaction.customId)) {
                 if (member.roles.cache.has(role.id)) {
                     return true;
                 }
@@ -99,7 +112,7 @@ export default class Config {
         }
 
         for (const group of this.groups) {
-            if (group[interactionType]?.includes(customId)) {
+            if (group[interactionType]?.includes(interaction.customId)) {
                 if (group.roles.some(roleId => member.roles.cache.has(roleId))) {
                     return true;
                 }
@@ -114,5 +127,26 @@ export default class Config {
         const groups = this.groups.filter(group => group.guildStaff).flatMap(group => group.roles);
 
         return [...new Set([...roles, ...groups])];
+    }
+
+    isGuildStaff(member: GuildMember): boolean {
+        return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
+    }
+
+    validateModerationReason(data: {
+        moderatorId: string,
+        offender: GuildMember,
+        additionalValidation?: { condition: boolean, reason: string }[]
+    }): string | void {
+        const { moderatorId, offender, additionalValidation } = data;
+
+        if (!offender) return "The member provided is invalid.";
+        if (moderatorId === offender.id) return "You cannot moderate yourself.";
+        if (offender.user.bot) return "Bots cannot be moderated.";
+        if (this.isGuildStaff(offender)) return "Server staff cannot be moderated.";
+
+        additionalValidation?.forEach(check => {
+            if (check.condition) return check.reason;
+        });
     }
 }

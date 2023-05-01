@@ -1,4 +1,5 @@
 import { parse } from "@iarna/toml";
+import { Events } from "discord.js";
 
 import { readdir, readFile } from "node:fs/promises";
 import ClientManager from "../Client";
@@ -9,7 +10,7 @@ import { ConfigData } from "../utils/Types";
 export default class ReadyEventListener extends EventListener {
     constructor() {
         super({
-            name: "ready",
+            name: Events.ClientReady,
             once: true
         });
     }
@@ -20,14 +21,14 @@ export default class ReadyEventListener extends EventListener {
 
         for (const file of configFiles) {
             const guildId = file.split(".")[0];
-            if (guildId === "example") continue;
+            if (!guildId.match(/^\d{17,19}$/g)) continue;
 
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            new Config(guildId, config).save();
+            new Config(config).bind(guildId);
         }
 
         await Promise.all([
-            ClientManager.selectMenus.load(),
+            ClientManager.selections.load(),
             ClientManager.buttons.load(),
             ClientManager.modals.load(),
             ClientManager.commands.load()
