@@ -3,7 +3,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandI
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { resolveInfraction } from "../../utils/ModerationUtils";
-import { InteractionResponseType, LoggingEvent } from "../../utils/Types";
+import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 export default class BanCommand extends ChatInputCommand {
     constructor() {
@@ -68,7 +68,7 @@ export default class BanCommand extends ChatInputCommand {
             });
 
             await resolveInfraction({
-                infractionType: LoggingEvent.MemberBan,
+                infractionType: InfractionType.Ban,
                 moderator: interaction.user,
                 offender: user,
                 guildId,

@@ -1,38 +1,52 @@
 import { ColorResolvable, Colors, EmbedBuilder, User } from "discord.js";
 import { sendLog } from "./LoggingUtils";
-import { LoggingEvent } from "./Types";
+import { InfractionType, LoggingEvent } from "./Types";
+import ms from "ms";
 
 export async function resolveInfraction(data: {
     moderator: User,
     offender: User,
     guildId: string,
-    reason: string | null,
-    infractionType: LoggingEvent
+    reason?: string | null,
+    infractionType: InfractionType,
+    duration?: number
 }): Promise<void> {
-    const { moderator, offender, reason, guildId, infractionType } = data;
-    let name!: string;
+    const {
+        moderator,
+        offender,
+        reason,
+        guildId,
+        infractionType,
+        duration
+    } = data;
+
     let color!: ColorResolvable;
 
     switch (infractionType) {
-        case LoggingEvent.MemberBan:
-            name = "Member Banned";
-            color = Colors.Purple;
+        case InfractionType.Ban:
+            color = Colors.Blurple;
             break;
 
-        case LoggingEvent.MemberKick:
-            name = "Member Kicked";
+        case InfractionType.Kick:
             color = Colors.Red;
             break;
 
-        case LoggingEvent.MemberUnban:
-            name = "Member Unbanned";
-            color = Colors.Blue;
+        case InfractionType.Unban:
+            color = Colors.DarkButNotBlack;
+            break;
+
+        case InfractionType.Mute:
+            color = Colors.NotQuiteBlack;
+            break;
+
+        case InfractionType.Unmute:
+            color = Colors.DarkButNotBlack;
             break;
     }
 
     const log = new EmbedBuilder()
         .setColor(color)
-        .setAuthor({ name })
+        .setAuthor({ name: infractionType })
         .setFields([
             {
                 name: "Member",
@@ -45,10 +59,11 @@ export async function resolveInfraction(data: {
         ])
         .setTimestamp();
 
+    if (duration) log.addFields([{ name: "Duration", value: ms(duration, { long: true }) }]);
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
 
     await sendLog({
-        event: infractionType,
+        event: LoggingEvent.Infraction,
         embed: log,
         guildId
     });

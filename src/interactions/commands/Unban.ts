@@ -3,7 +3,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandI
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { resolveInfraction } from "../../utils/ModerationUtils";
-import { InteractionResponseType, LoggingEvent } from "../../utils/Types";
+import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 export default class UnbanCommand extends ChatInputCommand {
     constructor() {
@@ -53,7 +53,7 @@ export default class UnbanCommand extends ChatInputCommand {
         try {
             await interaction.guild?.members.unban(user, reason ?? undefined);
             await resolveInfraction({
-                infractionType: LoggingEvent.MemberUnban,
+                infractionType: InfractionType.Unban,
                 moderator: interaction.user,
                 offender: user,
                 guildId,

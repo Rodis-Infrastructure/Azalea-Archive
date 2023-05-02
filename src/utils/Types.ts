@@ -8,9 +8,15 @@ export enum InteractionResponseType {
 
 export enum LoggingEvent {
     InteractionUsage = "interactionUsage",
-    MemberKick = "memberKick",
-    MemberBan = "memberBan",
-    MemberUnban = "memberUnban",
+    Infraction = "infractions"
+}
+
+export enum InfractionType {
+    Ban = "Member Banned",
+    Unban = "Member Unbanned",
+    Kick = "Member Kicked",
+    Mute = "Member Muted",
+    Unmute = "Member Unmuted"
 }
 
 export type StringInteractionType = "buttons" | "modals" | "selections";

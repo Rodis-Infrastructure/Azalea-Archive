@@ -7,32 +7,24 @@ import {
 
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { resolveInfraction } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
+import ms from "ms";
+import { resolveInfraction } from "../../utils/ModerationUtils";
 
-export default class KickCommand extends ChatInputCommand {
+export default class UnmuteCommand extends ChatInputCommand {
     constructor() {
         super({
-            name: "kick",
-            description: "Kick a member from the guild.",
+            name: "unmute",
+            description: "Revoke a user's timeout.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Defer,
             skipInternalUsageCheck: false,
-            options: [
-                {
-                    name: "member",
-                    description: "The member to kick",
-                    type: ApplicationCommandOptionType.User,
-                    required: true
-                },
-                {
-                    name: "reason",
-                    description: "The reason for kicking the member",
-                    type: ApplicationCommandOptionType.String,
-                    max_length: 1024,
-                    required: false
-                }
-            ]
+            options: [{
+                name: "member",
+                description: "The member to unmute",
+                type: ApplicationCommandOptionType.User,
+                required: true
+            }]
         });
     }
 
@@ -41,7 +33,6 @@ export default class KickCommand extends ChatInputCommand {
      * @returns {Promise<void>}
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const reason = interaction.options.getString("reason");
         const member = interaction.options.getMember("member") as GuildMember;
         const guildId = interaction.guildId!;
         const config = ClientManager.config(guildId)!;
@@ -57,8 +48,8 @@ export default class KickCommand extends ChatInputCommand {
             moderatorId: interaction.user.id,
             offender: member,
             additionalValidation: [{
-                condition: !member.kickable,
-                reason: "I do not have permission to kick this member."
+                condition: !member.moderatable,
+                reason: "I do not have permission to unmute this member."
             }]
         });
 
@@ -67,19 +58,26 @@ export default class KickCommand extends ChatInputCommand {
             return;
         }
 
+        const currentTimestamp = ms(Date.now().toString());
+        const mutedTimestamp = member.communicationDisabledUntilTimestamp;
+
+        if (!mutedTimestamp || mutedTimestamp < currentTimestamp) {
+            await interaction.editReply(`${error} This member is not muted.`);
+            return;
+        }
+
         try {
-            await member.kick(reason ?? undefined);
+            await member.timeout(null);
             await resolveInfraction({
-                infractionType: InfractionType.Kick,
-                moderator: interaction.user,
-                offender: member.user,
                 guildId,
-                reason
+                infractionType: InfractionType.Unmute,
+                offender: member.user,
+                moderator: interaction.user
             });
 
-            await interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${reason ? ` (\`${reason}\`)` : ""}`);
+            await interaction.editReply(`${success} Successfully unmuted **${member.user.tag}**`);
         } catch {
-            await interaction.editReply(`${error} An error has occurred while trying to kick this member.`);
+            await interaction.editReply(`${error} An error has occurred while trying to unmute this member.`);
         }
     }
 }
