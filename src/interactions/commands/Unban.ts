@@ -52,15 +52,17 @@ export default class UnbanCommand extends ChatInputCommand {
 
         try {
             await interaction.guild?.members.unban(user, reason ?? undefined);
-            await resolveInfraction({
-                infractionType: InfractionType.Unban,
-                moderator: interaction.user,
-                offender: user,
-                guildId,
-                reason
-            });
+            await Promise.all([
+                resolveInfraction({
+                    infractionType: InfractionType.Unban,
+                    moderator: interaction.user,
+                    offender: user,
+                    guildId,
+                    reason
+                }),
 
-            await interaction.editReply(`${success} Successfully unbanned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`);
+                interaction.editReply(`${success} Successfully unbanned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
+            ]);
         } catch {
             await interaction.editReply(`${error} An error has occurred while trying to unban this user.`);
         }

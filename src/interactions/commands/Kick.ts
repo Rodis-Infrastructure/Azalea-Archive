@@ -70,15 +70,17 @@ export default class KickCommand extends ChatInputCommand {
 
         try {
             await member.kick(reason ?? undefined);
-            await resolveInfraction({
-                infractionType: InfractionType.Kick,
-                moderator: interaction.user,
-                offender: member.user,
-                guildId,
-                reason
-            });
+            await Promise.all([
+                resolveInfraction({
+                    infractionType: InfractionType.Kick,
+                    moderator: interaction.user,
+                    offender: member.user,
+                    guildId,
+                    reason
+                }),
 
-            await interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${reason ? ` (\`${reason}\`)` : ""}`);
+                interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
+            ]);
         } catch {
             await interaction.editReply(`${error} An error has occurred while trying to kick this member.`);
         }

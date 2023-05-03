@@ -82,15 +82,17 @@ export default class BanCommand extends ChatInputCommand {
                 deleteMessageSeconds: config.deleteMessageSecondsOnBan
             });
 
-            await resolveInfraction({
-                infractionType: InfractionType.Ban,
-                moderator: interaction.user,
-                offender: user,
-                guildId,
-                reason
-            });
+            await Promise.all([
+                resolveInfraction({
+                    infractionType: InfractionType.Ban,
+                    moderator: interaction.user,
+                    offender: user,
+                    guildId,
+                    reason
+                }),
 
-            await interaction.editReply(`${success} Successfully banned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`);
+                interaction.editReply(`${success} Successfully banned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
+            ]);
         } catch {
             await interaction.editReply(`${error} An error has occurred while trying to ban this user.`);
         }

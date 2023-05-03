@@ -46,9 +46,11 @@ export default class QuickMute60Command extends ContextMenuCommand {
         if (typeof res === "number") {
             const muteDetails = `muted **${message.author?.tag}** until <t:${res}:F> | Expires <t:${res}:R> (\`${reason}\`)`;
 
-            await interaction.editReply(`${config.emojis.success} Successfully ${muteDetails}`);
-            await channel.send(`${config.emojis.success} **${interaction.user.tag}** has successfully ${muteDetails}`);
-            await message.delete().catch(() => null);
+            await Promise.all([
+                interaction.editReply(`${config.emojis.success} Successfully ${muteDetails}`),
+                channel.send(`${config.emojis.success} **${interaction.user.tag}** has successfully ${muteDetails}`),
+                message.delete().catch(() => null)
+            ]);
 
             return;
         }
