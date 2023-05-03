@@ -1,11 +1,11 @@
 import ClientManager from "../../../Client";
 import Modal from "./Modal";
 
-import { Collection, EmbedBuilder, GuildTextBasedChannel, ModalSubmitInteraction } from "discord.js";
+import { Collection, EmbedBuilder, GuildMember, GuildTextBasedChannel, ModalSubmitInteraction } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
-import { LoggingEvent } from "../../../utils/Types";
+import { LoggingEvent, RolePermission } from "../../../utils/Types";
 
 
 export default class ModalHandler {
@@ -45,17 +45,17 @@ export default class ModalHandler {
             if ((m.name as { startsWith: string }).startsWith) {
                 return interaction.customId.startsWith((m.name as {
                     startsWith: string
-                }).startsWith); 
+                }).startsWith);
             }
             if ((m.name as { endsWith: string }).endsWith) {
                 return interaction.customId.endsWith((m.name as {
                     endsWith: string
-                }).endsWith); 
+                }).endsWith);
             }
             if ((m.name as { includes: string }).includes) {
                 return interaction.customId.includes((m.name as {
                     includes: string
-                }).includes); 
+                }).includes);
             }
 
             return false;
@@ -67,7 +67,11 @@ export default class ModalHandler {
             modal.name :
             Object.values(modal.name)[0];
 
-        if (!config.interactionAllowed(interaction)) {
+        if (!config.actionAllowed({
+            roleProperty: RolePermission.Modal,
+            id: modalName,
+            member: interaction.member as GuildMember
+        })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
                 ephemeral: true

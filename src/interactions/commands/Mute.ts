@@ -7,9 +7,8 @@ import {
 
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { InfractionType, InteractionResponseType } from "../../utils/Types";
-import ms from "ms";
-import { resolveInfraction } from "../../utils/ModerationUtils";
+import { InteractionResponseType } from "../../utils/Types";
+import { muteMember } from "../../utils/ModerationUtils";
 
 export default class MuteCommand extends ChatInputCommand {
     constructor() {
@@ -48,7 +47,7 @@ export default class MuteCommand extends ChatInputCommand {
      * @returns {Promise<void>}
      */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const reason = interaction.options.getString("reason");
+        const reason = interaction.options.getString("reason") ?? undefined;
         const duration = interaction.options.getString("duration") ?? "28d";
         const member = interaction.options.getMember("member") as GuildMember;
         const guildId = interaction.guildId!;
@@ -61,55 +60,19 @@ export default class MuteCommand extends ChatInputCommand {
             return;
         }
 
-        const notModerateableReason = config.validateModerationReason({
-            moderatorId: interaction.user.id,
+        const res = await muteMember({
+            config,
+            moderator: interaction.user,
             offender: member,
-            additionalValidation: [{
-                condition: !member.moderatable,
-                reason: "I do not have permission to mute this member."
-            }]
+            duration,
+            reason
         });
 
-        if (notModerateableReason) {
-            await interaction.editReply(`${error} ${notModerateableReason}`);
+        if (typeof res === "number") {
+            await interaction.editReply(`${success} Successfully muted **${member.user.tag}** until <t:${res}:F> | Expires <t:${res}:R>${reason ? ` (\`${reason}\`)` : ""}`);
             return;
         }
 
-        const currentTimestamp = ms(Date.now().toString());
-        let mutedTimestamp = member.communicationDisabledUntilTimestamp;
-
-        if (mutedTimestamp && mutedTimestamp >= currentTimestamp) {
-            mutedTimestamp = Math.round(mutedTimestamp / 1000);
-            await interaction.editReply(`${error} This member has already been muted until <t:${mutedTimestamp}:F> (expires <t:${mutedTimestamp}:R>).`);
-            return;
-        }
-
-        let msDuration = ms(duration);
-
-        if (!duration.match(/^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi) || msDuration <= 0) {
-            await interaction.editReply(`${error} The duration provided is not valid.`);
-            return;
-        }
-
-        if (msDuration > ms("28d")) msDuration = ms("28d");
-
-        try {
-            await member.timeout(msDuration, reason ?? undefined);
-            await resolveInfraction({
-                guildId,
-                infractionType: InfractionType.Mute,
-                offender: member.user,
-                moderator: interaction.user,
-                duration: msDuration,
-                reason
-            });
-
-            msDuration += currentTimestamp;
-            msDuration = Math.round(msDuration / 1000);
-
-            await interaction.editReply(`${success} Successfully muted **${member.user.tag}** until <t:${msDuration}:F> | Expires <t:${msDuration}:R>${reason ? ` (\`${reason}\`)` : ""}`);
-        } catch {
-            await interaction.editReply(`${error} An error has occurred while trying to mute this member.`);
-        }
+        await interaction.editReply(`${error} ${res}`);
     }
 }

@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandI
 
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { resolveInfraction } from "../../utils/ModerationUtils";
+import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 export default class BanCommand extends ChatInputCommand {
@@ -46,7 +46,8 @@ export default class BanCommand extends ChatInputCommand {
             .catch(() => undefined);
 
         if (member) {
-            const notModerateableReason = config.validateModerationReason({
+            const notModerateableReason = validateModerationReason({
+                config,
                 moderatorId: interaction.user.id,
                 offender: member,
                 additionalValidation: [{

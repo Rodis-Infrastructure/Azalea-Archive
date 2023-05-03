@@ -9,7 +9,7 @@ import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
 import ms from "ms";
-import { resolveInfraction } from "../../utils/ModerationUtils";
+import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
 
 export default class UnmuteCommand extends ChatInputCommand {
     constructor() {
@@ -44,7 +44,8 @@ export default class UnmuteCommand extends ChatInputCommand {
             return;
         }
 
-        const notModerateableReason = config.validateModerationReason({
+        const notModerateableReason = validateModerationReason({
+            config,
             moderatorId: interaction.user.id,
             offender: member,
             additionalValidation: [{

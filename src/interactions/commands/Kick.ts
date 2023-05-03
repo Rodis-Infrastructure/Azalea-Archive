@@ -7,7 +7,7 @@ import {
 
 import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { resolveInfraction } from "../../utils/ModerationUtils";
+import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 export default class KickCommand extends ChatInputCommand {
@@ -53,7 +53,8 @@ export default class KickCommand extends ChatInputCommand {
             return;
         }
 
-        const notModerateableReason = config.validateModerationReason({
+        const notModerateableReason = validateModerationReason({
+            config,
             moderatorId: interaction.user.id,
             offender: member,
             additionalValidation: [{

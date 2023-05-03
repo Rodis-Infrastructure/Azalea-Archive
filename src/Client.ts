@@ -21,6 +21,7 @@ class ClientManager {
         intents: [
             GatewayIntentBits.GuildMessageReactions,
             GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.MessageContent,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMembers,
             GatewayIntentBits.GuildBans,
@@ -29,6 +30,7 @@ class ClientManager {
         partials: [
             Partials.ThreadMember,
             Partials.GuildMember,
+            Partials.Reaction,
             Partials.Channel,
             Partials.Message,
             Partials.User

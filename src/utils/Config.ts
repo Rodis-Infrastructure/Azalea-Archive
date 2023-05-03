@@ -1,14 +1,7 @@
-import {
-    ComponentType,
-    GuildMember,
-    GuildTextBasedChannel,
-    InteractionType,
-    MessageComponentInteraction,
-    ModalSubmitInteraction
-} from "discord.js";
+import { ComponentType, GuildMember, GuildTextBasedChannel, InteractionType } from "discord.js";
 
 import ClientManager from "../Client";
-import { ConfigData, LoggingEvent, StringInteractionType } from "./Types";
+import { ConfigData, LoggingEvent, RolePermission } from "./Types";
 
 export default class Config {
     // @formatter:off
@@ -17,6 +10,10 @@ export default class Config {
 
     get deleteMessageSecondsOnBan() {
         return this.data.deleteMessageSecondsOnBan ?? 0;
+    }
+
+    get channels() {
+        return this.data.channels ?? {};
     }
 
     get emojis() {
@@ -87,28 +84,12 @@ export default class Config {
         ) as boolean;
     }
 
-    interactionAllowed(interaction: MessageComponentInteraction | ModalSubmitInteraction): boolean {
+    actionAllowed(data: { roleProperty: RolePermission, id: string, member: GuildMember }): boolean {
+        const { roleProperty, id, member } = data;
         if (!this.roles.length && !this.groups.length) return false;
 
-        const member = interaction.member as GuildMember;
-        if (!member) return false;
-
-        let interactionType: StringInteractionType = "modals";
-
-        if (interaction.type === InteractionType.MessageComponent) {
-            switch (interaction.componentType) {
-                case ComponentType.Button:
-                    interactionType = "buttons";
-                    break;
-
-                case ComponentType.SelectMenu:
-                    interactionType = "selections";
-                    break;
-            }
-        }
-
         for (const role of this.roles) {
-            if (role[interactionType]?.includes(interaction.customId)) {
+            if (role[roleProperty]?.includes(id)) {
                 if (member.roles.cache.has(role.id)) {
                     return true;
                 }
@@ -116,7 +97,7 @@ export default class Config {
         }
 
         for (const group of this.groups) {
-            if (group[interactionType]?.includes(interaction.customId)) {
+            if (group[roleProperty]?.includes(id)) {
                 if (group.roles.some(roleId => member.roles.cache.has(roleId))) {
                     return true;
                 }
@@ -135,21 +116,5 @@ export default class Config {
 
     isGuildStaff(member: GuildMember): boolean {
         return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
-    }
-
-    validateModerationReason(data: {
-        moderatorId: string,
-        offender: GuildMember,
-        additionalValidation?: { condition: boolean, reason: string }[]
-    }): string | void {
-        const { moderatorId, offender, additionalValidation } = data;
-
-        if (moderatorId === offender.id) return "You cannot moderate yourself.";
-        if (offender.user.bot) return "Bots cannot be moderated.";
-        if (this.isGuildStaff(offender)) return "Server staff cannot be moderated.";
-
-        for (const check of additionalValidation ?? []) {
-            if (check.condition) return check.reason;
-        }
     }
 }

@@ -6,6 +6,13 @@ export enum InteractionResponseType {
     EphemeralDefer = 2,
 }
 
+export enum RolePermission {
+    Button = "buttons",
+    Modal = "modals",
+    SelectMenu = "selections",
+    Reaction = "reactions",
+}
+
 export enum LoggingEvent {
     InteractionUsage = "interactionUsage",
     Infraction = "infractions"
@@ -19,9 +26,10 @@ export enum InfractionType {
     Unmute = "Member Unmuted"
 }
 
-export type StringInteractionType = "buttons" | "modals" | "selections";
+interface PermissionData extends Partial<Record<RolePermission, string[]>> {
+    guildStaff?: boolean
+}
 
-type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"guildStaff", boolean | undefined>;
 type LoggingEventData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
@@ -32,7 +40,16 @@ interface ToggleableProperty {
     excludedCategories?: string[]
 }
 
-type EmojiType = "success" | "error";
+interface EmojiData {
+    success: string | "✅"
+    error: string | "❌"
+    quickMute30?: string
+    quickMute60?: string
+}
+
+interface ChannelData {
+    staffCommands?: string
+}
 
 export interface ConfigData {
     deleteMessageSecondsOnBan?: number
@@ -40,7 +57,8 @@ export interface ConfigData {
     roles?: Array<PermissionData & Record<"id", string>>,
     groups?: Array<PermissionData & Record<"roles", string[]>>,
     logging?: LoggingEventData,
-    emojis?: Partial<Record<EmojiType, string>>
+    emojis?: EmojiData,
+    channels?: ChannelData
 }
 
 export type LogData = {

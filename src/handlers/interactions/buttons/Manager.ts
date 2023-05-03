@@ -1,8 +1,8 @@
 import ClientManager from "../../../Client";
 import Button from "./Button";
 
-import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
-import { ButtonInteraction, Collection, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
+import { InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
+import { ButtonInteraction, Collection, EmbedBuilder, GuildMember, GuildTextBasedChannel } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
@@ -44,17 +44,17 @@ export default class ButtonHandler {
             if ((b.name as { startsWith: string }).startsWith) {
                 return interaction.customId.startsWith((b.name as {
                     startsWith: string
-                }).startsWith); 
+                }).startsWith);
             }
             if ((b.name as { endsWith: string }).endsWith) {
                 return interaction.customId.endsWith((b.name as {
                     endsWith: string
-                }).endsWith); 
+                }).endsWith);
             }
             if ((b.name as { includes: string }).includes) {
                 return interaction.customId.includes((b.name as {
                     includes: string
-                }).includes); 
+                }).includes);
             }
 
             return false;
@@ -66,7 +66,11 @@ export default class ButtonHandler {
             button.name :
             Object.values(button.name)[0];
 
-        if (!config.interactionAllowed(interaction)) {
+        if (!config.actionAllowed({
+            roleProperty: RolePermission.Button,
+            id: buttonName,
+            member: interaction.member as GuildMember
+        })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
                 ephemeral: true

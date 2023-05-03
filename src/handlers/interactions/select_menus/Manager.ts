@@ -1,7 +1,7 @@
 import ClientManager from "../../../Client";
 
-import { Collection, EmbedBuilder, GuildTextBasedChannel, StringSelectMenuInteraction } from "discord.js";
-import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
+import { Collection, EmbedBuilder, GuildMember, GuildTextBasedChannel, StringSelectMenuInteraction } from "discord.js";
+import { InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -45,17 +45,17 @@ export default class SelectMenuHandler {
             if ((s.name as { startsWith: string }).startsWith) {
                 return interaction.customId.startsWith((s.name as {
                     startsWith: string
-                }).startsWith); 
+                }).startsWith);
             }
             if ((s.name as { endsWith: string }).endsWith) {
                 return interaction.customId.endsWith((s.name as {
                     endsWith: string
-                }).endsWith); 
+                }).endsWith);
             }
             if ((s.name as { includes: string }).includes) {
                 return interaction.customId.includes((s.name as {
                     includes: string
-                }).includes); 
+                }).includes);
             }
 
             return false;
@@ -67,7 +67,11 @@ export default class SelectMenuHandler {
             selectMenu.name :
             Object.values(selectMenu.name)[0];
 
-        if (!config.interactionAllowed(interaction)) {
+        if (!config.actionAllowed({
+            roleProperty: RolePermission.SelectMenu,
+            id: selectMenuName,
+            member: interaction.member as GuildMember
+        })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
                 ephemeral: true
