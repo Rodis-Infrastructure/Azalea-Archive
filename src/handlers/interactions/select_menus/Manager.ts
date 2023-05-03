@@ -67,10 +67,9 @@ export default class SelectMenuHandler {
             selectMenu.name :
             Object.values(selectMenu.name)[0];
 
-        if (!config.actionAllowed({
-            roleProperty: RolePermission.SelectMenu,
-            id: selectMenuName,
-            member: interaction.member as GuildMember
+        if (!config.actionAllowed(interaction.member as GuildMember, {
+            property: RolePermission.SelectMenu,
+            value: selectMenuName
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",

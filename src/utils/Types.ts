@@ -26,7 +26,7 @@ export enum InfractionType {
     Unmute = "Member Unmuted"
 }
 
-interface PermissionData extends Partial<Record<RolePermission, string[]>> {
+export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
     guildStaff?: boolean
 }
 

@@ -36,10 +36,9 @@ export default class MessageReactionAddEventListener extends EventListener {
                 emojiType = "quickMute60";
             }
 
-            if (!config.actionAllowed({
-                roleProperty: RolePermission.Reaction,
-                id: emojiType,
-                member
+            if (!config.actionAllowed(member, {
+                property: RolePermission.Reaction,
+                value: emojiType
             })) return;
 
             const reason = message.content ?? undefined;

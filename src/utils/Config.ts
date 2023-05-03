@@ -1,7 +1,7 @@
-import { ComponentType, GuildMember, GuildTextBasedChannel, InteractionType } from "discord.js";
+import { GuildMember, GuildTextBasedChannel } from "discord.js";
 
 import ClientManager from "../Client";
-import { ConfigData, LoggingEvent, RolePermission } from "./Types";
+import { ConfigData, LoggingEvent, PermissionData } from "./Types";
 
 export default class Config {
     // @formatter:off
@@ -84,12 +84,19 @@ export default class Config {
         ) as boolean;
     }
 
-    actionAllowed(data: { roleProperty: RolePermission, id: string, member: GuildMember }): boolean {
-        const { roleProperty, id, member } = data;
+    actionAllowed(member: GuildMember, data: { property: keyof PermissionData, value: string | boolean }): boolean {
+        const { property, value } = data;
         if (!this.roles.length && !this.groups.length) return false;
 
         for (const role of this.roles) {
-            if (role[roleProperty]?.includes(id)) {
+            const propertyValue = role[property];
+
+            if (
+                // Property with a boolean value
+                (!Array.isArray(propertyValue) && propertyValue === value) ||
+                // Property with an array of strings
+                (Array.isArray(propertyValue) && propertyValue?.includes(value as string))
+            ) {
                 if (member.roles.cache.has(role.id)) {
                     return true;
                 }
@@ -97,7 +104,14 @@ export default class Config {
         }
 
         for (const group of this.groups) {
-            if (group[roleProperty]?.includes(id)) {
+            const propertyValue = group[property];
+
+            if (
+                // Property with a boolean value
+                (!Array.isArray(propertyValue) && propertyValue === value) ||
+                // Property with an array of strings
+                (Array.isArray(propertyValue) && propertyValue?.includes(value as string))
+            ) {
                 if (group.roles.some(roleId => member.roles.cache.has(roleId))) {
                     return true;
                 }

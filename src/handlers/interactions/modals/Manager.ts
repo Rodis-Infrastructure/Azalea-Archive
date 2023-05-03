@@ -67,10 +67,9 @@ export default class ModalHandler {
             modal.name :
             Object.values(modal.name)[0];
 
-        if (!config.actionAllowed({
-            roleProperty: RolePermission.Modal,
-            id: modalName,
-            member: interaction.member as GuildMember
+        if (!config.actionAllowed(interaction.member as GuildMember, {
+            property: RolePermission.Modal,
+            value: modalName
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",

@@ -66,10 +66,9 @@ export default class ButtonHandler {
             button.name :
             Object.values(button.name)[0];
 
-        if (!config.actionAllowed({
-            roleProperty: RolePermission.Button,
-            id: buttonName,
-            member: interaction.member as GuildMember
+        if (!config.actionAllowed(interaction.member as GuildMember, {
+            property: RolePermission.Button,
+            value: buttonName
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
