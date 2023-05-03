@@ -62,6 +62,20 @@ export default class BanCommand extends ChatInputCommand {
             }
         }
 
+        const isBanned = await interaction.guild?.bans.fetch(user.id).catch(() => undefined);
+
+        if (isBanned) {
+            await interaction.editReply(`${error} This user has already been banned.`);
+            return;
+        }
+
+        let deleteMessageSeconds = config.deleteMessageSecondsOnBan;
+
+        // Minimum value
+        if (deleteMessageSeconds < 0) deleteMessageSeconds = 0;
+        // Maximum value
+        if (deleteMessageSeconds > 604800) deleteMessageSeconds = 604800;
+
         try {
             await interaction.guild?.members.ban(user, {
                 reason: reason ?? undefined,
