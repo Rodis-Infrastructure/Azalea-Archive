@@ -8,7 +8,7 @@ export async function resolveInfraction(data: {
     moderator: User,
     offender: User,
     guildId: string,
-    reason?: string | null,
+    reason?: string,
     infractionType: InfractionType,
     duration?: number
 }): Promise<void> {

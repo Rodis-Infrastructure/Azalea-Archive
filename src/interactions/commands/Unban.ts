@@ -1,9 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-
-import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { resolveInfraction } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
+import Config from "../../utils/Config";
 
 export default class UnbanCommand extends ChatInputCommand {
     constructor() {
@@ -31,15 +30,12 @@ export default class UnbanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const reason = interaction.options.getString("reason");
-        const user = interaction.options.getUser("user")!;
-        const guildId = interaction.guildId!;
-        const config = ClientManager.config(guildId)!;
+    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+        const user = interaction.options.getUser("user", true);
+        const bannedMember = await interaction.guild?.bans.fetch(user.id)
+            .catch(() => null);
 
         const { success, error } = config.emojis;
-        const bannedMember = await interaction.guild?.bans.fetch(user.id)
-            .catch(() => undefined);
 
         if (!bannedMember) {
             await interaction.editReply(`${error} This user is not banned.`);
@@ -47,13 +43,15 @@ export default class UnbanCommand extends ChatInputCommand {
         }
 
         try {
-            await interaction.guild?.members.unban(user, reason ?? undefined);
+            const reason = interaction.options.getString("reason") ?? undefined;
+
+            await interaction.guild?.members.unban(user, reason);
             await Promise.all([
                 resolveInfraction({
                     infractionType: InfractionType.Unban,
                     moderator: interaction.user,
                     offender: user,
-                    guildId,
+                    guildId: interaction.guildId!,
                     reason
                 }),
 

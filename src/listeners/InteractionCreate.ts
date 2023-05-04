@@ -12,6 +12,8 @@ export default class InteractionCreateEventListener extends EventListener {
     }
 
     async execute(interaction: Interaction): Promise<void> {
+        if (!interaction.guild || !interaction.guildId) return;
+
         if (
             interaction.isChatInputCommand() ||
             interaction.isMessageContextMenuCommand() ||

@@ -24,11 +24,11 @@ export default class ButtonHandler {
     }
 
     public register(button: Button) {
-        this.buttons.set(button.name, button);
+        this.buttons.set(button.data.name, button);
     }
 
     public async handle(interaction: ButtonInteraction) {
-        const config = ClientManager.config(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {
             await interaction.reply({
@@ -38,21 +38,22 @@ export default class ButtonHandler {
             return;
         }
 
-        const button = this.buttons.find(b => {
-            if (typeof b.name === "string") return b.name === interaction.customId;
+        const button = this.buttons.find(btn => {
+            const { name } = btn.data;
+            if (typeof name === "string") return name === interaction.customId;
 
-            if ((b.name as { startsWith: string }).startsWith) {
-                return interaction.customId.startsWith((b.name as {
+            if ((name as { startsWith: string }).startsWith) {
+                return interaction.customId.startsWith((name as {
                     startsWith: string
                 }).startsWith);
             }
-            if ((b.name as { endsWith: string }).endsWith) {
-                return interaction.customId.endsWith((b.name as {
+            if ((name as { endsWith: string }).endsWith) {
+                return interaction.customId.endsWith((name as {
                     endsWith: string
                 }).endsWith);
             }
-            if ((b.name as { includes: string }).includes) {
-                return interaction.customId.includes((b.name as {
+            if ((name as { includes: string }).includes) {
+                return interaction.customId.includes((name as {
                     includes: string
                 }).includes);
             }
@@ -61,10 +62,11 @@ export default class ButtonHandler {
         });
 
         if (!button) return;
+        const { name, defer } = button.data;
 
-        const buttonName = typeof button.name === "string" ?
-            button.name :
-            Object.values(button.name)[0];
+        const buttonName = typeof name === "string" ?
+            name :
+            Object.values(name)[0];
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
             property: RolePermission.Button,
@@ -81,7 +83,7 @@ export default class ButtonHandler {
 
         const responseType = config.ephemeralResponseIn(channel) ?
             InteractionResponseType.EphemeralDefer :
-            button.defer;
+            defer;
 
         switch (responseType) {
             case InteractionResponseType.Defer: {
@@ -95,7 +97,7 @@ export default class ButtonHandler {
         }
 
         try {
-            await button.execute(interaction);
+            await button.execute(interaction, config);
         } catch (err) {
             console.log(`Failed to execute button: ${buttonName}`);
             console.error(err);

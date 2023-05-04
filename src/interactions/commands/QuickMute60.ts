@@ -1,9 +1,9 @@
 import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
-import ClientManager from "../../Client";
 
-import { ApplicationCommandType, MessageContextMenuCommandInteraction, TextBasedChannel } from "discord.js";
+import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../utils/Types";
 import { muteMember } from "../../utils/ModerationUtils";
+import Config from "../../utils/Config";
 
 export default class QuickMute60Command extends ContextMenuCommand {
     constructor() {
@@ -15,16 +15,16 @@ export default class QuickMute60Command extends ContextMenuCommand {
         });
     }
 
-    async execute(interaction: MessageContextMenuCommandInteraction): Promise<void> {
-        const config = ClientManager.config(interaction.guildId!)!;
-        const reason = interaction.targetMessage.content;
+    async execute(interaction: MessageContextMenuCommandInteraction, config: Config): Promise<void> {
         const message = interaction.targetMessage;
+        const { success, error } = config.emojis;
 
         if (!message.member) {
-            await interaction.editReply(`${config.emojis.error} Failed to fetch the message author.`);
+            await interaction.editReply(`${error} Failed to fetch the message author.`);
             return;
         }
 
+        const reason = message.content;
         const res = await muteMember({
             offender: message.member,
             moderator: interaction.user,
@@ -36,21 +36,21 @@ export default class QuickMute60Command extends ContextMenuCommand {
         const channelId = config.channels?.staffCommands;
         if (!channelId) return;
 
-        const channel = await interaction.guild?.channels.fetch(channelId) as TextBasedChannel;
+        const channel = await interaction.guild?.channels.fetch(channelId) as GuildTextBasedChannel;
         if (!channel) return;
 
         if (typeof res === "number") {
             const muteDetails = `muted **${message.author?.tag}** until <t:${res}:F> | Expires <t:${res}:R> (\`${reason}\`)`;
 
             await Promise.all([
-                interaction.editReply(`${config.emojis.success} Successfully ${muteDetails}`),
-                channel.send(`${config.emojis.success} **${interaction.user.tag}** has successfully ${muteDetails}`),
+                interaction.editReply(`${success} Successfully ${muteDetails}`),
+                channel.send(`${success} **${interaction.user.tag}** has successfully ${muteDetails}`),
                 message.delete().catch(() => null)
             ]);
 
             return;
         }
 
-        await interaction.editReply(`${config.emojis.error} ${interaction.user} ${res}`);
+        await interaction.editReply(`${error} ${interaction.user} ${res}`);
     }
 }

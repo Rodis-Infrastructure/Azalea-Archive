@@ -53,7 +53,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                 offender: target as User,
                 guildId: guild.id,
                 infractionType,
-                reason
+                reason: reason ?? undefined
             });
         }
     }

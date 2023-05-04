@@ -5,10 +5,10 @@ import {
     GuildMember
 } from "discord.js";
 
-import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
+import Config from "../../utils/Config";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -36,12 +36,8 @@ export default class KickCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const reason = interaction.options.getString("reason");
+    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const member = interaction.options.getMember("member") as GuildMember;
-        const guildId = interaction.guildId!;
-        const config = ClientManager.config(guildId)!;
-
         const { success, error } = config.emojis;
 
         if (!member) {
@@ -65,13 +61,15 @@ export default class KickCommand extends ChatInputCommand {
         }
 
         try {
-            await member.kick(reason ?? undefined);
+            const reason = interaction.options.getString("reason") ?? undefined;
+
+            await member.kick(reason);
             await Promise.all([
                 resolveInfraction({
                     infractionType: InfractionType.Kick,
                     moderator: interaction.user,
                     offender: member.user,
-                    guildId,
+                    guildId: interaction.guildId!,
                     reason
                 }),
 

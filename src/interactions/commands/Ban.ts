@@ -1,9 +1,9 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 
-import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
+import Config from "../../utils/Config";
 
 export default class BanCommand extends ChatInputCommand {
     constructor() {
@@ -31,15 +31,14 @@ export default class BanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const reason = interaction.options.getString("reason");
-        const user = interaction.options.getUser("user")!;
-        const guildId = interaction.guildId!;
-        const config = ClientManager.config(guildId)!;
+    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+        const user = interaction.options.getUser("user", true);
+        const [member, isBanned] = await Promise.all([
+            interaction.guild?.members.fetch(user.id),
+            interaction.guild?.bans.fetch(user.id)
+        ]).catch(() => []);
 
         const { success, error } = config.emojis;
-        const member = await interaction.guild?.members.fetch(user.id)
-            .catch(() => undefined);
 
         if (member) {
             const notModerateableReason = validateModerationReason({
@@ -58,8 +57,6 @@ export default class BanCommand extends ChatInputCommand {
             }
         }
 
-        const isBanned = await interaction.guild?.bans.fetch(user.id).catch(() => undefined);
-
         if (isBanned) {
             await interaction.editReply(`${error} This user has already been banned.`);
             return;
@@ -73,17 +70,15 @@ export default class BanCommand extends ChatInputCommand {
         if (deleteMessageSeconds > 604800) deleteMessageSeconds = 604800;
 
         try {
-            await interaction.guild?.members.ban(user, {
-                reason: reason ?? undefined,
-                deleteMessageSeconds: config.deleteMessageSecondsOnBan
-            });
+            const reason = interaction.options.getString("reason") ?? undefined;
 
+            await interaction.guild?.members.ban(user, { deleteMessageSeconds, reason });
             await Promise.all([
                 resolveInfraction({
                     infractionType: InfractionType.Ban,
                     moderator: interaction.user,
                     offender: user,
-                    guildId,
+                    guildId: interaction.guildId!,
                     reason
                 }),
 

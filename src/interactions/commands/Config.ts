@@ -5,6 +5,7 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
+    Colors,
     EmbedBuilder
 } from "discord.js";
 
@@ -34,9 +35,9 @@ export default class ConfigCommand extends ChatInputCommand {
         const formattedConfig = stringify(config || {});
 
         const embed = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setTitle("Guild Configuration")
-            .setDescription(`\`\`\`toml\n${formattedConfig || "N/A"}\`\`\``)
+            .setDescription(`\`\`\`toml\n${formattedConfig}\`\`\``)
             .setFooter({ text: `Guild ID: ${guildId}` })
             .setAuthor({
                 name: interaction.guild?.name as string,

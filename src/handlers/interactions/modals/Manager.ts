@@ -25,7 +25,7 @@ export default class ModalHandler {
     }
 
     public register(modal: Modal) {
-        this.list.set(modal.name, modal);
+        this.list.set(modal.data.name, modal);
     }
 
     public async handle(interaction: ModalSubmitInteraction) {
@@ -40,20 +40,21 @@ export default class ModalHandler {
         }
 
         const modal = this.list.find(m => {
-            if (typeof m.name === "string") return m.name === interaction.customId;
+            const { name } = m.data;
+            if (typeof name === "string") return name === interaction.customId;
 
-            if ((m.name as { startsWith: string }).startsWith) {
-                return interaction.customId.startsWith((m.name as {
+            if ((name as { startsWith: string }).startsWith) {
+                return interaction.customId.startsWith((name as {
                     startsWith: string
                 }).startsWith);
             }
-            if ((m.name as { endsWith: string }).endsWith) {
-                return interaction.customId.endsWith((m.name as {
+            if ((name as { endsWith: string }).endsWith) {
+                return interaction.customId.endsWith((name as {
                     endsWith: string
                 }).endsWith);
             }
-            if ((m.name as { includes: string }).includes) {
-                return interaction.customId.includes((m.name as {
+            if ((name as { includes: string }).includes) {
+                return interaction.customId.includes((name as {
                     includes: string
                 }).includes);
             }
@@ -62,10 +63,11 @@ export default class ModalHandler {
         });
 
         if (!modal) return;
+        const { name, ephemeral } = modal.data;
 
-        const modalName = typeof modal.name === "string" ?
-            modal.name :
-            Object.values(modal.name)[0];
+        const modalName = typeof name === "string" ?
+            name :
+            Object.values(name)[0];
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
             property: RolePermission.Modal,
@@ -80,14 +82,14 @@ export default class ModalHandler {
 
         const channel = interaction.channel as GuildTextBasedChannel;
 
-        const ephemeral = config.ephemeralResponseIn(channel) ?
+        const ephemeralResponse = config.ephemeralResponseIn(channel) ?
             true :
-            modal.ephemeral;
+            ephemeral;
 
-        await interaction.deferReply({ ephemeral });
+        await interaction.deferReply({ ephemeral: ephemeralResponse });
 
         try {
-            await modal.execute(interaction);
+            await modal.execute(interaction, config);
         } catch (err) {
             console.log(`Failed to execute modal: ${modalName}`);
             console.error(err);

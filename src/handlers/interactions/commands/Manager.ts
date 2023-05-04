@@ -41,7 +41,7 @@ export default class CommandHandler {
     }
 
     public register(command: Command) {
-        this.list.set(`${command.name}_${command.type}`, command);
+        this.list.set(`${command.data.name}_${command.data.type}`, command);
     }
 
     public async publish() {
@@ -58,7 +58,7 @@ export default class CommandHandler {
     }
 
     public async handle(interaction: CommandInteraction) {
-        const config = ClientManager.config(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {
             await interaction.reply({
@@ -69,6 +69,7 @@ export default class CommandHandler {
         }
 
         const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
+
         if (!command) {
             await interaction.reply({
                 content: "Unable to execute command.",
@@ -77,11 +78,12 @@ export default class CommandHandler {
             return;
         }
 
+        const { name, defer } = command.data;
         const channel = interaction.channel as GuildTextBasedChannel;
 
         const responseType = config.ephemeralResponseIn(channel) ?
             InteractionResponseType.EphemeralDefer :
-            command.defer;
+            defer;
 
         switch (responseType) {
             case InteractionResponseType.Defer: {
@@ -95,9 +97,9 @@ export default class CommandHandler {
         }
 
         try {
-            await command.execute(interaction);
+            await command.execute(interaction, config);
         } catch (err) {
-            console.log(`Failed to execute command: ${command.name}`);
+            console.log(`Failed to execute command: ${name}`);
             console.error(err);
             return;
         }
@@ -105,7 +107,7 @@ export default class CommandHandler {
         const log = new EmbedBuilder()
             .setColor(0x2e3136)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`Command \`${command.name}\` used by ${interaction.user}`)
+            .setDescription(`Command \`${name}\` used by ${interaction.user}`)
             .setTimestamp();
 
         const logEmbedFields = [{

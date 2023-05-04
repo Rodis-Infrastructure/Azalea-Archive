@@ -5,10 +5,10 @@ import {
     GuildMember
 } from "discord.js";
 
-import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { InteractionResponseType } from "../../utils/Types";
 import { muteMember } from "../../utils/ModerationUtils";
+import Config from "../../utils/Config";
 
 export default class MuteCommand extends ChatInputCommand {
     constructor() {
@@ -42,13 +42,8 @@ export default class MuteCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const reason = interaction.options.getString("reason") ?? undefined;
-        const duration = interaction.options.getString("duration") ?? "28d";
+    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const member = interaction.options.getMember("member") as GuildMember;
-        const guildId = interaction.guildId!;
-        const config = ClientManager.config(guildId)!;
-
         const { success, error } = config.emojis;
 
         if (!member) {
@@ -56,6 +51,8 @@ export default class MuteCommand extends ChatInputCommand {
             return;
         }
 
+        const reason = interaction.options.getString("reason") ?? undefined;
+        const duration = interaction.options.getString("duration") ?? "28d";
         const res = await muteMember({
             config,
             moderator: interaction.user,

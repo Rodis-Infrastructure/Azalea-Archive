@@ -68,3 +68,9 @@ export type LogData = {
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }
 );
+
+export interface CustomComponentProperties {
+    name: string | { startsWith: string } | { endsWith: string } | { includes: string };
+    skipInternalUsageCheck: boolean;
+    defer: InteractionResponseType;
+}

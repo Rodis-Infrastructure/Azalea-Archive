@@ -1,4 +1,4 @@
-import { Events, MessageReaction, TextBasedChannel, User } from "discord.js";
+import { Events, GuildTextBasedChannel, MessageReaction, User } from "discord.js";
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 import { muteMember } from "../utils/ModerationUtils";
@@ -53,7 +53,7 @@ export default class MessageReactionAddEventListener extends EventListener {
             const channelId = config.channels?.staffCommands;
             if (!channelId) return;
 
-            const channel = await message.guild?.channels.fetch(channelId) as TextBasedChannel;
+            const channel = await message.guild?.channels.fetch(channelId) as GuildTextBasedChannel;
             if (!channel) return;
 
             await reaction.remove();

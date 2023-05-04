@@ -4,12 +4,11 @@ import {
     ChatInputCommandInteraction,
     GuildMember
 } from "discord.js";
-
-import ClientManager from "../../Client";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
 import ms from "ms";
 import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
+import Config from "../../utils/Config";
 
 export default class UnmuteCommand extends ChatInputCommand {
     constructor() {
@@ -28,11 +27,8 @@ export default class UnmuteCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const member = interaction.options.getMember("member") as GuildMember;
-        const guildId = interaction.guildId!;
-        const config = ClientManager.config(guildId)!;
-
         const { success, error } = config.emojis;
 
         if (!member) {
@@ -67,7 +63,7 @@ export default class UnmuteCommand extends ChatInputCommand {
             await member.timeout(null);
             await Promise.all([
                 resolveInfraction({
-                    guildId,
+                    guildId: interaction.guildId!,
                     infractionType: InfractionType.Unmute,
                     offender: member.user,
                     moderator: interaction.user

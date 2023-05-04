@@ -24,12 +24,12 @@ export default class SelectMenuHandler {
         }
     }
 
-    public register(select_menu: SelectMenu) {
-        this.list.set(select_menu.name, select_menu);
+    public register(selectMenu: SelectMenu) {
+        this.list.set(selectMenu.data.name, selectMenu);
     }
 
     public async handle(interaction: StringSelectMenuInteraction) {
-        const config = ClientManager.config(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {
             await interaction.reply({
@@ -39,21 +39,22 @@ export default class SelectMenuHandler {
             return;
         }
 
-        const selectMenu = this.list.find(s => {
-            if (typeof s.name === "string") return s.name === interaction.customId;
+        const selectMenu = this.list.find(sm => {
+            const { name } = sm.data;
+            if (typeof name === "string") return name === interaction.customId;
 
-            if ((s.name as { startsWith: string }).startsWith) {
-                return interaction.customId.startsWith((s.name as {
+            if ((name as { startsWith: string }).startsWith) {
+                return interaction.customId.startsWith((name as {
                     startsWith: string
                 }).startsWith);
             }
-            if ((s.name as { endsWith: string }).endsWith) {
-                return interaction.customId.endsWith((s.name as {
+            if ((name as { endsWith: string }).endsWith) {
+                return interaction.customId.endsWith((name as {
                     endsWith: string
                 }).endsWith);
             }
-            if ((s.name as { includes: string }).includes) {
-                return interaction.customId.includes((s.name as {
+            if ((name as { includes: string }).includes) {
+                return interaction.customId.includes((name as {
                     includes: string
                 }).includes);
             }
@@ -62,10 +63,11 @@ export default class SelectMenuHandler {
         });
 
         if (!selectMenu) return;
+        const { name, defer } = selectMenu.data;
 
-        const selectMenuName = typeof selectMenu.name === "string" ?
-            selectMenu.name :
-            Object.values(selectMenu.name)[0];
+        const selectMenuName = typeof name === "string" ?
+            name :
+            Object.values(name)[0];
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
             property: RolePermission.SelectMenu,
@@ -82,7 +84,7 @@ export default class SelectMenuHandler {
 
         const responseType = config.ephemeralResponseIn(channel) ?
             InteractionResponseType.EphemeralDefer :
-            selectMenu.defer;
+            defer;
 
         switch (responseType) {
             case InteractionResponseType.Defer: {
@@ -96,7 +98,7 @@ export default class SelectMenuHandler {
         }
 
         try {
-            await selectMenu.execute(interaction);
+            await selectMenu.execute(interaction, config);
         } catch (err) {
             console.log(`Failed to execute select menu: ${selectMenuName}`);
             console.error(err);
