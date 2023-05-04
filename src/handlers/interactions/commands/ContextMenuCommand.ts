@@ -1,10 +1,9 @@
 import {
     ApplicationCommandType,
+    CommandInteraction,
     MessageApplicationCommandData,
-    MessageContextMenuCommandInteraction,
     PermissionFlagsBits,
-    UserApplicationCommandData,
-    UserContextMenuCommandInteraction
+    UserApplicationCommandData
 } from "discord.js";
 
 import { InteractionResponseType } from "../../../utils/Types";
@@ -28,7 +27,7 @@ export default abstract class ContextMenuCommand {
         this.type = data.type;
     }
 
-    abstract execute(interaction: MessageContextMenuCommandInteraction | UserContextMenuCommandInteraction): Promise<void>;
+    abstract execute(interaction: CommandInteraction): Promise<void>;
 
     build(): ContextMenuCommandData {
         return {

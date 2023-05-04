@@ -2,7 +2,7 @@ import {
     ApplicationCommandOptionData,
     ApplicationCommandType,
     ChatInputApplicationCommandData,
-    ChatInputCommandInteraction,
+    CommandInteraction,
     PermissionFlagsBits
 } from "discord.js";
 
@@ -31,7 +31,7 @@ export default abstract class ChatInputCommand {
         this.type = data.type;
     }
 
-    abstract execute(interaction: ChatInputCommandInteraction): Promise<void>;
+    abstract execute(interaction: CommandInteraction): Promise<void>;
 
     build(): ChatInputApplicationCommandData {
         return {
