@@ -13,10 +13,6 @@ export default class UserSampleCommand extends ContextMenuCommand {
         });
     }
 
-    /**
-     * @param {ContextMenuCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ContextMenuCommandInteraction): Promise<void> {
         await interaction.editReply("This is a sample **USER** command.");
     }

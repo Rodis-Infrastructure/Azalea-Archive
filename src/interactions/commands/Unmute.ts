@@ -28,10 +28,6 @@ export default class UnmuteCommand extends ChatInputCommand {
         });
     }
 
-    /**
-     * @param {ChatInputCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const member = interaction.options.getMember("member") as GuildMember;
         const guildId = interaction.guildId!;

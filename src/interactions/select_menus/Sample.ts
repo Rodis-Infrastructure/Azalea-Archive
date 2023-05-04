@@ -12,10 +12,6 @@ export default class SampleSelectMenu extends SelectMenu {
         });
     }
 
-    /**
-     * @param {SelectMenuInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: SelectMenuInteraction): Promise<void> {
         await interaction.editReply("This is a sample **SELECT MENU** interaction.");
     }

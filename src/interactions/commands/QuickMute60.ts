@@ -15,10 +15,6 @@ export default class QuickMute60Command extends ContextMenuCommand {
         });
     }
 
-    /**
-     * @param {MessageContextMenuCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: MessageContextMenuCommandInteraction): Promise<void> {
         const config = ClientManager.config(interaction.guildId!)!;
         const reason = interaction.targetMessage.content;

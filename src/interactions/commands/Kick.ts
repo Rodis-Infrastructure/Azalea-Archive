@@ -36,10 +36,6 @@ export default class KickCommand extends ChatInputCommand {
         });
     }
 
-    /**
-     * @param {ChatInputCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const reason = interaction.options.getString("reason");
         const member = interaction.options.getMember("member") as GuildMember;

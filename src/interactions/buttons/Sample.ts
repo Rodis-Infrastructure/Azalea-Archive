@@ -12,10 +12,6 @@ export default class SampleButton extends Button {
         });
     }
 
-    /**
-     * @param {ButtonInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ButtonInteraction): Promise<void> {
         await interaction.editReply("This is a sample **BUTTON** interaction.");
     }

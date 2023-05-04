@@ -28,10 +28,6 @@ export default class ConfigCommand extends ChatInputCommand {
         });
     }
 
-    /**
-     * @param {ChatInputCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId as string;
         const config = ClientManager.config(guildId) as unknown as JsonMap;

@@ -42,10 +42,6 @@ export default class MuteCommand extends ChatInputCommand {
         });
     }
 
-    /**
-     * @param {ChatInputCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const reason = interaction.options.getString("reason") ?? undefined;
         const duration = interaction.options.getString("duration") ?? "28d";
