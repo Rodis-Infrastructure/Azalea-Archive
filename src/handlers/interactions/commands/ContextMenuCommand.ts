@@ -1,9 +1,10 @@
 import {
-    MessageApplicationCommandData,
-    UserApplicationCommandData,
     ApplicationCommandType,
-    CommandInteraction,
-    PermissionFlagsBits
+    MessageApplicationCommandData,
+    MessageContextMenuCommandInteraction,
+    PermissionFlagsBits,
+    UserApplicationCommandData,
+    UserContextMenuCommandInteraction
 } from "discord.js";
 
 import { InteractionResponseType } from "../../../utils/Types";
@@ -20,14 +21,14 @@ export default abstract class ContextMenuCommand {
     defer: InteractionResponseType;
     name: string;
 
-    abstract execute(interaction: CommandInteraction): Promise<void>;
-
     protected constructor(data: CustomApplicationCommandData) {
         this.skipInternalUsageCheck = data.skipInternalUsageCheck;
         this.defer = data.defer;
         this.name = data.name;
         this.type = data.type;
     }
+
+    abstract execute(interaction: MessageContextMenuCommandInteraction | UserContextMenuCommandInteraction): Promise<void>;
 
     build(): ContextMenuCommandData {
         return {
