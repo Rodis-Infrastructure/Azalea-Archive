@@ -50,7 +50,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                 reason
             });
 
-            const channelId = config.channels?.staffCommands;
+            const channelId = config.channels.staffCommands;
             if (!channelId) return;
 
             const channel = await message.guild?.channels.fetch(channelId) as GuildTextBasedChannel;

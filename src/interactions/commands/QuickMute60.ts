@@ -33,7 +33,7 @@ export default class QuickMute60Command extends ContextMenuCommand {
             reason
         });
 
-        const channelId = config.channels?.staffCommands;
+        const channelId = config.channels.staffCommands;
         if (!channelId) return;
 
         const channel = await interaction.guild?.channels.fetch(channelId) as GuildTextBasedChannel;
