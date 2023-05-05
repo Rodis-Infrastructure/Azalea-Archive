@@ -7,10 +7,7 @@ import ClientManager from "../Client";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {
-        super({
-            name: Events.MessageReactionAdd,
-            once: false
-        });
+        super(Events.MessageReactionAdd);
     }
 
     async execute(reaction: MessageReaction, user: User): Promise<void> {

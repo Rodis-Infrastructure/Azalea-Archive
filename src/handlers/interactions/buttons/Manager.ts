@@ -1,12 +1,12 @@
-import ClientManager from "../../../Client";
-import Button from "./Button";
-
 import { InteractionCustomIdFilter, InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { ButtonInteraction, Collection, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
 import { formatCustomId, validateCustomId } from "../../../utils";
+
+import ClientManager from "../../../Client";
+import Button from "./Button";
 
 export default class ButtonHandler {
     list: Collection<InteractionCustomIdFilter, Button>;

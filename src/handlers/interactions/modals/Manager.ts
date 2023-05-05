@@ -1,6 +1,3 @@
-import ClientManager from "../../../Client";
-import Modal from "./Modal";
-
 import {
     Collection,
     Colors,
@@ -9,12 +6,15 @@ import {
     GuildTextBasedChannel,
     ModalSubmitInteraction
 } from "discord.js";
+
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
 import { InteractionCustomIdFilter, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { formatCustomId, validateCustomId } from "../../../utils";
 
+import ClientManager from "../../../Client";
+import Modal from "./Modal";
 
 export default class ModalHandler {
     list: Collection<InteractionCustomIdFilter, Modal>;

@@ -6,10 +6,7 @@ import Config from "../utils/Config";
 
 export default class GuildCreateEventListener extends EventListener {
     constructor() {
-        super({
-            name: Events.GuildCreate,
-            once: true
-        });
+        super(Events.GuildCreate);
     }
 
     execute(guild: Guild) {

@@ -1,5 +1,3 @@
-import ClientManager from "../../../Client";
-
 import {
     Collection,
     Colors,
@@ -8,13 +6,15 @@ import {
     GuildTextBasedChannel,
     StringSelectMenuInteraction
 } from "discord.js";
+
 import { InteractionCustomIdFilter, InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-
-import SelectMenu from "./SelectMenu";
 import { sendLog } from "../../../utils/LoggingUtils";
 import { formatCustomId, validateCustomId } from "../../../utils";
+
+import SelectMenu from "./SelectMenu";
+import ClientManager from "../../../Client";
 
 export default class SelectMenuHandler {
     list: Collection<InteractionCustomIdFilter, SelectMenu>;

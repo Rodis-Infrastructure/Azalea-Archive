@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 
 import { InteractionResponseType } from "../../utils/Types";
-import { stringify } from "@iarna/toml";
+import { JsonMap, stringify } from "@iarna/toml";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import ClientManager from "../../Client";
@@ -30,7 +30,7 @@ export default class ConfigCommand extends ChatInputCommand {
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId!;
-        const config = { ...ClientManager.config(guildId) };
+        const config = { ...(ClientManager.config(guildId)?.data) } as unknown as JsonMap;
 
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)

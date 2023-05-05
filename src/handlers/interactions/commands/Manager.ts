@@ -1,28 +1,11 @@
-import ContextMenuCommand from "./ContextMenuCommand";
-import ChatInputCommand from "./ChatInputCommand";
-import ClientManager from "../../../Client";
+import { ApplicationCommandType, Collection, Colors, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 
-import {
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    Collection,
-    Colors,
-    EmbedBuilder,
-    GuildTextBasedChannel,
-    MessageContextMenuCommandInteraction,
-    UserContextMenuCommandInteraction
-} from "discord.js";
-
-import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
+import { Command, CommandInteraction, InteractionResponseType, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
 
-type Command = ChatInputCommand | ContextMenuCommand;
-type CommandInteraction =
-    ChatInputCommandInteraction
-    | UserContextMenuCommandInteraction
-    | MessageContextMenuCommandInteraction;
+import ClientManager from "../../../Client";
 
 export default class CommandHandler {
     list: Collection<string, Command>;

@@ -1,5 +1,6 @@
 import { CustomComponentProperties } from "../../../utils/Types";
 import { SelectMenuInteraction } from "discord.js";
+
 import Config from "../../../utils/Config";
 
 export default abstract class SelectMenu {

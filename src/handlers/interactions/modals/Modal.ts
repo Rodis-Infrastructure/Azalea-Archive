@@ -1,12 +1,7 @@
 import { ModalSubmitInteraction } from "discord.js";
-import Config from "../../../utils/Config";
-import { InteractionCustomIdFilter } from "../../../utils/Types";
+import { CustomModalProperties } from "../../../utils/Types";
 
-interface CustomModalProperties {
-    name: InteractionCustomIdFilter;
-    skipInternalUsageCheck: boolean;
-    ephemeral: boolean;
-}
+import Config from "../../../utils/Config";
 
 export default abstract class Modal {
     // @formatter:off

@@ -6,7 +6,7 @@ import ClientManager from "../Client";
 export default class Config {
     // @formatter:off
     // eslint-disable-next-line no-empty-function
-    constructor(private readonly data: ConfigData) {}
+    constructor(public readonly data: ConfigData) {}
 
     get deleteMessageSecondsOnBan() {
         return this.data.deleteMessageSecondsOnBan ?? 0;

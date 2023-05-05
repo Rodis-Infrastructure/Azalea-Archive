@@ -1,4 +1,12 @@
-import { EmbedBuilder, GuildTextBasedChannel } from "discord.js";
+import {
+    ChatInputCommandInteraction,
+    EmbedBuilder,
+    GuildTextBasedChannel, MessageContextMenuCommandInteraction,
+    UserContextMenuCommandInteraction
+} from "discord.js";
+
+import ChatInputCommand from "../handlers/interactions/commands/ChatInputCommand";
+import ContextMenuCommand from "../handlers/interactions/commands/ContextMenuCommand";
 
 export type InteractionCustomIdFilter = string | { startsWith: string } | { endsWith: string } | { includes: string };
 
@@ -76,3 +84,15 @@ export interface CustomComponentProperties {
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
 }
+
+export interface CustomModalProperties {
+    name: InteractionCustomIdFilter;
+    skipInternalUsageCheck: boolean;
+    ephemeral: boolean;
+}
+
+export type Command = ChatInputCommand | ContextMenuCommand;
+export type CommandInteraction =
+    ChatInputCommandInteraction
+    | UserContextMenuCommandInteraction
+    | MessageContextMenuCommandInteraction;

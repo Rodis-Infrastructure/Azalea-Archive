@@ -7,10 +7,7 @@ import ClientManager from "../Client";
 
 export default class GuildAuditLogEntryCreateListener extends EventListener {
     constructor() {
-        super({
-            name: Events.GuildAuditLogEntryCreate,
-            once: false
-        });
+        super(Events.GuildAuditLogEntryCreate);
     }
 
     async execute(log: GuildAuditLogsEntry, guild: Guild): Promise<void> {

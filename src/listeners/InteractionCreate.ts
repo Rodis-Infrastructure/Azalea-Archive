@@ -5,10 +5,7 @@ import ClientManager from "../Client";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
-        super({
-            name: Events.InteractionCreate,
-            once: false
-        });
+        super(Events.InteractionCreate);
     }
 
     async execute(interaction: Interaction): Promise<void> {

@@ -9,8 +9,7 @@ import Config from "../utils/Config";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
-        super({
-            name: Events.ClientReady,
+        super(Events.ClientReady, {
             once: true
         });
     }
