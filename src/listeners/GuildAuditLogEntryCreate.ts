@@ -50,7 +50,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                     if (!timeoutChange.old && timeoutChange.new) {
                         infractionType = InfractionType.Mute;
 
-                        const duration = Math.round(Date.parse(timeoutChange.new as string) / 1000);
+                        const duration = Math.floor(Date.parse(timeoutChange.new as string) / 1000);
                         channelResponse += `muted **${(target as User).tag}** until <t:${duration}:F> | Expires <t:${duration}:R>${reason ? ` (\`${reason}\`)` : ""}`;
                     }
                     if (timeoutChange.old && !timeoutChange.new) {

@@ -2,8 +2,8 @@ import { ColorResolvable, Colors, EmbedBuilder, GuildMember, User } from "discor
 import { sendLog } from "./LoggingUtils";
 import { InfractionType, LoggingEvent } from "./Types";
 import ms from "ms";
-import prettyPrint from "pretty-print-ms";
 import Config from "./Config";
+import { msToString } from "./index";
 
 export async function resolveInfraction(data: {
     moderator: User,
@@ -61,7 +61,7 @@ export async function resolveInfraction(data: {
         ])
         .setTimestamp();
 
-    if (duration) log.addFields([{ name: "Duration", value: prettyPrint(duration) }]);
+    if (duration) log.addFields([{ name: "Duration", value: msToString(duration) }]);
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
 
     await sendLog({
@@ -112,7 +112,7 @@ export async function muteMember(data: {
         });
 
         msDuration += ms(Date.now().toString());
-        msDuration = Math.round(msDuration / 1000);
+        msDuration = Math.floor(msDuration / 1000);
 
         return msDuration;
     } catch {
@@ -124,7 +124,7 @@ export function mutedUntil(member: GuildMember): number | void {
     const currentTimestamp = ms(Date.now().toString());
     const mutedTimestamp = member.communicationDisabledUntilTimestamp;
 
-    if (mutedTimestamp && mutedTimestamp >= currentTimestamp) return Math.round(mutedTimestamp / 1000);
+    if (mutedTimestamp && mutedTimestamp >= currentTimestamp) return Math.floor(mutedTimestamp / 1000);
 }
 
 export function validateModerationReason(data: {
