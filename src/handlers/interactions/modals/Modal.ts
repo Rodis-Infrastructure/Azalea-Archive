@@ -1,8 +1,9 @@
 import { ModalSubmitInteraction } from "discord.js";
 import Config from "../../../utils/Config";
+import { InteractionCustomIdFilter } from "../../../utils/Types";
 
 interface CustomModalProperties {
-    name: string | { startsWith: string } | { endsWith: string } | { includes: string };
+    name: InteractionCustomIdFilter;
     skipInternalUsageCheck: boolean;
     ephemeral: boolean;
 }

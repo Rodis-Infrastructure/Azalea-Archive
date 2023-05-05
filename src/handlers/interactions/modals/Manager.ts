@@ -1,15 +1,23 @@
 import ClientManager from "../../../Client";
 import Modal from "./Modal";
 
-import { Collection, EmbedBuilder, GuildMember, GuildTextBasedChannel, ModalSubmitInteraction } from "discord.js";
+import {
+    Collection,
+    Colors,
+    EmbedBuilder,
+    GuildMember,
+    GuildTextBasedChannel,
+    ModalSubmitInteraction
+} from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
-import { LoggingEvent, RolePermission } from "../../../utils/Types";
+import { InteractionCustomIdFilter, LoggingEvent, RolePermission } from "../../../utils/Types";
+import { formatCustomId, validateCustomId } from "../../../utils";
 
 
 export default class ModalHandler {
-    list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Modal>;
+    list: Collection<InteractionCustomIdFilter, Modal>;
 
     constructor() {
         this.list = new Collection();
@@ -39,39 +47,21 @@ export default class ModalHandler {
             return;
         }
 
-        const modal = this.list.find(m => {
-            const { name } = m.data;
-            if (typeof name === "string") return name === interaction.customId;
+        const modal = validateCustomId(this.list, interaction.customId);
 
-            if ((name as { startsWith: string }).startsWith) {
-                return interaction.customId.startsWith((name as {
-                    startsWith: string
-                }).startsWith);
-            }
-            if ((name as { endsWith: string }).endsWith) {
-                return interaction.customId.endsWith((name as {
-                    endsWith: string
-                }).endsWith);
-            }
-            if ((name as { includes: string }).includes) {
-                return interaction.customId.includes((name as {
-                    includes: string
-                }).includes);
-            }
+        if (!modal) {
+            await interaction.reply({
+                content: "Interaction not found.",
+                ephemeral: true
+            });
+            return;
+        }
 
-            return false;
-        });
-
-        if (!modal) return;
-        const { name, ephemeral } = modal.data;
-
-        const modalName = typeof name === "string" ?
-            name :
-            Object.values(name)[0];
+        const formattedCustomId = formatCustomId(modal.data.name);
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
             property: RolePermission.Modal,
-            value: modalName
+            value: formattedCustomId
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
@@ -80,36 +70,35 @@ export default class ModalHandler {
             return;
         }
 
-        const channel = interaction.channel as GuildTextBasedChannel;
+        const usageChannel = interaction.channel as GuildTextBasedChannel;
+        const ephemeral = config.ephemeralResponseIn(usageChannel)
+            ? true
+            : modal.data.ephemeral;
 
-        const ephemeralResponse = config.ephemeralResponseIn(channel) ?
-            true :
-            ephemeral;
-
-        await interaction.deferReply({ ephemeral: ephemeralResponse });
+        await interaction.deferReply({ ephemeral });
 
         try {
             await modal.execute(interaction, config);
         } catch (err) {
-            console.log(`Failed to execute modal: ${modalName}`);
+            console.log(`Failed to execute modal: ${formattedCustomId}`);
             console.error(err);
             return;
         }
 
         const log = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`Modal \`${modalName}\` used by ${interaction.user}`)
+            .setDescription(`Modal \`${formattedCustomId}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Channel",
-                value: `${channel} (\`#${channel.name}\`)`
+                value: `${usageChannel} (\`#${usageChannel.name}\`)`
             }])
             .setTimestamp();
 
         await sendLog({
             event: LoggingEvent.InteractionUsage,
             embed: log,
-            channel
+            channel: usageChannel
         });
     }
 }

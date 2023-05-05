@@ -1,17 +1,18 @@
 import ClientManager from "../../../Client";
 import Button from "./Button";
 
-import { InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
-import { ButtonInteraction, Collection, EmbedBuilder, GuildMember, GuildTextBasedChannel } from "discord.js";
+import { InteractionCustomIdFilter, InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
+import { ButtonInteraction, Collection, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
+import { formatCustomId, validateCustomId } from "../../../utils";
 
 export default class ButtonHandler {
-    buttons: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, Button>;
+    list: Collection<InteractionCustomIdFilter, Button>;
 
     constructor() {
-        this.buttons = new Collection();
+        this.list = new Collection();
     }
 
     public async load() {
@@ -24,7 +25,7 @@ export default class ButtonHandler {
     }
 
     public register(button: Button) {
-        this.buttons.set(button.data.name, button);
+        this.list.set(button.data.name, button);
     }
 
     public async handle(interaction: ButtonInteraction) {
@@ -38,39 +39,21 @@ export default class ButtonHandler {
             return;
         }
 
-        const button = this.buttons.find(btn => {
-            const { name } = btn.data;
-            if (typeof name === "string") return name === interaction.customId;
+        const button = validateCustomId(this.list, interaction.customId);
 
-            if ((name as { startsWith: string }).startsWith) {
-                return interaction.customId.startsWith((name as {
-                    startsWith: string
-                }).startsWith);
-            }
-            if ((name as { endsWith: string }).endsWith) {
-                return interaction.customId.endsWith((name as {
-                    endsWith: string
-                }).endsWith);
-            }
-            if ((name as { includes: string }).includes) {
-                return interaction.customId.includes((name as {
-                    includes: string
-                }).includes);
-            }
+        if (!button) {
+            await interaction.reply({
+                content: "Interaction not found.",
+                ephemeral: true
+            });
+            return;
+        }
 
-            return false;
-        });
-
-        if (!button) return;
-        const { name, defer } = button.data;
-
-        const buttonName = typeof name === "string" ?
-            name :
-            Object.values(name)[0];
+        const formattedCustomId = formatCustomId(button.data.name);
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
             property: RolePermission.Button,
-            value: buttonName
+            value: formattedCustomId
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
@@ -79,13 +62,12 @@ export default class ButtonHandler {
             return;
         }
 
-        const channel = interaction.channel as GuildTextBasedChannel;
+        const usageChannel = interaction.channel as GuildTextBasedChannel;
+        const responseDeferralType = config.ephemeralResponseIn(usageChannel)
+            ? InteractionResponseType.EphemeralDefer
+            : button.data.defer;
 
-        const responseType = config.ephemeralResponseIn(channel) ?
-            InteractionResponseType.EphemeralDefer :
-            defer;
-
-        switch (responseType) {
+        switch (responseDeferralType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -99,25 +81,25 @@ export default class ButtonHandler {
         try {
             await button.execute(interaction, config);
         } catch (err) {
-            console.log(`Failed to execute button: ${buttonName}`);
+            console.log(`Failed to execute button: ${formattedCustomId}`);
             console.error(err);
             return;
         }
 
         const log = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`Button \`${buttonName}\` used by ${interaction.user}`)
+            .setDescription(`Button \`${formattedCustomId}\` used by ${interaction.user}`)
             .setFields([{
-                name: "Channel",
-                value: `${channel} (\`#${channel.name}\`)`
+                name: "Used In",
+                value: `${usageChannel} (\`#${usageChannel.name}\`)`
             }])
             .setTimestamp();
 
         await sendLog({
             event: LoggingEvent.InteractionUsage,
             embed: log,
-            channel
+            channel: usageChannel
         });
     }
 }

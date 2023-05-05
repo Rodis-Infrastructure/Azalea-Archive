@@ -10,10 +10,7 @@ export async function loadListeners() {
         const EventListener = (await import(join(__dirname, "../../listeners", file))).default;
         const listener = new EventListener();
 
-        if (listener.once) {
-            ClientManager.client.once(listener.name, (...args) => listener.execute(...args));
-        } else {
-            ClientManager.client.on(listener.name, (...args) => listener.execute(...args));
-        }
+        if (listener.once) ClientManager.client.once(listener.name, (...args) => listener.execute(...args));
+        else ClientManager.client.on(listener.name, (...args) => listener.execute(...args));
     }
 }

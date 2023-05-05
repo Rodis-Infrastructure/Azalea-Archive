@@ -1,5 +1,7 @@
 import { EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 
+export type InteractionCustomIdFilter = string | { startsWith: string } | { endsWith: string } | { includes: string };
+
 export enum InteractionResponseType {
     Default = 0,
     Defer = 1,
@@ -70,7 +72,7 @@ export type LogData = {
 );
 
 export interface CustomComponentProperties {
-    name: string | { startsWith: string } | { endsWith: string } | { includes: string };
+    name: InteractionCustomIdFilter;
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
 }

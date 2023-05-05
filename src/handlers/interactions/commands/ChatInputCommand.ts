@@ -10,7 +10,6 @@ import Config from "../../../utils/Config";
 
 type CustomChatInputCommandProperties = ChatInputApplicationCommandData & {
     skipInternalUsageCheck: boolean;
-    type: ApplicationCommandType;
     defer: InteractionResponseType;
 }
 
@@ -26,7 +25,7 @@ export default abstract class ChatInputCommand {
             description: this.data.description,
             options: this.data.options ?? [],
             dmPermission: false,
-            type: this.data.type,
+            type: ApplicationCommandType.ChatInput,
             defaultMemberPermissions: [PermissionFlagsBits.Administrator]
         };
     }

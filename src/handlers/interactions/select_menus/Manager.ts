@@ -1,15 +1,23 @@
 import ClientManager from "../../../Client";
 
-import { Collection, EmbedBuilder, GuildMember, GuildTextBasedChannel, StringSelectMenuInteraction } from "discord.js";
-import { InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
+import {
+    Collection,
+    Colors,
+    EmbedBuilder,
+    GuildMember,
+    GuildTextBasedChannel,
+    StringSelectMenuInteraction
+} from "discord.js";
+import { InteractionCustomIdFilter, InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 import SelectMenu from "./SelectMenu";
 import { sendLog } from "../../../utils/LoggingUtils";
+import { formatCustomId, validateCustomId } from "../../../utils";
 
 export default class SelectMenuHandler {
-    list: Collection<string | { startsWith: string } | { endsWith: string } | { includes: string }, SelectMenu>;
+    list: Collection<InteractionCustomIdFilter, SelectMenu>;
 
     constructor() {
         this.list = new Collection();
@@ -39,39 +47,21 @@ export default class SelectMenuHandler {
             return;
         }
 
-        const selectMenu = this.list.find(sm => {
-            const { name } = sm.data;
-            if (typeof name === "string") return name === interaction.customId;
+        const selectMenu = validateCustomId(this.list, interaction.customId);
 
-            if ((name as { startsWith: string }).startsWith) {
-                return interaction.customId.startsWith((name as {
-                    startsWith: string
-                }).startsWith);
-            }
-            if ((name as { endsWith: string }).endsWith) {
-                return interaction.customId.endsWith((name as {
-                    endsWith: string
-                }).endsWith);
-            }
-            if ((name as { includes: string }).includes) {
-                return interaction.customId.includes((name as {
-                    includes: string
-                }).includes);
-            }
+        if (!selectMenu) {
+            await interaction.reply({
+                content: "Interaction not found.",
+                ephemeral: true
+            });
+            return;
+        }
 
-            return false;
-        });
-
-        if (!selectMenu) return;
-        const { name, defer } = selectMenu.data;
-
-        const selectMenuName = typeof name === "string" ?
-            name :
-            Object.values(name)[0];
+        const formattedCustomId = formatCustomId(selectMenu.data.name);
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
             property: RolePermission.SelectMenu,
-            value: selectMenuName
+            value: formattedCustomId
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
@@ -80,13 +70,12 @@ export default class SelectMenuHandler {
             return;
         }
 
-        const channel = interaction.channel as GuildTextBasedChannel;
+        const usageChannel = interaction.channel as GuildTextBasedChannel;
+        const responseDeferralType = config.ephemeralResponseIn(usageChannel)
+            ? InteractionResponseType.EphemeralDefer
+            : selectMenu.data.defer;
 
-        const responseType = config.ephemeralResponseIn(channel) ?
-            InteractionResponseType.EphemeralDefer :
-            defer;
-
-        switch (responseType) {
+        switch (responseDeferralType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -100,25 +89,25 @@ export default class SelectMenuHandler {
         try {
             await selectMenu.execute(interaction, config);
         } catch (err) {
-            console.log(`Failed to execute select menu: ${selectMenuName}`);
+            console.log(`Failed to execute select menu: ${formattedCustomId}`);
             console.error(err);
             return;
         }
 
         const log = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`Selection \`${selectMenuName}\` used by ${interaction.user}`)
+            .setDescription(`Select menu \`${formattedCustomId}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Channel",
-                value: `${channel} (\`#${channel.name}\`)`
+                value: `${usageChannel} (\`#${usageChannel.name}\`)`
             }])
             .setTimestamp();
 
         await sendLog({
             event: LoggingEvent.InteractionUsage,
             embed: log,
-            channel
+            channel: usageChannel
         });
     }
 }

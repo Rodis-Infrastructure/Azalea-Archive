@@ -3,10 +3,10 @@ import ChatInputCommand from "./ChatInputCommand";
 import ClientManager from "../../../Client";
 
 import {
-    ApplicationCommandDataResolvable,
     ApplicationCommandType,
     ChatInputCommandInteraction,
     Collection,
+    Colors,
     EmbedBuilder,
     GuildTextBasedChannel,
     MessageContextMenuCommandInteraction,
@@ -45,9 +45,7 @@ export default class CommandHandler {
     }
 
     public async publish() {
-        const commandData: ApplicationCommandDataResolvable[] = await Promise.all(
-            ClientManager.commands.list.map(command => command.build())
-        );
+        const commandData = ClientManager.commands.list.map(command => command.build());
 
         try {
             await ClientManager.client.application?.commands.set(commandData);
@@ -72,20 +70,18 @@ export default class CommandHandler {
 
         if (!command) {
             await interaction.reply({
-                content: "Unable to execute command.",
+                content: "Interaction not found.",
                 ephemeral: true
             });
             return;
         }
 
-        const { name, defer } = command.data;
-        const channel = interaction.channel as GuildTextBasedChannel;
+        const usageChannel = interaction.channel as GuildTextBasedChannel;
+        const replyDeferralType = config.ephemeralResponseIn(usageChannel)
+            ? InteractionResponseType.EphemeralDefer
+            : command.data.defer;
 
-        const responseType = config.ephemeralResponseIn(channel) ?
-            InteractionResponseType.EphemeralDefer :
-            defer;
-
-        switch (responseType) {
+        switch (replyDeferralType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -99,37 +95,34 @@ export default class CommandHandler {
         try {
             await command.execute(interaction, config);
         } catch (err) {
-            console.log(`Failed to execute command: ${name}`);
+            console.log(`Failed to execute command: ${command.data.name}`);
             console.error(err);
             return;
         }
 
         const log = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`Command \`${name}\` used by ${interaction.user}`)
+            .setDescription(`Command \`${command.data.name}\` used by ${interaction.user}`)
+            .setFields([{
+                name: "Channel",
+                value: `${usageChannel} (\`#${usageChannel.name}\`)`
+            }])
             .setTimestamp();
 
-        const logEmbedFields = [{
-            name: "Channel",
-            value: `${channel} (\`#${channel.name}\`)`
-        }];
-
         if (interaction.commandType !== ApplicationCommandType.ChatInput) {
-            let target = interaction.targetId;
-            if (interaction.commandType === ApplicationCommandType.Message) target = interaction.targetMessage.author.id;
+            let targetUserId = interaction.targetId;
+            if (interaction.commandType === ApplicationCommandType.Message) targetUserId = interaction.targetMessage.author.id;
 
-            logEmbedFields.push({
+            log.addFields([{
                 name: "Target",
-                value: `<@${target}> (\`${target}\`)`
-            });
+                value: `<@${targetUserId}> (\`${targetUserId}\`)`
+            }]);
         }
-
-        log.setFields(logEmbedFields);
 
         await sendLog({
             event: LoggingEvent.InteractionUsage,
-            channel: channel,
+            channel: usageChannel,
             embed: log
         });
     }

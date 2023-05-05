@@ -25,22 +25,19 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         if (executor.partial) executor = await executor.fetch();
 
         let infractionType: InfractionType | undefined;
-        let channelResponse = `**${executor.tag}** has successfully `;
+        const channelResponse = [`**${executor.tag}** has successfully`];
 
         switch (log.action) {
             case AuditLogEvent.MemberKick:
                 infractionType = InfractionType.Kick;
-                channelResponse += `kicked **${(target as User).tag}**${reason ? ` (\`${reason}\`)` : ""}`;
                 break;
 
             case AuditLogEvent.MemberBanAdd:
                 infractionType = InfractionType.Ban;
-                channelResponse += `banned **${(target as User).tag}**${reason ? ` (\`${reason}\`)` : ""}`;
                 break;
 
             case AuditLogEvent.MemberBanRemove:
                 infractionType = InfractionType.Unban;
-                channelResponse += `unbanned **${(target as User).tag}**${reason ? ` (\`${reason}\`)` : ""}`;
                 break;
 
             case AuditLogEvent.MemberUpdate: {
@@ -51,12 +48,10 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                         infractionType = InfractionType.Mute;
 
                         const duration = Math.floor(Date.parse(timeoutChange.new as string) / 1000);
-                        channelResponse += `muted **${(target as User).tag}** until <t:${duration}:F> | Expires <t:${duration}:R>${reason ? ` (\`${reason}\`)` : ""}`;
+                        channelResponse.push(`until <t:${duration}:F> | Expires <t:${duration}:R>`);
                     }
-                    if (timeoutChange.old && !timeoutChange.new) {
-                        infractionType = InfractionType.Unmute;
-                        channelResponse += `unmuted **${(target as User).tag}**`;
-                    }
+
+                    if (timeoutChange.old && !timeoutChange.new) infractionType = InfractionType.Unmute;
                 }
 
                 break;
@@ -81,7 +76,10 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             const channel = await guild.channels.fetch(channelId) as GuildTextBasedChannel;
             if (!channel) return;
 
-            await channel.send(`${config.emojis.success} ${channelResponse}`);
+            channelResponse.splice(1, 0, `${infractionType.split(" ")[1]} **${(target as User).tag}**`);
+            if (infractionType !== InfractionType.Unmute && reason) channelResponse.push(`(\`${reason}\`)`);
+
+            await channel.send(`${config.emojis.success} ${channelResponse.join("")}`);
         }
     }
 }
