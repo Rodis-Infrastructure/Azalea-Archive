@@ -1,17 +1,18 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, User } from "discord.js";
-import { sendLog } from "./LoggingUtils";
 import { InfractionType, LoggingEvent } from "./Types";
-import ms from "ms";
-import Config from "./Config";
+import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
+
+import Config from "./Config";
+import ms from "ms";
 
 export async function resolveInfraction(data: {
     moderator: User,
     offender: User,
     guildId: string,
-    reason?: string,
     infractionType: InfractionType,
-    duration?: number
+    duration?: number,
+    reason?: string
 }): Promise<void> {
     const {
         moderator,
@@ -71,16 +72,15 @@ export async function resolveInfraction(data: {
     });
 }
 
-export async function muteMember(data: {
+export async function muteMember(offender: GuildMember, data: {
     config: Config,
     moderator: User,
-    offender: GuildMember,
     duration: string,
     reason?: string
 }): Promise<string | number> {
-    const { config, moderator, offender, duration, reason } = data;
+    const { config, moderator, duration, reason } = data;
 
-    const notModerateableReason = validateModerationReason({
+    const notModerateableReason = validateModerationAction({
         config,
         moderatorId: moderator.id,
         offender,
@@ -92,42 +92,43 @@ export async function muteMember(data: {
 
     if (notModerateableReason) return notModerateableReason;
 
-    const mutedUntilTimestamp = await mutedUntil(offender);
-    if (mutedUntilTimestamp) return `This member has already been muted until <t:${mutedUntilTimestamp}:F> (expires <t:${mutedUntilTimestamp}:R>).`;
+    const expiresAt = await muteExpirationTimestamp(offender);
+    if (expiresAt) return `This member has already been muted until <t:${expiresAt}:F> (expires <t:${expiresAt}:R>).`;
 
-    let msDuration = ms(duration);
-    if (!duration.match(/^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi) || msDuration <= 0) return "The duration provided is not valid.";
+    let msMuteDuration = ms(duration);
 
-    if (msDuration > ms("28d")) msDuration = ms("28d");
+    /* Only allow the duration to be given in days, hours, and minutes */
+    if (!duration.match(/^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi) || msMuteDuration <= 0) return "The duration provided is not valid.";
+    if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {
-        await offender.timeout(msDuration, reason ?? undefined);
+        await offender.timeout(msMuteDuration, reason ?? undefined);
         await resolveInfraction({
             guildId: offender.guild.id,
             infractionType: InfractionType.Mute,
             offender: offender.user,
-            duration: msDuration,
+            duration: msMuteDuration,
             moderator,
             reason
         });
 
-        msDuration += ms(Date.now().toString());
-        msDuration = Math.floor(msDuration / 1000);
-
-        return msDuration;
+        msMuteDuration += ms(Date.now().toString());
+        return Math.floor(msMuteDuration / 1000);
     } catch {
         return "An error has occurred while trying to mute this member.";
     }
 }
 
-export function mutedUntil(member: GuildMember): number | void {
-    const currentTimestamp = ms(Date.now().toString());
-    const mutedTimestamp = member.communicationDisabledUntilTimestamp;
+export function muteExpirationTimestamp(member: GuildMember): number | void {
+    const timestamp = {
+        now: ms(Date.now().toString()),
+        muted: member.communicationDisabledUntilTimestamp
+    };
 
-    if (mutedTimestamp && mutedTimestamp >= currentTimestamp) return Math.floor(mutedTimestamp / 1000);
+    if (timestamp.muted && timestamp.muted >= timestamp.now) return Math.floor(timestamp.muted / 1000);
 }
 
-export function validateModerationReason(data: {
+export function validateModerationAction(data: {
     config: Config,
     moderatorId: string,
     offender: GuildMember,

@@ -60,8 +60,8 @@ export default class SelectMenuHandler {
         const formattedCustomId = formatCustomId(selectMenu.data.name);
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
-            property: RolePermission.SelectMenu,
-            value: formattedCustomId
+            permission: RolePermission.SelectMenu,
+            requiredValue: formattedCustomId
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",

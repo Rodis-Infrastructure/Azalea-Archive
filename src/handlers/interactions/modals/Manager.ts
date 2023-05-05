@@ -60,8 +60,8 @@ export default class ModalHandler {
         const formattedCustomId = formatCustomId(modal.data.name);
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
-            property: RolePermission.Modal,
-            value: formattedCustomId
+            permission: RolePermission.Modal,
+            requiredValue: formattedCustomId
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",

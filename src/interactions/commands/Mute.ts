@@ -5,9 +5,10 @@ import {
     GuildMember
 } from "discord.js";
 
-import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { InteractionResponseType } from "../../utils/Types";
 import { muteMember } from "../../utils/ModerationUtils";
+
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
 
 export default class MuteCommand extends ChatInputCommand {
@@ -28,15 +29,13 @@ export default class MuteCommand extends ChatInputCommand {
                 {
                     name: "duration",
                     description: "The duration of the mute",
-                    type: ApplicationCommandOptionType.String,
-                    required: false
+                    type: ApplicationCommandOptionType.String
                 },
                 {
                     name: "reason",
                     description: "The reason for muting the member",
                     type: ApplicationCommandOptionType.String,
-                    max_length: 1024,
-                    required: false
+                    max_length: 1024
                 }
             ]
         });
@@ -53,19 +52,20 @@ export default class MuteCommand extends ChatInputCommand {
 
         const reason = interaction.options.getString("reason") ?? undefined;
         const duration = interaction.options.getString("duration") ?? "28d";
-        const res = await muteMember({
+        const res = await muteMember(member, {
             config,
             moderator: interaction.user,
-            offender: member,
             duration,
             reason
         });
 
+        /* The result is the mute's expiration timestamp */
         if (typeof res === "number") {
             await interaction.editReply(`${success} Successfully muted **${member.user.tag}** until <t:${res}:F> | Expires <t:${res}:R>${reason ? ` (\`${reason}\`)` : ""}`);
             return;
         }
 
+        /* The result is an error message */
         await interaction.editReply(`${error} ${res}`);
     }
 }

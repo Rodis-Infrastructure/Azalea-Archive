@@ -52,8 +52,8 @@ export default class ButtonHandler {
         const formattedCustomId = formatCustomId(button.data.name);
 
         if (!config.actionAllowed(interaction.member as GuildMember, {
-            property: RolePermission.Button,
-            value: formattedCustomId
+            permission: RolePermission.Button,
+            requiredValue: formattedCustomId
         })) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",

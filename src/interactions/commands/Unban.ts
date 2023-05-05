@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { resolveInfraction } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
+
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
 
 export default class UnbanCommand extends ChatInputCommand {
@@ -23,21 +24,20 @@ export default class UnbanCommand extends ChatInputCommand {
                     name: "reason",
                     description: "The reason for unbanning the user",
                     type: ApplicationCommandOptionType.String,
-                    max_length: 1024,
-                    required: false
+                    max_length: 1024
                 }
             ]
         });
     }
 
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
-        const user = interaction.options.getUser("user", true);
-        const bannedMember = await interaction.guild?.bans.fetch(user.id)
+        const offender = interaction.options.getUser("user", true);
+        const banInfo = await interaction.guild!.bans.fetch(offender.id)
             .catch(() => null);
 
         const { success, error } = config.emojis;
 
-        if (!bannedMember) {
+        if (!banInfo) {
             await interaction.editReply(`${error} This user is not banned.`);
             return;
         }
@@ -45,17 +45,17 @@ export default class UnbanCommand extends ChatInputCommand {
         try {
             const reason = interaction.options.getString("reason") ?? undefined;
 
-            await interaction.guild?.members.unban(user, reason);
+            await interaction.guild!.members.unban(offender, reason);
             await Promise.all([
                 resolveInfraction({
                     infractionType: InfractionType.Unban,
                     moderator: interaction.user,
-                    offender: user,
+                    offender,
                     guildId: interaction.guildId!,
                     reason
                 }),
 
-                interaction.editReply(`${success} Successfully unbanned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
+                interaction.editReply(`${success} Successfully unbanned **${offender.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
             ]);
         } catch {
             await interaction.editReply(`${error} An error has occurred while trying to unban this user.`);

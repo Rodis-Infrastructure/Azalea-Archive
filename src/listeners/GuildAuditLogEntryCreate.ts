@@ -1,7 +1,8 @@
 import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, GuildTextBasedChannel, User } from "discord.js";
-import EventListener from "../handlers/listeners/EventListener";
 import { resolveInfraction } from "../utils/ModerationUtils";
 import { InfractionType } from "../utils/Types";
+
+import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 
 export default class GuildAuditLogEntryCreateListener extends EventListener {

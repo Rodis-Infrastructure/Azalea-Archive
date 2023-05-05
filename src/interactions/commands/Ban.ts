@@ -1,8 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
+import { resolveInfraction, validateModerationAction } from "../../utils/ModerationUtils";
+import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
-import { InfractionType, InteractionResponseType } from "../../utils/Types";
 import Config from "../../utils/Config";
 
 export default class BanCommand extends ChatInputCommand {
@@ -24,8 +24,7 @@ export default class BanCommand extends ChatInputCommand {
                     name: "reason",
                     description: "The reason for banning the user",
                     type: ApplicationCommandOptionType.String,
-                    max_length: 1024,
-                    required: false
+                    max_length: 1024
                 }
             ]
         });
@@ -34,14 +33,14 @@ export default class BanCommand extends ChatInputCommand {
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const user = interaction.options.getUser("user", true);
         const [member, isBanned] = await Promise.all([
-            interaction.guild?.members.fetch(user.id),
-            interaction.guild?.bans.fetch(user.id)
+            interaction.guild!.members.fetch(user.id),
+            interaction.guild!.bans.fetch(user.id)
         ]).catch(() => []);
 
         const { success, error } = config.emojis;
 
         if (member) {
-            const notModerateableReason = validateModerationReason({
+            const notModerateableReason = validateModerationAction({
                 config,
                 moderatorId: interaction.user.id,
                 offender: member,
@@ -64,15 +63,15 @@ export default class BanCommand extends ChatInputCommand {
 
         let deleteMessageSeconds = config.deleteMessageSecondsOnBan;
 
-        // Minimum value
+        /* Minimum value */
         if (deleteMessageSeconds < 0) deleteMessageSeconds = 0;
-        // Maximum value
+        /* Maximum value */
         if (deleteMessageSeconds > 604800) deleteMessageSeconds = 604800;
 
         try {
             const reason = interaction.options.getString("reason") ?? undefined;
 
-            await interaction.guild?.members.ban(user, { deleteMessageSeconds, reason });
+            await interaction.guild!.members.ban(user, { deleteMessageSeconds, reason });
             await Promise.all([
                 resolveInfraction({
                     infractionType: InfractionType.Ban,

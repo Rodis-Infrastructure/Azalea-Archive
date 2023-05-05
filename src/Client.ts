@@ -1,11 +1,13 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import "dotenv/config";
+import { loadListeners } from "./handlers/listeners/Loader";
+
 import ButtonHandler from "./handlers/interactions/buttons/Manager";
 import CommandHandler from "./handlers/interactions/commands/Manager";
 import ModalHandler from "./handlers/interactions/modals/Manager";
 import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
-import { loadListeners } from "./handlers/listeners/Loader";
 import Config from "./utils/Config";
+
+import "dotenv/config";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));

@@ -1,11 +1,11 @@
+import { readdir, readFile } from "node:fs/promises";
+import { ConfigData } from "../utils/Types";
 import { parse } from "@iarna/toml";
 import { Events } from "discord.js";
 
-import { readdir, readFile } from "node:fs/promises";
-import ClientManager from "../Client";
 import EventListener from "../handlers/listeners/EventListener";
+import ClientManager from "../Client";
 import Config from "../utils/Config";
-import { ConfigData } from "../utils/Types";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {

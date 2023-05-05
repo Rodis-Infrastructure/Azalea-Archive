@@ -1,7 +1,7 @@
 import { GuildMember, GuildTextBasedChannel } from "discord.js";
+import { ConfigData, LoggingEvent, PermissionData } from "./Types";
 
 import ClientManager from "../Client";
-import { ConfigData, LoggingEvent, PermissionData } from "./Types";
 
 export default class Config {
     // @formatter:off
@@ -41,13 +41,14 @@ export default class Config {
 
     bind(guildId: string) {
         ClientManager.configs.set(guildId, this);
+        console.log(`Bound configuration to guild (${guildId})`);
     }
 
     loggingChannel(event: LoggingEvent): string | undefined {
         return this.logging?.[event]?.channelId;
     }
 
-    canLog(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
+    loggingAllowed(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
         if (!this.logging) return false;
 
         const {
@@ -60,10 +61,12 @@ export default class Config {
         const categoryId = channel.parentId ?? "";
 
         return (
+            /* Global logging is enabled and the channel/category is not excluded */
             enabled &&
             !excludedChannels?.includes(channel.id) &&
             !excludedCategories?.includes(categoryId) &&
 
+            /* The event's logging is enabled and the channel/category is not excluded */
             event?.enabled &&
             event.channelId &&
             !event.excludedChannels?.includes(channel.id) &&
@@ -75,27 +78,28 @@ export default class Config {
         if (!this.ephemeralResponses) return false;
 
         const { enabled, excludedChannels, excludedCategories } = this.ephemeralResponses;
-        const categoryId = channel.parentId ?? "None";
+        const categoryId = channel.parentId ?? "";
 
         return (
+            /* Ephemeral responses are enabled and the channel/category is not excluded */
             enabled &&
             !excludedChannels?.includes(channel.id) &&
             !excludedCategories?.includes(categoryId)
         ) as boolean;
     }
 
-    actionAllowed(member: GuildMember, data: { property: keyof PermissionData, value: string | boolean }): boolean {
-        const { property, value } = data;
+    actionAllowed(member: GuildMember, data: { permission: keyof PermissionData, requiredValue: string | boolean }): boolean {
         if (!this.roles.length && !this.groups.length) return false;
+        const { permission, requiredValue } = data;
 
         for (const role of this.roles) {
-            const propertyValue = role[property];
+            const permissionValue = role[permission];
 
             if (
-                // Property with a boolean value
-                (!Array.isArray(propertyValue) && propertyValue === value) ||
-                // Property with an array of strings
-                (Array.isArray(propertyValue) && propertyValue?.includes(value as string))
+                /* Permission value is a boolean */
+                (!Array.isArray(permissionValue) && permissionValue === requiredValue) ||
+                /* Permission value is an array of strings */
+                (Array.isArray(permissionValue) && permissionValue?.includes(requiredValue as string))
             ) {
                 if (member.roles.cache.has(role.id)) {
                     return true;
@@ -104,13 +108,13 @@ export default class Config {
         }
 
         for (const group of this.groups) {
-            const propertyValue = group[property];
+            const permissionValue = group[permission];
 
             if (
-                // Property with a boolean value
-                (!Array.isArray(propertyValue) && propertyValue === value) ||
-                // Property with an array of strings
-                (Array.isArray(propertyValue) && propertyValue?.includes(value as string))
+                /* Permission value is a boolean */
+                (!Array.isArray(permissionValue) && permissionValue === requiredValue) ||
+                /* Permission value is an array of strings */
+                (Array.isArray(permissionValue) && permissionValue?.includes(requiredValue as string))
             ) {
                 if (group.roles.some(roleId => member.roles.cache.has(roleId))) {
                     return true;

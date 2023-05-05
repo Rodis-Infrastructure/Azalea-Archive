@@ -4,10 +4,11 @@ import {
     ChatInputCommandInteraction,
     GuildMember
 } from "discord.js";
-import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
+
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
-import ms from "ms";
-import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
+import { muteExpirationTimestamp, resolveInfraction, validateModerationAction } from "../../utils/ModerationUtils";
+
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
 
 export default class UnmuteCommand extends ChatInputCommand {
@@ -28,20 +29,20 @@ export default class UnmuteCommand extends ChatInputCommand {
     }
 
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
-        const member = interaction.options.getMember("member") as GuildMember;
+        const offender = interaction.options.getMember("member") as GuildMember;
         const { success, error } = config.emojis;
 
-        if (!member) {
+        if (!offender) {
             await interaction.editReply(`${error} The user provided is not a member of the server.`);
             return;
         }
 
-        const notModerateableReason = validateModerationReason({
+        const notModerateableReason = validateModerationAction({
             config,
             moderatorId: interaction.user.id,
-            offender: member,
+            offender,
             additionalValidation: [{
-                condition: !member.moderatable,
+                condition: !offender.moderatable,
                 reason: "I do not have permission to unmute this member."
             }]
         });
@@ -51,25 +52,23 @@ export default class UnmuteCommand extends ChatInputCommand {
             return;
         }
 
-        const currentTimestamp = ms(Date.now().toString());
-        const mutedTimestamp = member.communicationDisabledUntilTimestamp;
-
-        if (!mutedTimestamp || mutedTimestamp < currentTimestamp) {
+        if (!muteExpirationTimestamp(offender)) {
             await interaction.editReply(`${error} This member is not muted.`);
             return;
         }
 
         try {
-            await member.timeout(null);
+            /* Clears the timeout */
+            await offender.timeout(null);
             await Promise.all([
                 resolveInfraction({
                     guildId: interaction.guildId!,
                     infractionType: InfractionType.Unmute,
-                    offender: member.user,
+                    offender: offender.user,
                     moderator: interaction.user
                 }),
 
-                interaction.editReply(`${success} Successfully unmuted **${member.user.tag}**`)
+                interaction.editReply(`${success} Successfully unmuted **${offender.user.tag}**`)
             ]);
         } catch {
             await interaction.editReply(`${error} An error has occurred while trying to unmute this member.`);

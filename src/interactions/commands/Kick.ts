@@ -5,9 +5,10 @@ import {
     GuildMember
 } from "discord.js";
 
-import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { resolveInfraction, validateModerationReason } from "../../utils/ModerationUtils";
+import { resolveInfraction, validateModerationAction } from "../../utils/ModerationUtils";
 import { InfractionType, InteractionResponseType } from "../../utils/Types";
+
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
 
 export default class KickCommand extends ChatInputCommand {
@@ -29,8 +30,7 @@ export default class KickCommand extends ChatInputCommand {
                     name: "reason",
                     description: "The reason for kicking the member",
                     type: ApplicationCommandOptionType.String,
-                    max_length: 1024,
-                    required: false
+                    max_length: 1024
                 }
             ]
         });
@@ -45,7 +45,7 @@ export default class KickCommand extends ChatInputCommand {
             return;
         }
 
-        const notModerateableReason = validateModerationReason({
+        const notModerateableReason = validateModerationAction({
             config,
             moderatorId: interaction.user.id,
             offender: member,

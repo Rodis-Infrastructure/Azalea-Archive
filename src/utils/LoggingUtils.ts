@@ -1,12 +1,13 @@
 import { GuildTextBasedChannel } from "discord.js";
-import ClientManager from "../Client";
 import { LogData } from "./Types";
+
+import ClientManager from "../Client";
 
 export async function sendLog(data: LogData): Promise<void> {
     const { event, channel, guildId, embed } = data;
 
-    const config = ClientManager.config(channel?.guildId || guildId as string);
-    if (channel && !config?.canLog(event, channel)) return;
+    const config = ClientManager.config(channel?.guildId || guildId!);
+    if (channel && !config?.loggingAllowed(event, channel)) return;
 
     const loggingChannelId = config?.loggingChannel(event);
     if (!loggingChannelId) return;

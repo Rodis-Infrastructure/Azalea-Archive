@@ -1,8 +1,8 @@
-import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
-
 import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../utils/Types";
 import { muteMember } from "../../utils/ModerationUtils";
+
+import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
 import Config from "../../utils/Config";
 
 export default class QuickMute30Command extends ContextMenuCommand {
@@ -25,32 +25,33 @@ export default class QuickMute30Command extends ContextMenuCommand {
         }
 
         const reason = message.content;
-        const res = await muteMember({
-            offender: message.member,
+        const res = await muteMember(message.member, {
             moderator: interaction.user,
             duration: "30m",
             config,
             reason
         });
 
-        const channelId = config.channels.staffCommands;
-        if (!channelId) return;
+        const confirmationChannelId = config.channels.staffCommands;
+        if (!confirmationChannelId) return;
 
-        const channel = await interaction.guild?.channels.fetch(channelId) as GuildTextBasedChannel;
-        if (!channel) return;
+        const confirmationChannel = await interaction.guild!.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+        if (!confirmationChannel) return;
 
+        /* The result is the mute's expiration timestamp */
         if (typeof res === "number") {
-            const muteDetails = `muted **${message.author?.tag}** until <t:${res}:F> | Expires <t:${res}:R> (\`${reason}\`)`;
+            const reply = `muted **${message.author?.tag}** until <t:${res}:F> | Expires <t:${res}:R> (\`${reason}\`)`;
 
             await Promise.all([
-                interaction.editReply(`${success} Successfully ${muteDetails}`),
-                channel.send(`${success} **${interaction.user.tag}** has successfully ${muteDetails}`),
+                interaction.editReply(`${success} Successfully ${reply}`),
+                confirmationChannel.send(`${success} **${interaction.user.tag}** has successfully ${reply}`),
                 message.delete().catch(() => null)
             ]);
 
             return;
         }
 
+        /* The result is an error message */
         await interaction.editReply(`${error} ${interaction.user} ${res}`);
     }
 }
