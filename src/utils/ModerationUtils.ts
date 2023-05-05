@@ -2,6 +2,7 @@ import { ColorResolvable, Colors, EmbedBuilder, GuildMember, User } from "discor
 import { sendLog } from "./LoggingUtils";
 import { InfractionType, LoggingEvent } from "./Types";
 import ms from "ms";
+import prettyPrint from "pretty-print-ms";
 import Config from "./Config";
 
 export async function resolveInfraction(data: {
@@ -60,7 +61,7 @@ export async function resolveInfraction(data: {
         ])
         .setTimestamp();
 
-    if (duration) log.addFields([{ name: "Duration", value: ms(duration, { long: true }) }]);
+    if (duration) log.addFields([{ name: "Duration", value: prettyPrint(duration) }]);
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
 
     await sendLog({
