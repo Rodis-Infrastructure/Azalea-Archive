@@ -1,19 +1,12 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, User } from "discord.js";
-import { InfractionType, LoggingEvent } from "./Types";
+import { InfractionData, InfractionType, LoggingEvent } from "./Types";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
 
 import Config from "./Config";
 import ms from "ms";
 
-export async function resolveInfraction(data: {
-    moderator: User,
-    offender: User,
-    guildId: string,
-    infractionType: InfractionType,
-    duration?: number,
-    reason?: string
-}): Promise<void> {
+export async function resolveInfraction(data: InfractionData): Promise<void> {
     const {
         moderator,
         offender,

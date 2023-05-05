@@ -1,7 +1,9 @@
 import {
     ChatInputCommandInteraction,
     EmbedBuilder,
-    GuildTextBasedChannel, MessageContextMenuCommandInteraction,
+    GuildTextBasedChannel,
+    MessageContextMenuCommandInteraction,
+    User,
     UserContextMenuCommandInteraction
 } from "discord.js";
 
@@ -70,6 +72,16 @@ export interface ConfigData {
     emojis?: EmojiData,
     channels?: ChannelData
 }
+
+export type InfractionData = {
+    moderator: User,
+    offender: User,
+    guildId: string,
+    reason?: string
+} & (
+    { infractionType: InfractionType.Mute, duration: number } |
+    { infractionType: Exclude<InfractionType, InfractionType.Mute>, duration?: never }
+);
 
 export type LogData = {
     event: LoggingEvent,
