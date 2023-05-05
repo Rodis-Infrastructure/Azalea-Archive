@@ -21,7 +21,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             return;
         }
 
-        if (executor.bot) return;
+        if (executor.id === ClientManager.client.user?.id) return;
         if (executor.partial) executor = await executor.fetch();
 
         let infractionType: InfractionType | undefined;
