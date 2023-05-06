@@ -77,7 +77,7 @@ export type InfractionData = {
     moderator: User,
     offender: User,
     guildId: string,
-    reason?: string
+    reason?: string | null
 } & (
     { infractionType: InfractionType.Mute, duration: number } |
     { infractionType: Exclude<InfractionType, InfractionType.Mute>, duration?: never }

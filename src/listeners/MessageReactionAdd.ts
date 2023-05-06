@@ -40,7 +40,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                 requiredValue: emojiName
             })) return;
 
-            const reason = message.content ?? undefined;
+            const reason = message.content;
             const res = await muteMember(message.member, {
                 moderator: user,
                 duration: muteDuration,

@@ -39,17 +39,32 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                 break;
 
             case AuditLogEvent.MemberUpdate: {
-                const timeoutChange = changes?.find(c => c.key === "communication_disabled_until");
+                const muteDurationDiff = changes?.find(c => c.key === "communication_disabled_until");
 
-                if (timeoutChange) {
-                    if (!timeoutChange.old && timeoutChange.new) {
+                if (muteDurationDiff) {
+                    if (!muteDurationDiff.old && muteDurationDiff.new) {
                         infractionType = InfractionType.Mute;
 
-                        const duration = Math.floor(Date.parse(timeoutChange.new as string) / 1000);
-                        channelResponse.push(`until <t:${duration}:F> | Expires <t:${duration}:R>`);
+                        const parsedMuteExpiration = Date.parse(muteDurationDiff.new as string);
+                        const muteExpirationTimestamp = Math.floor(parsedMuteExpiration / 1000);
+
+                        channelResponse.push(`until <t:${muteExpirationTimestamp}:F> | Expires <t:${muteExpirationTimestamp}:R>`);
+
+                        const muteDurationTimestamp = parsedMuteExpiration - Date.now();
+                        await resolveInfraction({
+                            moderator: executor,
+                            offender: target as User,
+                            guildId: guild.id,
+                            infractionType,
+                            reason,
+                            /* Prevent mute duration from being less than 1 minute */
+                            duration: muteDurationTimestamp < 60000
+                                ? 60000
+                                : muteDurationTimestamp
+                        });
                     }
 
-                    if (timeoutChange.old && !timeoutChange.new) infractionType = InfractionType.Unmute;
+                    if (muteDurationDiff.old && !muteDurationDiff.new) infractionType = InfractionType.Unmute;
                 }
 
                 break;
@@ -57,15 +72,15 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         }
 
         if (infractionType) {
-            await Promise.all([
-                resolveInfraction({
+            if (infractionType !== InfractionType.Mute) {
+                await resolveInfraction({
                     moderator: executor,
                     offender: target as User,
                     guildId: guild.id,
                     infractionType,
-                    reason: reason ?? undefined
-                })
-            ]);
+                    reason
+                });
+            }
 
             const config = ClientManager.config(guild.id)!;
             const channelId = config.channels.staffCommands;
@@ -74,10 +89,10 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             const channel = await guild.channels.fetch(channelId) as GuildTextBasedChannel;
             if (!channel) return;
 
-            channelResponse.splice(1, 0, `${infractionType.split(" ")[1]} **${(target as User).tag}**`);
+            channelResponse.splice(1, 0, `${infractionType.split(" ")[1].toLowerCase()} **${(target as User).tag}**`);
             if (infractionType !== InfractionType.Unmute && reason) channelResponse.push(`(\`${reason}\`)`);
 
-            await channel.send(`${config.emojis.success} ${channelResponse.join("")}`);
+            await channel.send(`${config.emojis.success} ${channelResponse.join(" ")}`);
         }
     }
 }

@@ -69,7 +69,7 @@ export async function muteMember(offender: GuildMember, data: {
     config: Config,
     moderator: User,
     duration: string,
-    reason?: string
+    reason?: string | null
 }): Promise<string | number> {
     const { config, moderator, duration, reason } = data;
 
@@ -105,20 +105,15 @@ export async function muteMember(offender: GuildMember, data: {
             reason
         });
 
-        msMuteDuration += ms(Date.now().toString());
-        return Math.floor(msMuteDuration / 1000);
+        return Math.floor((msMuteDuration + Date.now()) / 1000);
     } catch {
         return "An error has occurred while trying to mute this member.";
     }
 }
 
 export function muteExpirationTimestamp(member: GuildMember): number | void {
-    const timestamp = {
-        now: ms(Date.now().toString()),
-        muted: member.communicationDisabledUntilTimestamp
-    };
-
-    if (timestamp.muted && timestamp.muted >= timestamp.now) return Math.floor(timestamp.muted / 1000);
+    const mutedExpirationTimestamp = member.communicationDisabledUntilTimestamp;
+    if (mutedExpirationTimestamp && mutedExpirationTimestamp >= Date.now()) return Math.floor(mutedExpirationTimestamp / 1000);
 }
 
 export function validateModerationAction(data: {
