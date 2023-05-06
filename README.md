@@ -24,9 +24,9 @@ emojis that can currently be configured for different types of responses.
 ```toml
 [emojis]
 success = "👌"
-error = "<emoji-name:emoji-id>"
-quickMute30 = "<emoji-name:emoji-id>"
-quickMute60 = "<emoji-name:emoji-id>"
+error = "<:emoji-name:emoji-id>"
+quickMute30 = "<:emoji-name:emoji-id>"
+quickMute60 = "<:emoji-name:emoji-id>"
 ```
 
 ### Ephemeral Responses
