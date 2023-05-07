@@ -116,7 +116,7 @@ export default class Config {
                 /* Permission value is an array of strings */
                 (Array.isArray(permissionValue) && permissionValue?.includes(requiredValue as string))
             ) {
-                if (group.roles.some(roleId => member.roles.cache.has(roleId))) {
+                if (group.roleIds.some(roleId => member.roles.cache.has(roleId))) {
                     return true;
                 }
             }
@@ -127,7 +127,7 @@ export default class Config {
 
     guildStaffRoles(): string[] {
         const roles = this.roles.filter(role => role.guildStaff).map(role => role.id);
-        const groups = this.groups.filter(group => group.guildStaff).flatMap(group => group.roles);
+        const groups = this.groups.filter(group => group.guildStaff).flatMap(group => group.roleIds);
 
         return [...new Set([...roles, ...groups])];
     }

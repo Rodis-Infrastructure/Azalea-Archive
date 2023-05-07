@@ -7,7 +7,7 @@ excludedChannels = ["channel-id"]
 
 [[groups]]
 guildStaff = false
-roles = ["role-id"]
+roleIds = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]

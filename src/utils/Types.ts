@@ -67,7 +67,7 @@ export interface ConfigData {
     deleteMessageSecondsOnBan?: number
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
-    groups?: Array<PermissionData & Record<"roles", string[]>>,
+    groups?: Array<PermissionData & Record<"roleIds", string[]>>,
     logging?: LoggingEventData,
     emojis?: EmojiData,
     channels?: ChannelData

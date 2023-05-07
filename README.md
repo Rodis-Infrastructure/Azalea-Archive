@@ -75,7 +75,7 @@ reactions = []
 ```toml
 [[groups]]
 staff = false
-roles = []
+roleIds = []
 selectMenus = []
 buttons = []
 modals = []
