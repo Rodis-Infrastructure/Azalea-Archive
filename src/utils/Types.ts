@@ -42,7 +42,7 @@ export interface PermissionData extends Partial<Record<RolePermission, string[]>
     guildStaff?: boolean
 }
 
-type LoggingEventData =
+type LoggingData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
@@ -68,7 +68,7 @@ export interface ConfigData {
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
     groups?: Array<PermissionData & Record<"roleIds", string[]>>,
-    logging?: LoggingEventData,
+    logging?: LoggingData,
     emojis?: EmojiData,
     channels?: ChannelData
 }
