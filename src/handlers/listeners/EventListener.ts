@@ -1,11 +1,7 @@
 import { Events } from "discord.js";
 
 export default abstract class EventListener {
-    once: boolean;
-    name: Events;
-
-    protected constructor(data: { name: Events; once: boolean; }) {
-        this.once = data.once;
-        this.name = data.name;
-    }
+    // @formatter:off
+    // eslint-disable-next-line no-empty-function
+    protected constructor(public name: Events, public data?: { once: boolean }) {}
 }

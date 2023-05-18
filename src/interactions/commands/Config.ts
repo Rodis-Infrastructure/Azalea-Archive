@@ -1,15 +1,16 @@
-import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import ClientManager from "../../Client";
-
 import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
+    Colors,
     EmbedBuilder
 } from "discord.js";
 
 import { InteractionResponseType } from "../../utils/Types";
 import { JsonMap, stringify } from "@iarna/toml";
+
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
+import ClientManager from "../../Client";
 
 export default class ConfigCommand extends ChatInputCommand {
     constructor() {
@@ -22,29 +23,23 @@ export default class ConfigCommand extends ChatInputCommand {
             options: [{
                 name: "guild_id",
                 description: "The ID of the guild to view the configuration of",
-                type: ApplicationCommandOptionType.String,
-                required: false
+                type: ApplicationCommandOptionType.String
             }]
         });
     }
 
-    /**
-     * @param {ChatInputCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const guildId = interaction.options.getString("guild_id") ?? interaction.guildId as string;
-        const config = ClientManager.config(guildId) as unknown as JsonMap;
-        const formattedConfig = stringify(config || {});
+        const guildId = interaction.options.getString("guild_id") ?? interaction.guildId!;
+        const config = { ...(ClientManager.config(guildId)?.data) } as unknown as JsonMap;
 
         const embed = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setTitle("Guild Configuration")
-            .setDescription(`\`\`\`toml\n${formattedConfig || "N/A"}\`\`\``)
+            .setDescription(`\`\`\`toml\n${stringify(config)}\`\`\``)
             .setFooter({ text: `Guild ID: ${guildId}` })
             .setAuthor({
-                name: interaction.guild?.name as string,
-                iconURL: interaction.guild?.iconURL() as string
+                name: interaction.guild!.name,
+                iconURL: interaction.guild!.iconURL() ?? undefined
             });
 
         await interaction.editReply({ embeds: [embed] });

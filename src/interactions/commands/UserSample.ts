@@ -1,7 +1,7 @@
-import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
-
 import { ApplicationCommandType, ContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../utils/Types";
+
+import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
 
 export default class UserSampleCommand extends ContextMenuCommand {
     constructor() {
@@ -13,10 +13,6 @@ export default class UserSampleCommand extends ContextMenuCommand {
         });
     }
 
-    /**
-     * @param {ContextMenuCommandInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ContextMenuCommandInteraction): Promise<void> {
         await interaction.editReply("This is a sample **USER** command.");
     }

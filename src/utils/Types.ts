@@ -1,4 +1,16 @@
-import { EmbedBuilder, GuildTextBasedChannel } from "discord.js";
+import {
+    ChatInputCommandInteraction,
+    EmbedBuilder,
+    GuildTextBasedChannel,
+    MessageContextMenuCommandInteraction,
+    User,
+    UserContextMenuCommandInteraction
+} from "discord.js";
+
+import ChatInputCommand from "../handlers/interactions/commands/ChatInputCommand";
+import ContextMenuCommand from "../handlers/interactions/commands/ContextMenuCommand";
+
+export type InteractionCustomIdFilter = string | { startsWith: string } | { endsWith: string } | { includes: string };
 
 export enum InteractionResponseType {
     Default = 0,
@@ -6,15 +18,31 @@ export enum InteractionResponseType {
     EphemeralDefer = 2,
 }
 
-export enum LoggingEvent {
-    InteractionUsage = "interactionUsage",
-    MemberKick = "memberKick",
+export enum RolePermission {
+    Button = "buttons",
+    Modal = "modals",
+    SelectMenu = "selections",
+    Reaction = "reactions",
 }
 
-export type StringInteractionType = "buttons" | "modals" | "selections";
+export enum LoggingEvent {
+    InteractionUsage = "interactionUsage",
+    Infraction = "infractions"
+}
 
-type PermissionData = Record<StringInteractionType, string[] | undefined> & Record<"guildStaff", boolean | undefined>;
-type LoggingEventData =
+export enum InfractionType {
+    Ban = "Member Banned",
+    Unban = "Member Unbanned",
+    Kick = "Member Kicked",
+    Mute = "Member Muted",
+    Unmute = "Member Unmuted"
+}
+
+export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
+    guildStaff?: boolean
+}
+
+type LoggingData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
@@ -24,15 +52,36 @@ interface ToggleableProperty {
     excludedCategories?: string[]
 }
 
-type EmojiType = "success" | "error";
+interface EmojiData {
+    success: string | "✅"
+    error: string | "❌"
+    quickMute30?: string
+    quickMute60?: string
+}
+
+interface ChannelData {
+    staffCommands?: string
+}
 
 export interface ConfigData {
+    deleteMessageSecondsOnBan?: number
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
-    groups?: Array<PermissionData & Record<"roles", string[]>>,
-    logging?: LoggingEventData,
-    emojis?: Partial<Record<EmojiType, string>>
+    groups?: Array<PermissionData & Record<"roleIds", string[]>>,
+    logging?: LoggingData,
+    emojis?: EmojiData,
+    channels?: ChannelData
 }
+
+export type InfractionData = {
+    moderator: User,
+    offender: User,
+    guildId: string,
+    reason?: string | null
+} & (
+    { infractionType: InfractionType.Mute, duration: number } |
+    { infractionType: Exclude<InfractionType, InfractionType.Mute>, duration?: never }
+);
 
 export type LogData = {
     event: LoggingEvent,
@@ -41,3 +90,21 @@ export type LogData = {
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }
 );
+
+export interface CustomComponentProperties {
+    name: InteractionCustomIdFilter;
+    skipInternalUsageCheck: boolean;
+    defer: InteractionResponseType;
+}
+
+export interface CustomModalProperties {
+    name: InteractionCustomIdFilter;
+    skipInternalUsageCheck: boolean;
+    ephemeral: boolean;
+}
+
+export type Command = ChatInputCommand | ContextMenuCommand;
+export type CommandInteraction =
+    ChatInputCommandInteraction
+    | UserContextMenuCommandInteraction
+    | MessageContextMenuCommandInteraction;

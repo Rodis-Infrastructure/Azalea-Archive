@@ -1,28 +1,11 @@
-import ContextMenuCommand from "./ContextMenuCommand";
-import ChatInputCommand from "./ChatInputCommand";
-import ClientManager from "../../../Client";
+import { ApplicationCommandType, Collection, Colors, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 
-import {
-    ApplicationCommandDataResolvable,
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    Collection,
-    EmbedBuilder,
-    GuildTextBasedChannel,
-    MessageContextMenuCommandInteraction,
-    UserContextMenuCommandInteraction
-} from "discord.js";
-
-import { InteractionResponseType, LoggingEvent } from "../../../utils/Types";
+import { Command, CommandInteraction, InteractionResponseType, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
 
-type Command = ChatInputCommand | ContextMenuCommand;
-type CommandInteraction =
-    ChatInputCommandInteraction
-    | UserContextMenuCommandInteraction
-    | MessageContextMenuCommandInteraction;
+import ClientManager from "../../../Client";
 
 export default class CommandHandler {
     list: Collection<string, Command>;
@@ -41,13 +24,11 @@ export default class CommandHandler {
     }
 
     public register(command: Command) {
-        this.list.set(`${command.name}_${command.type}`, command);
+        this.list.set(`${command.data.name}_${command.data.type}`, command);
     }
 
     public async publish() {
-        const commandData: ApplicationCommandDataResolvable[] = await Promise.all(
-            ClientManager.commands.list.map(command => command.build())
-        );
+        const commandData = ClientManager.commands.list.map(command => command.build());
 
         try {
             await ClientManager.client.application?.commands.set(commandData);
@@ -58,32 +39,32 @@ export default class CommandHandler {
     }
 
     public async handle(interaction: CommandInteraction) {
-        const config = ClientManager.config(interaction.guildId as string);
+        const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {
             await interaction.reply({
-                content: "Guild not configured.",
+                content: "Failed to fetch guild configuration.",
                 ephemeral: true
             });
             return;
         }
 
         const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
+
         if (!command) {
             await interaction.reply({
-                content: "Unable to execute command.",
+                content: "Interaction not found.",
                 ephemeral: true
             });
             return;
         }
 
-        const channel = interaction.channel as GuildTextBasedChannel;
+        const usageChannel = interaction.channel as GuildTextBasedChannel;
+        const replyDeferralType = config.ephemeralResponseIn(usageChannel)
+            ? InteractionResponseType.EphemeralDefer
+            : command.data.defer;
 
-        const responseType = config.ephemeralResponseIn(channel) ?
-            InteractionResponseType.EphemeralDefer :
-            command.defer;
-
-        switch (responseType) {
+        switch (replyDeferralType) {
             case InteractionResponseType.Defer: {
                 await interaction.deferReply();
                 break;
@@ -95,39 +76,36 @@ export default class CommandHandler {
         }
 
         try {
-            await command.execute(interaction);
+            await command.execute(interaction, config);
         } catch (err) {
-            console.log(`Failed to execute command: ${command.name}`);
+            console.log(`Failed to execute command: ${command.data.name}`);
             console.error(err);
             return;
         }
 
         const log = new EmbedBuilder()
-            .setColor(0x2e3136)
+            .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-            .setDescription(`Command \`${command.name}\` used by ${interaction.user}`)
+            .setDescription(`Command \`${command.data.name}\` used by ${interaction.user}`)
+            .setFields([{
+                name: "Channel",
+                value: `${usageChannel} (\`#${usageChannel.name}\`)`
+            }])
             .setTimestamp();
 
-        const logEmbedFields = [{
-            name: "Channel",
-            value: `${channel} (\`#${channel.name}\`)`
-        }];
-
         if (interaction.commandType !== ApplicationCommandType.ChatInput) {
-            let target = interaction.targetId;
-            if (interaction.commandType === ApplicationCommandType.Message) target = interaction.targetMessage.author.id;
+            let targetUserId = interaction.targetId;
+            if (interaction.commandType === ApplicationCommandType.Message) targetUserId = interaction.targetMessage.author.id;
 
-            logEmbedFields.push({
+            log.addFields([{
                 name: "Target",
-                value: `<@${target}> (\`${target}\`)`
-            });
+                value: `<@${targetUserId}> (\`${targetUserId}\`)`
+            }]);
         }
-
-        log.setFields(logEmbedFields);
 
         await sendLog({
             event: LoggingEvent.InteractionUsage,
-            channel: channel,
+            channel: usageChannel,
             embed: log
         });
     }

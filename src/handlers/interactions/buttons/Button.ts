@@ -1,22 +1,11 @@
-import { InteractionResponseType } from "../../../utils/Types";
+import { CustomComponentProperties } from "../../../utils/Types";
 import { ButtonInteraction } from "discord.js";
 
-type CustomButtonComponentData = {
-    name: string | { startsWith: string; } | { endsWith: string; } | { includes: string; }
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
-}
+import Config from "../../../utils/Config";
 
 export default abstract class Button {
-    name: string | { startsWith: string } | { endsWith: string } | { includes: string };
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
-
-    abstract execute(interaction: ButtonInteraction): Promise<void>;
-
-    protected constructor(data: CustomButtonComponentData) {
-        this.skipInternalUsageCheck = data.skipInternalUsageCheck;
-        this.defer = data.defer;
-        this.name = data.name;
-    }
+    // @formatter:off
+    // eslint-disable-next-line no-empty-function
+    protected constructor(public data: CustomComponentProperties) {}
+    abstract execute(interaction: ButtonInteraction, config: Config): Promise<void>;
 }

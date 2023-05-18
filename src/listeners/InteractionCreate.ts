@@ -1,17 +1,16 @@
+import { Events, Interaction } from "discord.js";
+
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 
-import { Events, Interaction } from "discord.js";
-
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
-        super({
-            name: Events.InteractionCreate,
-            once: false
-        });
+        super(Events.InteractionCreate);
     }
 
     async execute(interaction: Interaction): Promise<void> {
+        if (!interaction.guild || !interaction.guildId) return;
+
         if (
             interaction.isChatInputCommand() ||
             interaction.isMessageContextMenuCommand() ||

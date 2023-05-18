@@ -10,10 +10,6 @@ export default class SampleModal extends Modal {
         });
     }
 
-    /**
-     * @param  {ModalSubmitInteraction} interaction
-     * @returns {Promise<void>}
-     */
     async execute(interaction: ModalSubmitInteraction): Promise<void> {
         await interaction.editReply("This is a sample **MODAL**");
     }
