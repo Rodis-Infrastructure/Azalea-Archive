@@ -45,8 +45,8 @@ export default class MessageDeleteEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Message,
-            channel: message.channel as GuildTextBasedChannel,
-            embed: log
+            embed: log,
+            channel
         });
     }
 }
