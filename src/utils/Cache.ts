@@ -51,7 +51,6 @@ export async function processCachedMessages(): Promise<void> {
 		VALUES (?, ?, ?, ?, ?)
     `);
 
-    console.log(messageCache);
     messageCache.remove.forEach(message => remove.run(message));
     messageCache.store.forEach((data, messageId) => {
         store.run(

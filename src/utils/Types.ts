@@ -27,7 +27,8 @@ export enum RolePermission {
 
 export enum LoggingEvent {
     InteractionUsage = "interactionUsage",
-    Infraction = "infractions"
+    Infraction = "infractions",
+    Message = "messages"
 }
 
 export enum InfractionType {
