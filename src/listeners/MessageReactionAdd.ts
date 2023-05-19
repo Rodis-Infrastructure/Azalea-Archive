@@ -70,6 +70,11 @@ export default class MessageReactionAddEventListener extends EventListener {
         }
 
         if (config.emojis.purgeMessages?.includes(emojiId)) {
+            if (!config.actionAllowed(member, {
+                permission: RolePermission.Reaction,
+                requiredValue: "purgeMessages"
+            })) return;
+
             const { success, error } = config.emojis;
 
             const confirmationChannelId = config.channels.staffCommands;
