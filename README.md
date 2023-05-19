@@ -38,6 +38,7 @@ success = "👌"
 error = "<:emoji-name:emoji-id>"
 quickMute30 = "<:emoji-name:emoji-id>"
 quickMute60 = "<:emoji-name:emoji-id>"
+purgeMessages = "<:emoji-name:emoji-id>"
 ```
 
 ### Ephemeral Responses

@@ -1,5 +1,5 @@
 import { Events, GuildTextBasedChannel, MessageReaction, User } from "discord.js";
-import { muteMember } from "../utils/ModerationUtils";
+import { muteMember, purgeMessages } from "../utils/ModerationUtils";
 import { RolePermission } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
@@ -67,6 +67,35 @@ export default class MessageReactionAddEventListener extends EventListener {
 
             /* The result is an error message */
             await confirmationChannel.send(`${config.emojis.error} ${user} ${res}`);
+        }
+
+        if (config.emojis.purgeMessages?.includes(emojiId)) {
+            const { success, error } = config.emojis;
+
+            const confirmationChannelId = config.channels.staffCommands;
+            if (!confirmationChannelId) return;
+
+            const confirmationChannel = await message.guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+            if (!confirmationChannel) return;
+
+            await reaction.remove();
+
+            try {
+                const purgedMessages = await purgeMessages({
+                    channel: reaction.message.channel as GuildTextBasedChannel,
+                    amount: 100,
+                    authorId: reaction.message.author?.id
+                });
+
+                if (!purgedMessages) {
+                    await confirmationChannel.send(`${error} ${user} There are no messages to purge.`);
+                    return;
+                }
+
+                await confirmationChannel.send(`${success} ${user} Successfully purged \`${purgedMessages}\` messages by **${reaction.message.author?.tag}**.`);
+            } catch {
+                await confirmationChannel.send(`${error} ${user} Failed to purge messages.`);
+            }
         }
     }
 }

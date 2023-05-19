@@ -1,11 +1,14 @@
+import { processCachedMessages } from "../utils/Cache";
 import { readdir, readFile } from "node:fs/promises";
 import { ConfigData } from "../utils/Types";
+import { removeExpiredData } from "../db";
 import { parse } from "@iarna/toml";
 import { Events } from "discord.js";
 
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 import Config from "../utils/Config";
+import ms from "ms";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -34,5 +37,13 @@ export default class ReadyEventListener extends EventListener {
         ]);
 
         await ClientManager.commands.publish();
+
+        setInterval(async() => {
+            await processCachedMessages();
+        }, ms("15m"));
+
+        setInterval(async() => {
+            await removeExpiredData();
+        }, ms("6h"));
     }
 }

@@ -57,6 +57,7 @@ interface EmojiData {
     error: string | "❌"
     quickMute30?: string
     quickMute60?: string
+    purgeMessages?: string
 }
 
 interface ChannelData {
@@ -95,6 +96,24 @@ export interface CustomComponentProperties {
     name: InteractionCustomIdFilter;
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
+}
+
+export enum CacheType {
+    Messages = "messages"
+}
+
+export interface Cache {
+    messages: {
+        store: CachedMessage[];
+        remove: string[];
+    }
+}
+
+export interface CachedMessage {
+    authorId: string;
+    channelId: string;
+    guildId: string;
+    createdAt: number;
 }
 
 export interface CustomModalProperties {

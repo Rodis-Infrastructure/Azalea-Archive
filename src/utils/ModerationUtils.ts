@@ -1,8 +1,11 @@
-import { ColorResolvable, Colors, EmbedBuilder, GuildMember, User } from "discord.js";
-import { InfractionData, InfractionType, LoggingEvent } from "./Types";
+import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
+import { CacheType, InfractionData, InfractionType, LoggingEvent } from "./Types";
+import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
+import { conn } from "../db";
 
+import ClientManager from "../Client";
 import Config from "./Config";
 import ms from "ms";
 
@@ -131,4 +134,56 @@ export function validateModerationAction(data: {
     for (const check of additionalValidation ?? []) {
         if (check.condition) return check.reason;
     }
+}
+
+export async function purgeMessages(data: {
+    channel: GuildTextBasedChannel,
+    amount: number,
+    authorId?: string
+}): Promise<number> {
+    const { channel, amount, authorId } = data;
+
+    const messageCache = ClientManager.cache.get(CacheType.Messages)!;
+    const removableMessageIds = getCachedMessageIds({
+        channelId: channel.id,
+        guildId: channel.guildId,
+        authorId,
+        limit: amount
+    });
+
+    removableMessageIds.forEach(id => cacheMessage(id, { deleted: true }));
+
+    if (removableMessageIds.length < amount) {
+        const messagesToFetch = amount - removableMessageIds.length;
+        const authorCondition = authorId ? `AND authorId = ${authorId}` : "";
+
+        try {
+            const excludedIds = [...removableMessageIds, ...Array.from(messageCache.remove)].join(",");
+            const storedMessages = await new Promise((resolve, reject) => {
+                // @formatter:off
+                conn.all(`
+					DELETE FROM messages
+					WHERE id IN (
+					    SELECT id FROM messages
+                        WHERE channelId = ${channel.id} ${authorCondition} 
+                            AND guildId = ${channel.guildId}
+                            AND id NOT IN (${excludedIds})
+                        ORDER BY createdAt DESC
+                        LIMIT ${messagesToFetch}
+                    )
+					RETURNING CAST(id AS TEXT) AS id;
+                `, (err, rows: { id: string }[]) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                });
+            }) as { id: string }[];
+
+            removableMessageIds.push(...storedMessages.map(({ id }) => id));
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    const { size } = await channel.bulkDelete(removableMessageIds);
+    return size;
 }
