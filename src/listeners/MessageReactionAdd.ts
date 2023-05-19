@@ -67,6 +67,7 @@ export default class MessageReactionAddEventListener extends EventListener {
 
             /* The result is an error message */
             await confirmationChannel.send(`${config.emojis.error} ${user} ${res}`);
+            return;
         }
 
         if (config.emojis.purgeMessages?.includes(emojiId)) {
