@@ -33,6 +33,22 @@ export default class MessageBulkDeleteEventListener extends EventListener {
 
         loggingChannel.send({
             files: [file]
+        }).then(async message => {
+            const cache = ClientManager.cache.messages.purged;
+            if (!cache || !messages.some(({ id }) => cache.data.includes(id))) return;
+
+            const confirmationChannelId = config.channels.staffCommands;
+            if (!confirmationChannelId) return;
+
+            const confirmationChannel = await message.guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+            if (!confirmationChannel) return;
+
+            const author = cache.targetId
+                ? ` by <@${cache.targetId}> (\`${cache.targetId}\`)`
+                : "";
+
+            confirmationChannel.send(`${config.emojis.success} <@${cache.moderatorId}> Successfully purged \`${messages.size}\` messages${author}: ${message.url}`);
+            ClientManager.cache.messages.purged = undefined;
         });
     }
 }

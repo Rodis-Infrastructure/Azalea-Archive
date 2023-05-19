@@ -1,5 +1,6 @@
 import {
     ChatInputCommandInteraction,
+    Collection,
     EmbedBuilder,
     GuildTextBasedChannel,
     MessageContextMenuCommandInteraction,
@@ -99,14 +100,15 @@ export interface CustomComponentProperties {
     defer: InteractionResponseType;
 }
 
-export enum CacheType {
-    Messages = "messages"
-}
-
 export interface Cache {
     messages: {
-        store: CachedMessage[];
-        remove: string[];
+        store: Collection<string, CachedMessage>;
+        remove: Set<string>;
+        purged?: {
+            targetId?: string;
+            moderatorId: string;
+            data: string[];
+        }
     }
 }
 

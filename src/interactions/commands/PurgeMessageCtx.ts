@@ -24,7 +24,8 @@ export default class PurgeMessageCtxCommand extends ContextMenuCommand {
             const purgedMessages = await purgeMessages({
                 channel: interaction.channel as GuildTextBasedChannel,
                 amount: 100,
-                authorId: author.id
+                authorId: author.id,
+                moderatorId: interaction.user.id
             });
 
             if (!purgedMessages) {

@@ -68,7 +68,8 @@ export default class CleanCommand extends ChatInputCommand {
             const purgedMessages = await purgeMessages({
                 channel: interaction.channel as GuildTextBasedChannel,
                 amount,
-                authorId: user?.id
+                authorId: user?.id,
+                moderatorId: interaction.user.id
             });
 
             if (!purgedMessages) {

@@ -3,7 +3,7 @@ import { LogData } from "./Types";
 
 import ClientManager from "../Client";
 
-export async function sendLog(data: LogData): Promise<void> {
+export async function sendLog(data: LogData): Promise<string | void> {
     const { event, channel, guildId, embed } = data;
 
     const config = ClientManager.config(channel?.guildId || guildId!);
@@ -19,5 +19,6 @@ export async function sendLog(data: LogData): Promise<void> {
         return;
     }
 
-    await loggingChannel.send({ embeds: [embed] });
+    const message = await loggingChannel.send({ embeds: [embed] });
+    return message.url;
 }

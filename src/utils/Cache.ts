@@ -1,4 +1,3 @@
-import { CacheType } from "./Types";
 import { Message } from "discord.js";
 import { conn } from "../db";
 
@@ -12,14 +11,14 @@ export function getCachedMessageIds(data: {
 }): string[] {
     const { authorId, channelId, guildId, limit } = data;
 
-    const messageCache = ClientManager.cache.get(CacheType.Messages)!;
-    return messageCache.store
+    const cache = ClientManager.cache.messages;
+    return cache.store
         .filter((message, id) => {
             const shouldPurge = message.channelId === channelId
                 && message.guildId === guildId
                 && (!authorId || message.authorId === authorId);
 
-            if (shouldPurge) messageCache.store.delete(id);
+            if (shouldPurge) cache.store.delete(id);
             return shouldPurge;
         })
         .sort((a, b) => b.createdAt - a.createdAt)
@@ -28,9 +27,9 @@ export function getCachedMessageIds(data: {
 }
 
 export function cacheMessage(message: Message | string, params?: { deleted: boolean }) {
-    const messageCache = ClientManager.cache.get(CacheType.Messages)!;
+    const cache = ClientManager.cache.messages;
     if (!params?.deleted && typeof message !== "string") {
-        messageCache.store.set(message.id, {
+        cache.store.set(message.id, {
             authorId: message.author.id,
             channelId: message.channel.id,
             guildId: message.guild!.id,
@@ -39,20 +38,20 @@ export function cacheMessage(message: Message | string, params?: { deleted: bool
         return;
     }
 
-    const removed = messageCache.store.delete(message as string);
-    if (!removed) messageCache.remove.add(message as string);
+    const removed = cache.store.delete(message as string);
+    if (!removed) cache.remove.add(message as string);
 }
 
 export async function processCachedMessages(): Promise<void> {
-    const messageCache = ClientManager.cache.get(CacheType.Messages)!;
+    const cache = ClientManager.cache.messages;
     const remove = conn.prepare("DELETE FROM messages WHERE id = ?");
     const store = conn.prepare(`
 		INSERT INTO messages (id, authorId, channelId, guildId, createdAt)
 		VALUES (?, ?, ?, ?, ?)
     `);
 
-    messageCache.remove.forEach(message => remove.run(message));
-    messageCache.store.forEach((data, messageId) => {
+    cache.remove.forEach(message => remove.run(message));
+    cache.store.forEach((data, messageId) => {
         store.run(
             messageId,
             data.authorId,
@@ -65,6 +64,6 @@ export async function processCachedMessages(): Promise<void> {
     await store.finalize();
     await remove.finalize();
 
-    messageCache.store.clear();
-    messageCache.remove.clear();
+    cache.store.clear();
+    cache.remove.clear();
 }

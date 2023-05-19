@@ -1,5 +1,5 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { CacheType, InfractionData, InfractionType, LoggingEvent } from "./Types";
+import { InfractionData, InfractionType, LoggingEvent } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
@@ -139,15 +139,16 @@ export function validateModerationAction(data: {
 export async function purgeMessages(data: {
     channel: GuildTextBasedChannel,
     amount: number,
+    moderatorId: string,
     authorId?: string
 }): Promise<number> {
-    const { channel, amount, authorId } = data;
+    const { channel, amount, authorId, moderatorId } = data;
 
-    const messageCache = ClientManager.cache.get(CacheType.Messages)!;
+    const cache = ClientManager.cache.messages;
     const removableMessageIds = getCachedMessageIds({
         channelId: channel.id,
         guildId: channel.guildId,
-        authorId,
+        authorId: authorId,
         limit: amount
     });
 
@@ -158,7 +159,7 @@ export async function purgeMessages(data: {
         const authorCondition = authorId ? `AND authorId = ${authorId}` : "";
 
         try {
-            const excludedIds = [...removableMessageIds, ...Array.from(messageCache.remove)].join(",");
+            const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
             const storedMessages = await new Promise((resolve, reject) => {
                 // @formatter:off
                 conn.all(`
@@ -184,6 +185,12 @@ export async function purgeMessages(data: {
         }
     }
 
-    const { size } = await channel.bulkDelete(removableMessageIds);
-    return size;
+    cache.purged = {
+        targetId: authorId,
+        data: removableMessageIds,
+        moderatorId
+    };
+
+    const res = await channel.bulkDelete(removableMessageIds);
+    return res.size;
 }

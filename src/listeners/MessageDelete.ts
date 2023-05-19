@@ -4,6 +4,7 @@ import EventListener from "../handlers/listeners/EventListener";
 import { cacheMessage } from "../utils/Cache";
 import { sendLog } from "../utils/LoggingUtils";
 import { LoggingEvent } from "../utils/Types";
+import ClientManager from "../Client";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -47,6 +48,21 @@ export default class MessageDeleteEventListener extends EventListener {
             event: LoggingEvent.Message,
             embed: log,
             channel
+        }).then(async url => {
+            const cache = ClientManager.cache.messages.purged;
+            if (!cache || !cache.data.includes(message.id)) return;
+
+            const config = ClientManager.config(channel.guildId)!;
+            const confirmationChannelId = config.channels.staffCommands;
+            if (!confirmationChannelId) return;
+
+            const confirmationChannel = await message.guild?.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+            if (!confirmationChannel) return;
+
+            const author = `by <@${message.author.id}> (\`${message.author.id}\`)`;
+
+            confirmationChannel.send(`${config.emojis.success} <@${cache.moderatorId}> Successfully purged \`1\` message ${author}: ${url}`);
+            ClientManager.cache.messages.purged = undefined;
         });
     }
 }

@@ -8,7 +8,7 @@ import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
 import Config from "./utils/Config";
 
 import "dotenv/config";
-import { CachedMessage, CacheType } from "./utils/Types";
+import { Cache, CachedMessage } from "./utils/Types";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
@@ -19,12 +19,13 @@ class ClientManager {
     public commands = new CommandHandler();
     public buttons = new ButtonHandler();
     public modals = new ModalHandler();
-    public cache = new Collection([
-        [CacheType.Messages, {
+    public cache: Cache = {
+        messages: {
             store: new Collection<string, CachedMessage>(),
-            remove: new Set<string>()
-        }]
-    ]);
+            remove: new Set<string>(),
+            purged: undefined
+        }
+    };
 
     public client = new Client({
         intents: [
