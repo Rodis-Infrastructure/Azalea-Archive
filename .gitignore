@@ -1,6 +1,7 @@
 # Files
 .env
 .DS_Store
+*.db
 
 # Directories
 node_modules
