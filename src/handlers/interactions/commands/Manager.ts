@@ -85,7 +85,7 @@ export default class CommandHandler {
 
         const log = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
-            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .setAuthor({ name: "Interaction Used", iconURL: "attachment://interaction.png" })
             .setDescription(`Command \`${command.data.name}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Channel",
@@ -104,9 +104,15 @@ export default class CommandHandler {
         }
 
         await sendLog({
-            event: LoggingEvent.InteractionUsage,
+            event: LoggingEvent.Interaction,
             channel: usageChannel,
-            embed: log
+            options: {
+                embeds: [log],
+                files: [{
+                    attachment: "./icons/interaction.png",
+                    name: "interaction.png"
+                }]
+            }
         });
     }
 }

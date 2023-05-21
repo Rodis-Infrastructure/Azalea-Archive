@@ -1,9 +1,10 @@
 import {
     ChatInputCommandInteraction,
     Collection,
-    EmbedBuilder,
     GuildTextBasedChannel,
     MessageContextMenuCommandInteraction,
+    MessageCreateOptions,
+    MessagePayload,
     User,
     UserContextMenuCommandInteraction
 } from "discord.js";
@@ -27,7 +28,7 @@ export enum RolePermission {
 }
 
 export enum LoggingEvent {
-    InteractionUsage = "interactionUsage",
+    Interaction = "interactions",
     Infraction = "infractions",
     Message = "messages"
 }
@@ -88,7 +89,7 @@ export type InfractionData = {
 
 export type LogData = {
     event: LoggingEvent,
-    embed: EmbedBuilder
+    options: string | MessagePayload | MessageCreateOptions
 } & (
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }

@@ -1,10 +1,9 @@
 import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "discord.js";
+import { linkToLog, sendLog } from "../utils/LoggingUtils";
+import { cacheMessage } from "../utils/Cache";
+import { LoggingEvent } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
-import { cacheMessage } from "../utils/Cache";
-import { sendLog } from "../utils/LoggingUtils";
-import { LoggingEvent } from "../utils/Types";
-import ClientManager from "../Client";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -27,7 +26,7 @@ export default class MessageDeleteEventListener extends EventListener {
         const channel = message.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
             .setColor(Colors.Red)
-            .setTitle("Message Deleted")
+            .setAuthor({ name: "Message Deleted", iconURL: "attachment://messageDelete.png" })
             .setFields([
                 {
                     name: "Author",
@@ -44,25 +43,22 @@ export default class MessageDeleteEventListener extends EventListener {
             ])
             .setTimestamp();
 
-        await sendLog({
+        const url = await sendLog({
             event: LoggingEvent.Message,
-            embed: log,
-            channel
-        }).then(async url => {
-            const cache = ClientManager.cache.messages.purged;
-            if (!cache || !cache.data.includes(message.id)) return;
+            channel,
+            options: {
+                embeds: [log],
+                files: [{
+                    attachment: "./icons/messageDelete.png",
+                    name: "messageDelete.png"
+                }]
+            }
+        });
 
-            const config = ClientManager.config(channel.guildId)!;
-            const confirmationChannelId = config.channels.staffCommands;
-            if (!confirmationChannelId) return;
-
-            const confirmationChannel = await message.guild?.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-            if (!confirmationChannel) return;
-
-            const author = `by <@${message.author.id}> (\`${message.author.id}\`)`;
-
-            confirmationChannel.send(`${config.emojis.success} <@${cache.moderatorId}> Successfully purged \`1\` message ${author}: ${url}`);
-            ClientManager.cache.messages.purged = undefined;
+        await linkToLog({
+            channel,
+            content: message.id,
+            url
         });
     }
 }

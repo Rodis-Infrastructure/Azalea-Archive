@@ -1,9 +1,10 @@
 import { AttachmentBuilder, Collection, Events, GuildTextBasedChannel, Message } from "discord.js";
+import { linkToLog, sendLog } from "../utils/LoggingUtils";
 import { cacheMessage } from "../utils/Cache";
+import { LoggingEvent } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
-import { LoggingEvent } from "../utils/Types";
 
 export default class MessageBulkDeleteEventListener extends EventListener {
     constructor() {
@@ -31,24 +32,18 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             .setName(`purged_messages_${new Date().toLocaleString("en-GB")}.txt`)
             .setDescription("Purged messages");
 
-        loggingChannel.send({
-            files: [file]
-        }).then(async message => {
-            const cache = ClientManager.cache.messages.purged;
-            if (!cache || !messages.some(({ id }) => cache.data.includes(id))) return;
+        const url = await sendLog({
+            event: LoggingEvent.Message,
+            channel,
+            options: {
+                files: [file]
+            }
+        });
 
-            const confirmationChannelId = config.channels.staffCommands;
-            if (!confirmationChannelId) return;
-
-            const confirmationChannel = await message.guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-            if (!confirmationChannel) return;
-
-            const author = cache.targetId
-                ? ` by <@${cache.targetId}> (\`${cache.targetId}\`)`
-                : "";
-
-            confirmationChannel.send(`${config.emojis.success} <@${cache.moderatorId}> Successfully purged \`${messages.size}\` messages${author}: ${message.url}`);
-            ClientManager.cache.messages.purged = undefined;
+        await linkToLog({
+            channel,
+            content: messages,
+            url
         });
     }
 }

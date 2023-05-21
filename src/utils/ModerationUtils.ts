@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
+import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
 import { InfractionData, InfractionType, LoggingEvent } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
@@ -19,17 +19,19 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
         duration
     } = data;
 
-    const colorMap = {
-        [InfractionType.Ban]: Colors.Blurple,
-        [InfractionType.Kick]: Colors.Red,
-        [InfractionType.Unban]: Colors.DarkButNotBlack,
-        [InfractionType.Mute]: Colors.NotQuiteBlack,
-        [InfractionType.Unmute]: Colors.DarkButNotBlack
-    };
+    let color: ColorResolvable = Colors.Red;
+    let icon = "memberDelete.png";
+
+    switch (infractionType) {
+        case InfractionType.Unban:
+        case InfractionType.Unmute:
+            icon = "memberCreate.png";
+            color = Colors.Green;
+    }
 
     const log = new EmbedBuilder()
-        .setColor(colorMap[infractionType])
-        .setAuthor({ name: infractionType })
+        .setColor(color)
+        .setAuthor({ name: infractionType, iconURL: `attachment://${icon}` })
         .setFields([
             { name: "Member", value: `${offender} (\`${offender.id}\`)` },
             { name: "Moderator", value: `${moderator} (\`${moderator.id}\`)` }
@@ -41,8 +43,14 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     await sendLog({
         event: LoggingEvent.Infraction,
-        embed: log,
-        guildId
+        guildId,
+        options: {
+            embeds: [log],
+            files: [{
+                attachment: `./icons/${icon}`,
+                name: icon
+            }]
+        }
     });
 }
 

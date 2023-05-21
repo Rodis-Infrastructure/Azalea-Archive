@@ -29,7 +29,7 @@ export default class MessageDeleteEventListener extends EventListener {
         const channel = newMessage.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
             .setColor(Colors.Orange)
-            .setTitle("Message Edited")
+            .setAuthor({ name: "Message Updated", iconURL: "attachment://messageUpdate.png" })
             .setFields([
                 {
                     name: "Author",
@@ -52,8 +52,14 @@ export default class MessageDeleteEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Message,
-            embed: log,
-            channel
+            channel,
+            options: {
+                embeds: [log],
+                files: [{
+                    attachment: "./icons/messageUpdate.png",
+                    name: "messageUpdate.png"
+                }]
+            }
         });
     }
 }
