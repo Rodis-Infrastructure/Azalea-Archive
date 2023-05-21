@@ -1,4 +1,4 @@
-import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
+import { Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
 import { InfractionData, InfractionType, LoggingEvent } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
@@ -19,42 +19,20 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
         duration
     } = data;
 
-    let color!: ColorResolvable;
-
-    switch (infractionType) {
-        case InfractionType.Ban:
-            color = Colors.Blurple;
-            break;
-
-        case InfractionType.Kick:
-            color = Colors.Red;
-            break;
-
-        case InfractionType.Unban:
-            color = Colors.DarkButNotBlack;
-            break;
-
-        case InfractionType.Mute:
-            color = Colors.NotQuiteBlack;
-            break;
-
-        case InfractionType.Unmute:
-            color = Colors.DarkButNotBlack;
-            break;
-    }
+    const colorMap = {
+        [InfractionType.Ban]: Colors.Blurple,
+        [InfractionType.Kick]: Colors.Red,
+        [InfractionType.Unban]: Colors.DarkButNotBlack,
+        [InfractionType.Mute]: Colors.NotQuiteBlack,
+        [InfractionType.Unmute]: Colors.DarkButNotBlack
+    };
 
     const log = new EmbedBuilder()
-        .setColor(color)
+        .setColor(colorMap[infractionType])
         .setAuthor({ name: infractionType })
         .setFields([
-            {
-                name: "Member",
-                value: `${offender} (\`${offender.id}\`)`
-            },
-            {
-                name: "Moderator",
-                value: `${moderator} (\`${moderator.id}\`)`
-            }
+            { name: "Member", value: `${offender} (\`${offender.id}\`)` },
+            { name: "Moderator", value: `${moderator} (\`${moderator.id}\`)` }
         ])
         .setTimestamp();
 
