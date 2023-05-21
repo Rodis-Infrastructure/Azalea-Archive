@@ -1,7 +1,7 @@
 import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
 
 import { InteractionResponseType } from "../../utils/Types";
-import { purgeMessages } from "../../utils/ModerationUtils";
+import { purgeMessages, validateModerationAction } from "../../utils/ModerationUtils";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
 import Config from "../../utils/Config";
@@ -18,7 +18,20 @@ export default class PurgeMessageCtxCommand extends ContextMenuCommand {
 
     async execute(interaction: MessageContextMenuCommandInteraction, config: Config): Promise<void> {
         const { success, error } = config.emojis;
-        const { author } = interaction.targetMessage;
+        const { author, member } = interaction.targetMessage;
+
+        if (member) {
+            const notModerateableReason = validateModerationAction({
+                config,
+                moderatorId: interaction.user.id,
+                offender: member
+            });
+
+            if (notModerateableReason) {
+                await interaction.editReply(`${error} ${notModerateableReason}`);
+                return;
+            }
+        }
 
         try {
             const purgedMessages = await purgeMessages({

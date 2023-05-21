@@ -2,11 +2,12 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
+    GuildMember,
     GuildTextBasedChannel
 } from "discord.js";
 
 import { InteractionResponseType } from "../../utils/Types";
-import { purgeMessages } from "../../utils/ModerationUtils";
+import { purgeMessages, validateModerationAction } from "../../utils/ModerationUtils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
@@ -61,8 +62,22 @@ export default class CleanCommand extends ChatInputCommand {
         const action = interaction.options.getSubcommand(true);
         const amount = interaction.options.getInteger("amount") ?? 100;
         const user = interaction.options.getUser("user");
+        const member = interaction.options.getMember("user") as GuildMember;
 
         const { success, error } = config.emojis;
+
+        if (member) {
+            const notModerateableReason = validateModerationAction({
+                config,
+                moderatorId: interaction.user.id,
+                offender: member
+            });
+
+            if (notModerateableReason) {
+                await interaction.editReply(`${error} ${notModerateableReason}`);
+                return;
+            }
+        }
 
         try {
             const purgedMessages = await purgeMessages({
