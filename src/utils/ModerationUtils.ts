@@ -113,9 +113,9 @@ export function validateModerationAction(data: {
 }): string | void {
     const { moderatorId, offender, additionalValidation, config } = data;
 
-    if (moderatorId === offender.id) return "You cannot moderate yourself.";
-    if (offender.user.bot) return "Bots cannot be moderated.";
-    if (config.isGuildStaff(offender)) return "Server staff cannot be moderated.";
+    if (moderatorId === offender.id) return "This action cannot be carried out on yourself.";
+    if (offender.user.bot) return "This action cannot be carried out on bots.";
+    if (config.isGuildStaff(offender)) return "This action cannot be carried out on server staff.";
 
     for (const check of additionalValidation ?? []) {
         if (check.condition) return check.reason;
