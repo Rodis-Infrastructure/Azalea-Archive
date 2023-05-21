@@ -79,8 +79,9 @@ export default class CleanCommand extends ChatInputCommand {
 
             let messageAuthor = "";
             if (action === "user") messageAuthor = ` by **${user!.tag}**`;
+            const plural = purgedMessages === 1 ? "" : "s";
 
-            await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` messages${messageAuthor}.`);
+            await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` message${plural}${messageAuthor}.`);
         } catch {
             await interaction.editReply(`${error} Failed to purge messages.`);
         }
