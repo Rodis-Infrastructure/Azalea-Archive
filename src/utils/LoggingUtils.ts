@@ -60,11 +60,13 @@ export async function linkToLog(data: {
 }
 
 export function formatLogContent(content: string): string {
+    if (!content) return "No message content.";
+
     const MAX_CONTENT_LENGTH = 900;
     let formatted = content.replaceAll("```", "\\`\\`\\`");
 
     const lengthDiff = formatted.length - MAX_CONTENT_LENGTH;
     if (lengthDiff > 0) formatted = `${formatted.slice(0, MAX_CONTENT_LENGTH)}...(${lengthDiff} more characters)`;
 
-    return formatted ? codeBlock(formatted) : "No message content.";
+    return codeBlock(formatted);
 }

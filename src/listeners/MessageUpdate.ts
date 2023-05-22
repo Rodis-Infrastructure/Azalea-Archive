@@ -13,7 +13,12 @@ export default class MessageDeleteEventListener extends EventListener {
         if (!newMessage.guildId) return;
         if (oldMessage.partial) await oldMessage.fetch();
         if (newMessage.partial) await newMessage.fetch();
-        if (newMessage.author.bot) return;
+
+        if (
+            newMessage.author.bot ||
+            !newMessage.content ||
+            newMessage.content === oldMessage.content
+        ) return;
 
         const channel = newMessage.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
