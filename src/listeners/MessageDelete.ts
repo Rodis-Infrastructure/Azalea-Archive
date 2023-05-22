@@ -1,5 +1,5 @@
 import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { linkToLog, sendLog } from "../utils/LoggingUtils";
+import { formatLogContent, linkToLog, sendLog } from "../utils/LoggingUtils";
 import { cacheMessage } from "../utils/Cache";
 import { LoggingEvent } from "../utils/Types";
 
@@ -16,13 +16,6 @@ export default class MessageDeleteEventListener extends EventListener {
 
         cacheMessage(message.id, { deleted: true });
 
-        const MAX_CONTENT_LENGTH = 900;
-        const lengthDiff = message.content.length - MAX_CONTENT_LENGTH;
-
-        const content = lengthDiff > 0
-            ? `${message.content.slice(0, MAX_CONTENT_LENGTH)}...(${lengthDiff} more characters)`
-            : message.content;
-
         const channel = message.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
             .setColor(Colors.Red)
@@ -38,7 +31,7 @@ export default class MessageDeleteEventListener extends EventListener {
                 },
                 {
                     name: "Content",
-                    value: `\`\`\`${content}\`\`\``
+                    value: formatLogContent(message.content)
                 }
             ])
             .setTimestamp();

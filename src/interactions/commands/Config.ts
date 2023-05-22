@@ -2,6 +2,7 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
+    codeBlock,
     Colors,
     EmbedBuilder
 } from "discord.js";
@@ -35,7 +36,7 @@ export default class ConfigCommand extends ChatInputCommand {
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
             .setTitle("Guild Configuration")
-            .setDescription(`\`\`\`toml\n${stringify(config)}\`\`\``)
+            .setDescription(codeBlock("toml", stringify(config)))
             .setFooter({ text: `Guild ID: ${guildId}` })
             .setAuthor({
                 name: interaction.guild!.name,
