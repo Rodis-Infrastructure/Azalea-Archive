@@ -66,5 +66,5 @@ export function formatLogContent(content: string): string {
     const lengthDiff = formatted.length - MAX_CONTENT_LENGTH;
     if (lengthDiff > 0) formatted = `${formatted.slice(0, MAX_CONTENT_LENGTH)}...(${lengthDiff} more characters)`;
 
-    return codeBlock(formatted);
+    return formatted ? codeBlock(formatted) : "No message content.";
 }

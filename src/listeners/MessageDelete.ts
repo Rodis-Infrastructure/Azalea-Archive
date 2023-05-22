@@ -15,6 +15,7 @@ export default class MessageDeleteEventListener extends EventListener {
         if (message.author.bot) return;
 
         cacheMessage(message.id, { deleted: true });
+        if (!message.content) return;
 
         const channel = message.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
