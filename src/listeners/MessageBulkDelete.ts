@@ -12,6 +12,8 @@ export default class MessageBulkDeleteEventListener extends EventListener {
     }
 
     async execute(messages: Collection<string, Message>, channel: GuildTextBasedChannel): Promise<void> {
+        if (!channel.guildId) return;
+
         messages.forEach(message => {
             cacheMessage(message.id, { deleted: true });
         });

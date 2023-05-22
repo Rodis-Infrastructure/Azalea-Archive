@@ -11,9 +11,7 @@ export default class MessageDeleteEventListener extends EventListener {
     }
 
     async execute(message: Message): Promise<void> {
-        if (message.partial) await message.fetch();
-        if (message.author.bot) return;
-
+        if (!message.guildId) return;
         cacheMessage(message.id, { deleted: true });
         if (!message.content) return;
 
@@ -29,13 +27,24 @@ export default class MessageDeleteEventListener extends EventListener {
                 {
                     name: "Channel",
                     value: `${channel} (\`#${channel.name}\`)`
-                },
-                {
-                    name: "Content",
-                    value: formatLogContent(message.content)
                 }
             ])
             .setTimestamp();
+
+        const embedFields = [{
+            name: "Content",
+            value: formatLogContent(message.content)
+        }];
+
+        if (message.reference) {
+            const reference = await message.fetchReference();
+            embedFields.unshift({
+                name: "Reference",
+                value: formatLogContent(reference.content)
+            });
+        }
+
+        log.addFields(embedFields);
 
         const url = await sendLog({
             event: LoggingEvent.Message,

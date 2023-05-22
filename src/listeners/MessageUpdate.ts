@@ -10,6 +10,7 @@ export default class MessageDeleteEventListener extends EventListener {
     }
 
     async execute(oldMessage: Message, newMessage: Message): Promise<void> {
+        if (!newMessage.guildId) return;
         if (oldMessage.partial) await oldMessage.fetch();
         if (newMessage.partial) await newMessage.fetch();
         if (newMessage.author.bot) return;
@@ -26,17 +27,30 @@ export default class MessageDeleteEventListener extends EventListener {
                 {
                     name: "Channel",
                     value: `${channel} (\`#${channel.name}\`)`
-                },
-                {
-                    name: "Before",
-                    value: formatLogContent(oldMessage.content)
-                },
-                {
-                    name: "After",
-                    value: formatLogContent(newMessage.content)
                 }
             ])
             .setTimestamp();
+
+        const embedFields = [
+            {
+                name: "Before",
+                value: formatLogContent(oldMessage.content)
+            },
+            {
+                name: "After",
+                value: formatLogContent(newMessage.content)
+            }
+        ];
+
+        if (newMessage.reference) {
+            const reference = await newMessage.fetchReference();
+            embedFields.unshift({
+                name: "Reference",
+                value: formatLogContent(reference.content)
+            });
+        }
+
+        log.addFields(embedFields);
 
         await sendLog({
             event: LoggingEvent.Message,
