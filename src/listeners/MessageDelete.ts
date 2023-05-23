@@ -27,35 +27,51 @@ export default class MessageDeleteEventListener extends EventListener {
                 {
                     name: "Channel",
                     value: `${channel} (\`#${channel.name}\`)`
+                },
+                {
+                    name: "Content",
+                    value: formatLogContent(message.content)
                 }
             ])
             .setTimestamp();
 
-        const embedFields = [{
-            name: "Content",
-            value: formatLogContent(message.content)
+        const embeds = [log];
+        const files = [{
+            attachment: "./icons/messageDelete.png",
+            name: "messageDelete.png"
         }];
 
         if (message.reference) {
             const reference = await message.fetchReference();
-            embedFields.unshift({
-                name: "Reference",
-                value: formatLogContent(reference.content)
+            const referenceData = new EmbedBuilder()
+                .setColor(Colors.NotQuiteBlack)
+                .setAuthor({
+                    name: "Reference",
+                    iconURL: "attachment://reply.png",
+                    url: reference.url
+                })
+                .setFields([
+                    {
+                        name: "Author",
+                        value: `${reference.author} (\`${reference.author.id}\`)`
+                    },
+                    {
+                        name: "Content",
+                        value: formatLogContent(reference.content)
+                    }
+                ]);
+
+            embeds.unshift(referenceData);
+            files.push({
+                attachment: "./icons/reply.png",
+                name: "reply.png"
             });
         }
 
-        log.addFields(embedFields);
-
         const url = await sendLog({
             event: LoggingEvent.Message,
-            channel,
-            options: {
-                embeds: [log],
-                files: [{
-                    attachment: "./icons/messageDelete.png",
-                    name: "messageDelete.png"
-                }]
-            }
+            options: { embeds, files },
+            channel
         });
 
         await linkToLog({
