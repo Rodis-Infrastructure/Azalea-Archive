@@ -1,12 +1,14 @@
 # Files
 .env
 .DS_Store
+*.db
 
 # Directories
 node_modules
 config/guilds/*
 dist
 .idea
+.vscode
 
 # Files excluded from being ignored
 !config/guilds/example.*

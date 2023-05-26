@@ -1,8 +1,11 @@
-import { ColorResolvable, Colors, EmbedBuilder, GuildMember, User } from "discord.js";
+import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
 import { InfractionData, InfractionType, LoggingEvent } from "./Types";
+import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
+import { conn } from "../db";
 
+import ClientManager from "../Client";
 import Config from "./Config";
 import ms from "ms";
 
@@ -16,42 +19,22 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
         duration
     } = data;
 
-    let color!: ColorResolvable;
+    let color: ColorResolvable = Colors.Red;
+    let icon = "memberDelete.png";
 
     switch (infractionType) {
-        case InfractionType.Ban:
-            color = Colors.Blurple;
-            break;
-
-        case InfractionType.Kick:
-            color = Colors.Red;
-            break;
-
         case InfractionType.Unban:
-            color = Colors.DarkButNotBlack;
-            break;
-
-        case InfractionType.Mute:
-            color = Colors.NotQuiteBlack;
-            break;
-
         case InfractionType.Unmute:
-            color = Colors.DarkButNotBlack;
-            break;
+            icon = "memberCreate.png";
+            color = Colors.Green;
     }
 
     const log = new EmbedBuilder()
         .setColor(color)
-        .setAuthor({ name: infractionType })
+        .setAuthor({ name: infractionType, iconURL: `attachment://${icon}` })
         .setFields([
-            {
-                name: "Member",
-                value: `${offender} (\`${offender.id}\`)`
-            },
-            {
-                name: "Moderator",
-                value: `${moderator} (\`${moderator.id}\`)`
-            }
+            { name: "Member", value: `${offender} (\`${offender.id}\`)` },
+            { name: "Moderator", value: `${moderator} (\`${moderator.id}\`)` }
         ])
         .setTimestamp();
 
@@ -60,8 +43,14 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     await sendLog({
         event: LoggingEvent.Infraction,
-        embed: log,
-        guildId
+        guildId,
+        options: {
+            embeds: [log],
+            files: [{
+                attachment: `./icons/${icon}`,
+                name: icon
+            }]
+        }
     });
 }
 
@@ -124,11 +113,70 @@ export function validateModerationAction(data: {
 }): string | void {
     const { moderatorId, offender, additionalValidation, config } = data;
 
-    if (moderatorId === offender.id) return "You cannot moderate yourself.";
-    if (offender.user.bot) return "Bots cannot be moderated.";
-    if (config.isGuildStaff(offender)) return "Server staff cannot be moderated.";
+    if (moderatorId === offender.id) return "This action cannot be carried out on yourself.";
+    if (offender.user.bot) return "This action cannot be carried out on bots.";
+    if (config.isGuildStaff(offender)) return "This action cannot be carried out on server staff.";
 
     for (const check of additionalValidation ?? []) {
         if (check.condition) return check.reason;
     }
+}
+
+export async function purgeMessages(data: {
+    channel: GuildTextBasedChannel,
+    amount: number,
+    moderatorId: string,
+    authorId?: string
+}): Promise<number> {
+    const { channel, amount, authorId, moderatorId } = data;
+
+    const cache = ClientManager.cache.messages;
+    const removableMessageIds = getCachedMessageIds({
+        channelId: channel.id,
+        guildId: channel.guildId,
+        authorId: authorId,
+        limit: amount
+    });
+
+    removableMessageIds.forEach(id => cacheMessage(id, { deleted: true }));
+
+    if (removableMessageIds.length < amount) {
+        const messagesToFetch = amount - removableMessageIds.length;
+        const authorCondition = authorId ? `AND authorId = ${authorId}` : "";
+
+        try {
+            const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
+            const storedMessages = await new Promise((resolve, reject) => {
+                // @formatter:off
+                conn.all(`
+					DELETE FROM messages
+					WHERE id IN (
+					    SELECT id FROM messages
+                        WHERE channelId = ${channel.id} ${authorCondition} 
+                            AND guildId = ${channel.guildId}
+                            AND id NOT IN (${excludedIds})
+                        ORDER BY createdAt DESC
+                        LIMIT ${messagesToFetch}
+                    )
+					RETURNING CAST(id AS TEXT) AS id;
+                `, (err, rows: { id: string }[]) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                });
+            }) as { id: string }[];
+
+            removableMessageIds.push(...storedMessages.map(({ id }) => id));
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    cache.purged = {
+        targetId: authorId,
+        data: removableMessageIds,
+        moderatorId
+    };
+
+    const res = await channel.bulkDelete(removableMessageIds);
+    return res.size;
 }

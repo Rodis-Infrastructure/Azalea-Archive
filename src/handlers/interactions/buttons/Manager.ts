@@ -88,7 +88,7 @@ export default class ButtonHandler {
 
         const log = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
-            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .setAuthor({ name: "Interaction Used", iconURL: "attachment://interaction.png" })
             .setDescription(`Button \`${formattedCustomId}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Used In",
@@ -97,9 +97,15 @@ export default class ButtonHandler {
             .setTimestamp();
 
         await sendLog({
-            event: LoggingEvent.InteractionUsage,
-            embed: log,
-            channel: usageChannel
+            event: LoggingEvent.Interaction,
+            channel: usageChannel,
+            options: {
+                embeds: [log],
+                files: [{
+                    attachment: "./icons/interaction.png",
+                    name: "interaction.png"
+                }]
+            }
         });
     }
 }

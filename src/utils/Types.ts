@@ -1,8 +1,10 @@
 import {
     ChatInputCommandInteraction,
-    EmbedBuilder,
+    Collection,
     GuildTextBasedChannel,
     MessageContextMenuCommandInteraction,
+    MessageCreateOptions,
+    MessagePayload,
     User,
     UserContextMenuCommandInteraction
 } from "discord.js";
@@ -26,8 +28,9 @@ export enum RolePermission {
 }
 
 export enum LoggingEvent {
-    InteractionUsage = "interactionUsage",
-    Infraction = "infractions"
+    Interaction = "interactions",
+    Infraction = "infractions",
+    Message = "messages"
 }
 
 export enum InfractionType {
@@ -57,6 +60,7 @@ interface EmojiData {
     error: string | "❌"
     quickMute30?: string
     quickMute60?: string
+    purgeMessages?: string
 }
 
 interface ChannelData {
@@ -85,7 +89,7 @@ export type InfractionData = {
 
 export type LogData = {
     event: LoggingEvent,
-    embed: EmbedBuilder
+    options: string | MessagePayload | MessageCreateOptions
 } & (
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }
@@ -95,6 +99,25 @@ export interface CustomComponentProperties {
     name: InteractionCustomIdFilter;
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
+}
+
+export interface Cache {
+    messages: {
+        store: Collection<string, CachedMessage>;
+        remove: Set<string>;
+        purged?: {
+            targetId?: string;
+            moderatorId: string;
+            data: string[];
+        }
+    }
+}
+
+export interface CachedMessage {
+    authorId: string;
+    channelId: string;
+    guildId: string;
+    createdAt: number;
 }
 
 export interface CustomModalProperties {
