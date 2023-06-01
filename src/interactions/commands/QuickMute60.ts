@@ -26,6 +26,7 @@ export default class QuickMute60Command extends ContextMenuCommand {
 
         const reason = message.content;
         const res = await muteMember(message.member, {
+            quick: true,
             moderator: interaction.user,
             duration: "60m",
             config,

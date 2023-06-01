@@ -1,5 +1,5 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData, InfractionType, LoggingEvent, TInfraction } from "./Types";
+import { InfractionData, InfractionFlag, InfractionType, LoggingEvent, TInfraction } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
@@ -105,9 +105,10 @@ export async function muteMember(offender: GuildMember, data: {
     config: Config,
     moderator: User,
     duration: string,
-    reason?: string | null
+    reason?: string | null,
+    quick?: boolean
 }): Promise<string | number> {
-    const { config, moderator, duration, reason } = data;
+    const { config, moderator, duration, reason, quick } = data;
 
     const notModerateableReason = validateModerationAction({
         config,
@@ -137,6 +138,7 @@ export async function muteMember(offender: GuildMember, data: {
             infractionType: InfractionType.Mute,
             offender: offender.user,
             duration: msMuteDuration,
+            flag: quick ? InfractionFlag.QuickAction : undefined,
             moderator,
             reason
         });

@@ -1,6 +1,6 @@
 import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, GuildTextBasedChannel, User } from "discord.js";
 import { resolveInfraction } from "../utils/ModerationUtils";
-import { InfractionType } from "../utils/Types";
+import { InfractionFlag, InfractionType } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
@@ -24,6 +24,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
         let infractionType: InfractionType | undefined;
         const channelResponse = [`**${executor.tag}** has successfully`];
+        const infractionFlag = executor.bot ? InfractionFlag.Automatic : undefined;
 
         switch (log.action) {
             case AuditLogEvent.MemberKick:
@@ -56,6 +57,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                             offender: target as User,
                             guildId: guild.id,
                             infractionType,
+                            flag: infractionFlag,
                             reason,
                             /* Prevent mute duration from being less than 1 minute */
                             duration: muteDurationTimestamp < 60000
@@ -78,6 +80,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                     offender: target as User,
                     guildId: guild.id,
                     infractionType,
+                    flag: infractionFlag,
                     reason
                 });
             }
