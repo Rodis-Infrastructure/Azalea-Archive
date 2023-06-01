@@ -138,7 +138,7 @@ export async function muteMember(offender: GuildMember, data: {
             infractionType: InfractionType.Mute,
             offender: offender.user,
             duration: msMuteDuration,
-            flag: quick ? InfractionFlag.QuickAction : undefined,
+            flag: quick ? InfractionFlag.QuickMute : undefined,
             moderator,
             reason
         });

@@ -52,7 +52,7 @@ export enum TInfraction {
 
 export enum InfractionFlag {
     Automatic = 1,
-    QuickAction = 2,
+    QuickMute = 2,
 }
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
