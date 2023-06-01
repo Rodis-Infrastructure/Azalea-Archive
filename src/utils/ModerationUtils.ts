@@ -1,9 +1,9 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData, InfractionType, LoggingEvent } from "./Types";
+import { InfractionData, InfractionType, LoggingEvent, TInfraction } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
-import { conn } from "../db";
+import { conn, storeInfraction } from "../db";
 
 import ClientManager from "../Client";
 import Config from "./Config";
@@ -16,17 +16,49 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
         reason,
         guildId,
         infractionType,
-        duration
+        duration,
+        requestAuthor,
+        flag
     } = data;
 
     let color: ColorResolvable = Colors.Red;
     let icon = "memberDelete.png";
+    let dbInfractionType: TInfraction | null = null;
 
     switch (infractionType) {
-        case InfractionType.Unban:
+        case InfractionType.Ban: {
+            dbInfractionType = TInfraction.Ban;
+            break;
+        }
+
+        case InfractionType.Kick: {
+            dbInfractionType = TInfraction.Kick;
+            break;
+        }
+
+        case InfractionType.Mute: {
+            dbInfractionType = TInfraction.Mute;
+            break;
+        }
+
+        case InfractionType.Note: {
+            dbInfractionType = TInfraction.Note;
+            color = Colors.Yellow;
+            icon = "note.png";
+            break;
+        }
+
+        case InfractionType.Unban: {
+            dbInfractionType = TInfraction.Unban;
+            icon = "memberCreate.png";
+            color = Colors.Green;
+            break;
+        }
+
         case InfractionType.Unmute:
             icon = "memberCreate.png";
             color = Colors.Green;
+            break;
     }
 
     const log = new EmbedBuilder()
@@ -40,6 +72,21 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     if (duration) log.addFields([{ name: "Duration", value: msToString(duration) }]);
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
+
+    const expiresAt = duration ? Math.floor((Date.now() + duration) / 1000) : null;
+
+    if (dbInfractionType) {
+        await storeInfraction({
+            guildId,
+            infractionType: dbInfractionType,
+            executorId: moderator.id,
+            targetId: offender.id,
+            expiresAt,
+            requestAuthorId: requestAuthor?.id,
+            reason,
+            flag
+        });
+    }
 
     await sendLog({
         event: LoggingEvent.Infraction,

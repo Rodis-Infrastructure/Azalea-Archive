@@ -38,7 +38,21 @@ export enum InfractionType {
     Unban = "Member Unbanned",
     Kick = "Member Kicked",
     Mute = "Member Muted",
-    Unmute = "Member Unmuted"
+    Unmute = "Member Unmuted",
+    Note = "Note Added",
+}
+
+export enum TInfraction {
+    Note = 1,
+    Mute = 2,
+    Kick = 3,
+    Ban = 4,
+    Unban = 5
+}
+
+export enum InfractionFlag {
+    Automatic = 1,
+    QuickAction = 2,
 }
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
@@ -81,6 +95,8 @@ export type InfractionData = {
     moderator: User,
     offender: User,
     guildId: string,
+    requestAuthor?: User,
+    flag?: InfractionFlag,
     reason?: string | null
 } & (
     { infractionType: InfractionType.Mute, duration: number } |
