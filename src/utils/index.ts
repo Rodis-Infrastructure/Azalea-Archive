@@ -1,4 +1,4 @@
-import { InteractionCustomIdFilter } from "./Types";
+import { InfractionFlag, InteractionCustomIdFilter, TInfraction } from "./Types";
 import { Collection } from "discord.js";
 
 import Button from "../handlers/interactions/buttons/Button";
@@ -39,4 +39,32 @@ export function formatCustomId(customId: InteractionCustomIdFilter): string {
     return typeof customId === "string"
         ? customId
         : Object.values(customId)[0];
+}
+
+export function getInfractionName(infractionType: TInfraction) {
+    switch (infractionType) {
+        case TInfraction.Note:
+            return "Note";
+        case TInfraction.Mute:
+            return "Mute";
+        case TInfraction.Kick:
+            return "Kick";
+        case TInfraction.Ban:
+            return "Ban";
+        case TInfraction.Unban:
+            return "Unban";
+        default:
+            return "Unknown";
+    }
+}
+
+export function getInfractionFlagName(infractionFlag: InfractionFlag) {
+    switch (infractionFlag) {
+        case InfractionFlag.Automatic:
+            return "Automatic";
+        case InfractionFlag.Quick:
+            return "Quick Mute";
+        default:
+            return "Unknown";
+    }
 }

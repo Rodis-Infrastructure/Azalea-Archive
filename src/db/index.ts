@@ -1,6 +1,6 @@
 import { Database } from "sqlite3";
 import ms from "ms";
-import { InfractionFlag, TInfraction } from "../utils/Types";
+import { Infraction, InfractionFlag, TInfraction } from "../utils/Types";
 
 if (!process.env.DB_PATH) throw new Error("No database path provided in .env file.");
 export const conn = new Database(process.env.DB_PATH);
@@ -14,6 +14,28 @@ export async function removeExpiredData() {
         `, err => {
             if (err) reject(err);
             resolve(null);
+        });
+    });
+}
+
+export function fetchInfraction(data: { infractionId: number, guildId: string }): Promise<Infraction> {
+    const { infractionId, guildId } = data;
+    return new Promise((resolve, reject) => {
+        console.time("fetchInfraction");
+        conn.get(`
+            SELECT *,
+                   CAST(executorId AS TEXT)      AS executorId,
+                   CAST(targetId AS TEXT)        AS targetId,
+                   CAST(requestAuthorId AS TEXT) AS requestAuthorId,
+                   CAST(updatedBy AS TEXT)       AS updatedBy,
+                   CAST(deletedBy AS TEXT)       AS deletedBy
+            FROM infractions
+            WHERE id = ?
+              AND guildId = ?;
+        `, [infractionId, guildId], (err, row: Infraction) => {
+            console.timeEnd("fetchInfraction");
+            if (err) reject(err);
+            resolve(row);
         });
     });
 }

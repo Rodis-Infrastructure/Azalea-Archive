@@ -14,6 +14,14 @@ import ContextMenuCommand from "../handlers/interactions/commands/ContextMenuCom
 
 export type InteractionCustomIdFilter = string | { startsWith: string } | { endsWith: string } | { includes: string };
 
+export enum InfractionSubcommand {
+    Info = "info",
+    Search = "search",
+    Delete = "delete",
+    Reason = "reason",
+    Duration = "duration",
+}
+
 export enum InteractionResponseType {
     Default = 0,
     Defer = 1,
@@ -52,7 +60,7 @@ export enum TInfraction {
 
 export enum InfractionFlag {
     Automatic = 1,
-    QuickMute = 2,
+    Quick = 2,
 }
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
@@ -79,6 +87,37 @@ interface EmojiData {
 
 interface ChannelData {
     staffCommands?: string
+}
+
+export interface MinimalInfraction {
+    id: number;
+    executorId: bigint;
+    targetId: bigint;
+    createdAt: Date;
+    expiresAt?: Date;
+}
+
+export interface InfractionBase {
+    executorId: string;
+    createdAt: number;
+    expiresAt?: number;
+    type: number;
+    flag?: number;
+    reason?: string;
+}
+
+export interface UserInfraction extends InfractionBase {
+    id: number;
+    targetId: string;
+}
+
+export interface Infraction extends InfractionBase {
+    targetId: string;
+    requestAuthorId?: string;
+    updatedBy?: string;
+    deletedBy?: string;
+    deletedAt?: number;
+    updatedAt?: number;
 }
 
 export interface ConfigData {
