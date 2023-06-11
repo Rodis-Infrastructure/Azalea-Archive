@@ -21,19 +21,12 @@ export async function removeExpiredData() {
 export function fetchInfraction(data: { infractionId: number, guildId: string }): Promise<Infraction> {
     const { infractionId, guildId } = data;
     return new Promise((resolve, reject) => {
-        console.time("fetchInfraction");
         conn.get(`
-            SELECT *,
-                   CAST(executorId AS TEXT)      AS executorId,
-                   CAST(targetId AS TEXT)        AS targetId,
-                   CAST(requestAuthorId AS TEXT) AS requestAuthorId,
-                   CAST(updatedBy AS TEXT)       AS updatedBy,
-                   CAST(deletedBy AS TEXT)       AS deletedBy
+            SELECT *
             FROM infractions
             WHERE id = ?
               AND guildId = ?;
         `, [infractionId, guildId], (err, row: Infraction) => {
-            console.timeEnd("fetchInfraction");
             if (err) reject(err);
             resolve(row);
         });

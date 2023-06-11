@@ -2,6 +2,7 @@ import { codeBlock, Collection, GuildTextBasedChannel, Message } from "discord.j
 import { LogData } from "./Types";
 
 import ClientManager from "../Client";
+import { elipsify } from "./index";
 
 export async function sendLog(data: LogData): Promise<string | void> {
     const { event, channel, guildId, options } = data;
@@ -62,11 +63,8 @@ export async function linkToLog(data: {
 export function formatLogContent(content: string): string {
     if (!content) return "No message content.";
 
-    const MAX_CONTENT_LENGTH = 900;
     let formatted = content.replaceAll("```", "\\`\\`\\`");
-
-    const lengthDiff = formatted.length - MAX_CONTENT_LENGTH;
-    if (lengthDiff > 0) formatted = `${formatted.slice(0, MAX_CONTENT_LENGTH)}...(${lengthDiff} more characters)`;
+    formatted = elipsify(formatted, 1000);
 
     return codeBlock(formatted);
 }

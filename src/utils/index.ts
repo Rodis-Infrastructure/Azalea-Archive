@@ -85,3 +85,11 @@ export function getInfractionFlagName(infractionFlag: InfractionFlag) {
             return "Unknown";
     }
 }
+
+export function elipsify(str: string, length: number) {
+    const maxLength = length - 25;
+    const newStr = str.slice(0, maxLength);
+    return str.length > length
+        ? `${newStr}...(${str.length - newStr.length} more characters)`
+        : str;
+}

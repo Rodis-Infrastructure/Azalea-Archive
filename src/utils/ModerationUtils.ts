@@ -209,7 +209,7 @@ export async function purgeMessages(data: {
                         ORDER BY createdAt DESC
                         LIMIT ${messagesToFetch}
                     )
-					RETURNING CAST(id AS TEXT) AS id;
+					RETURNING id;
                 `, (err, rows: { id: string }[]) => {
                     if (err) reject(err);
                     else resolve(rows);

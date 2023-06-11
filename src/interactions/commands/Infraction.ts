@@ -9,7 +9,7 @@ import { InfractionSubcommand, InteractionResponseType } from "../../utils/Types
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { fetchInfraction } from "../../db";
-import { getInfractionColor, getInfractionFlagName, getInfractionName, msToString } from "../../utils";
+import { elipsify, getInfractionColor, getInfractionFlagName, getInfractionName, msToString } from "../../utils";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -55,6 +55,7 @@ export default class KickCommand extends ChatInputCommand {
                 flag
             } = await fetchInfraction({ infractionId: id, guildId: interaction.guildId! });
 
+            const createdAtMs = createdAt * 1000;
             const fields = [
                 {
                     name: "Offender",
@@ -77,7 +78,10 @@ export default class KickCommand extends ChatInputCommand {
             }
 
             if (expiresAt) {
-                if (expiresAt > Date.now()) {
+                const offender = await interaction.guild!.members.fetch(targetId);
+                const expiresAtMs = expiresAt * 1000;
+
+                if (expiresAtMs > Date.now() && offender.isCommunicationDisabled()) {
                     fields.push({
                         name: "Expires",
                         value: `<t:${expiresAt}:R>`,
@@ -86,7 +90,7 @@ export default class KickCommand extends ChatInputCommand {
                 } else {
                     fields.push({
                         name: "Duration",
-                        value: `${msToString((expiresAt - createdAt) * 1000)}`,
+                        value: `${msToString(expiresAtMs - createdAtMs)}`,
                         inline: true
                     });
                 }
@@ -94,25 +98,23 @@ export default class KickCommand extends ChatInputCommand {
 
             if ((updatedBy && updatedAt) || (deletedBy && deletedAt)) {
                 const changes = [];
-                const field = {
-                    name: "Recent Changes",
-                    value: "",
-                    inline: false
-                };
 
                 if (deletedBy && deletedAt) changes.push(`- Deleted by <@${deletedBy}> (<t:${deletedAt}:R>)`);
                 if (updatedBy && updatedAt) changes.push(`- Updated by <@${updatedBy}> (<t:${updatedAt}:R>)`);
 
                 if (changes.length) {
-                    field.value = changes.join("\n");
-                    fields.push(field);
+                    fields.push({
+                        name: "Recent Changes",
+                        value: changes.join("\n"),
+                        inline: false
+                    });
                 }
             }
 
             if (reason) {
                 fields.push({
                     name: "Reason",
-                    value: reason,
+                    value: elipsify(reason, 1024),
                     inline: false
                 });
             }
@@ -122,7 +124,7 @@ export default class KickCommand extends ChatInputCommand {
                 .setColor(getInfractionColor(type))
                 .setTitle(`${flagName}${getInfractionName(type)} #${id}`)
                 .setFields(fields)
-                .setTimestamp(createdAt * 1000);
+                .setTimestamp(createdAtMs);
 
             await interaction.editReply({ embeds: [embed] });
         }
