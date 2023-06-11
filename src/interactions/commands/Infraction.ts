@@ -110,6 +110,14 @@ export default class KickCommand extends ChatInputCommand {
                 }
             }
 
+            if (reason) {
+                fields.push({
+                    name: "Reason",
+                    value: reason,
+                    inline: false
+                });
+            }
+
             const flagName = flag ? `${getInfractionFlagName(flag)} ` : "";
             const embed = new EmbedBuilder()
                 .setColor(Colors.NotQuiteBlack)
@@ -117,7 +125,6 @@ export default class KickCommand extends ChatInputCommand {
                 .setFields(fields)
                 .setTimestamp(createdAt * 1000);
 
-            if (reason) embed.setDescription(reason);
             await interaction.editReply({ embeds: [embed] });
         }
     }
