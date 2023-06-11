@@ -1,34 +1,33 @@
 import { Database } from "sqlite3";
-import ms from "ms";
-import { Infraction, InfractionFlag, TInfraction } from "../utils/Types";
+import { InfractionFlag, TInfraction } from "../utils/Types";
+import * as process from "process";
 
-if (!process.env.DB_PATH) throw new Error("No database path provided in .env file.");
+if (!process.env.DB_PATH) throw new Error("No database path provided");
 export const conn = new Database(process.env.DB_PATH);
 
-export async function removeExpiredData() {
-    await new Promise((resolve, reject) => {
-        conn.run(`
-            DELETE
-            FROM messages
-            WHERE ${Date.now()} - createdAt > ${ms("24h")}
-        `, err => {
+export function runQuery(query: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        conn.run(query, err => {
             if (err) reject(err);
-            resolve(null);
+            resolve();
         });
     });
 }
 
-export function fetchInfraction(data: { infractionId: number, guildId: string }): Promise<Infraction> {
-    const { infractionId, guildId } = data;
+export function getQuery<T>(query: string): Promise<T> {
     return new Promise((resolve, reject) => {
-        conn.get(`
-            SELECT *
-            FROM infractions
-            WHERE id = ?
-              AND guildId = ?;
-        `, [infractionId, guildId], (err, row: Infraction) => {
+        conn.get(query, (err, row: T) => {
             if (err) reject(err);
             resolve(row);
+        });
+    });
+}
+
+export function allQuery<T>(query: string): Promise<T[]> {
+    return new Promise((resolve, reject) => {
+        conn.all(query, (err, rows: T[]) => {
+            if (err) reject(err);
+            resolve(rows);
         });
     });
 }
@@ -46,30 +45,26 @@ export async function storeInfraction(data: {
     const { guildId, executorId, targetId, infractionType, requestAuthorId, expiresAt, flag, reason } = data;
 
     // @formatter:off
-    await new Promise((resolve, reject) => {
-        conn.run(`
-            INSERT INTO infractions (
-                guildId,
-                executorId,
-                targetId,
-                type,
-                requestAuthorId,
-                expiresAt,
-                flag,
-                reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       `, [
+    await runQuery(`
+        INSERT INTO infractions (
             guildId,
             executorId,
             targetId,
-            infractionType,
-            requestAuthorId || null,
-            expiresAt || null,
-            flag || null,
-            reason?.toString() || null
-        ], err => {
-            if (err) reject(err);
-            resolve(null);
-        });
-    });
+            type,
+            requestAuthorId,
+            expiresAt,
+            flag,
+            reason
+        )
+        VALUES (
+            ${guildId}, 
+            ${executorId}, 
+            ${targetId}, 
+            ${infractionType}, 
+            ${requestAuthorId || null},
+            ${expiresAt || null}, 
+            ${flag || null},
+            ${reason || null}
+        )
+    `);
 }

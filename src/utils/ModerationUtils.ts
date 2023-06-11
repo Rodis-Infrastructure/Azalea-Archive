@@ -3,7 +3,7 @@ import { InfractionData, InfractionFlag, InfractionType, LoggingEvent, TInfracti
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { msToString } from "./index";
-import { conn, storeInfraction } from "../db";
+import { allQuery, storeInfraction } from "../db";
 
 import ClientManager from "../Client";
 import Config from "./Config";
@@ -197,24 +197,20 @@ export async function purgeMessages(data: {
 
         try {
             const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
-            const storedMessages = await new Promise((resolve, reject) => {
-                // @formatter:off
-                conn.all(`
-					DELETE FROM messages
-					WHERE id IN (
-					    SELECT id FROM messages
-                        WHERE channelId = ${channel.id} ${authorCondition} 
-                            AND guildId = ${channel.guildId}
-                            AND id NOT IN (${excludedIds})
-                        ORDER BY createdAt DESC
-                        LIMIT ${messagesToFetch}
-                    )
-					RETURNING id;
-                `, (err, rows: { id: string }[]) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            }) as { id: string }[];
+
+            // @formatter:off
+            const storedMessages = await allQuery<{ id: string }>(`
+                DELETE FROM messages
+                WHERE id IN (
+                    SELECT id FROM messages
+                    WHERE channelId = ${channel.id} ${authorCondition} 
+                        AND guildId = ${channel.guildId}
+                        AND id NOT IN (${excludedIds})
+                    ORDER BY createdAt DESC
+                    LIMIT ${messagesToFetch}
+                )
+                RETURNING id;
+            `);
 
             removableMessageIds.push(...storedMessages.map(({ id }) => id));
         } catch (err) {

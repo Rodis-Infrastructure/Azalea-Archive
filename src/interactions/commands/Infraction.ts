@@ -2,14 +2,16 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
-    EmbedBuilder
+    EmbedBuilder,
+    GuildMember
 } from "discord.js";
 
-import { InfractionSubcommand, InteractionResponseType } from "../../utils/Types";
+import { Infraction, InfractionSubcommand, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { fetchInfraction } from "../../db";
+import { getQuery, runQuery } from "../../db";
 import { elipsify, getInfractionColor, getInfractionFlagName, getInfractionName, msToString } from "../../utils";
+import Config from "../../utils/Config";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -30,16 +32,68 @@ export default class KickCommand extends ChatInputCommand {
                         type: ApplicationCommandOptionType.Number,
                         required: true
                     }]
+                },
+                {
+                    name: InfractionSubcommand.Delete,
+                    description: "Delete an infraction",
+                    type: ApplicationCommandOptionType.Subcommand,
+                    options: [{
+                        name: "id",
+                        description: "The ID of the infraction",
+                        type: ApplicationCommandOptionType.Number,
+                        required: true
+                    }]
                 }
             ]
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
+        const guildId = interaction.guildId!;
+
+        const { error, success } = config.emojis;
+
+        if (subcommand === InfractionSubcommand.Delete) {
+            const id = interaction.options.getNumber("id", true);
+
+            try {
+                await config.canManageInfraction({
+                    infractionId: id,
+                    member: interaction.member as GuildMember
+                });
+            } catch (err) {
+                await interaction.editReply(`${error} ${err}`);
+                return;
+            }
+
+            try {
+                await runQuery(`
+					UPDATE infractions
+					SET deletedAt = ${Math.floor(Date.now() / 1000)},
+						deletedBy = ${interaction.user.id}
+					WHERE id = ${id}
+					  AND guildId = ${guildId};
+                `);
+
+                await interaction.editReply(`${success} Successfully deleted infraction **#${id}**`);
+            } catch (err) {
+                console.error(err);
+                await interaction.editReply(`${error} An error occurred while deleting the infraction`);
+            }
+
+            return;
+        }
 
         if (subcommand === InfractionSubcommand.Info) {
             const id = interaction.options.getNumber("id", true);
+            const infraction = await getQuery<Infraction>(`
+				SELECT *
+				FROM infractions
+				WHERE id = ${id}
+				  AND guildId = ${guildId};
+            `);
+
             const {
                 type,
                 targetId,
@@ -53,7 +107,7 @@ export default class KickCommand extends ChatInputCommand {
                 createdAt,
                 executorId,
                 flag
-            } = await fetchInfraction({ infractionId: id, guildId: interaction.guildId! });
+            } = infraction;
 
             const createdAtMs = createdAt * 1000;
             const fields = [

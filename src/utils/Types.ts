@@ -65,6 +65,7 @@ export enum InfractionFlag {
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
     guildStaff?: boolean
+    manageInfractions?: boolean
 }
 
 type LoggingData =
@@ -91,10 +92,16 @@ interface ChannelData {
 
 export interface MinimalInfraction {
     id: number;
-    executorId: bigint;
-    targetId: bigint;
-    createdAt: Date;
-    expiresAt?: Date;
+    executorId: string;
+    targetId: string;
+    createdAt: number;
+    expiresAt?: number;
+}
+
+export interface ManageableInfractionResponse {
+    executorId: string,
+    deletedAt: number,
+    deletedBy: string
 }
 
 export interface InfractionBase {

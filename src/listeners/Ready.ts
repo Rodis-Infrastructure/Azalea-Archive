@@ -1,7 +1,6 @@
 import { processCachedMessages } from "../utils/Cache";
 import { readdir, readFile } from "node:fs/promises";
 import { ConfigData } from "../utils/Types";
-import { removeExpiredData } from "../db";
 import { parse } from "@iarna/toml";
 import { Events } from "discord.js";
 
@@ -9,6 +8,7 @@ import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 import Config from "../utils/Config";
 import ms from "ms";
+import { runQuery } from "../db";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -42,8 +42,13 @@ export default class ReadyEventListener extends EventListener {
             await processCachedMessages();
         }, ms("15m"));
 
+        // Removes old data from the database
         setInterval(async() => {
-            await removeExpiredData();
+            await runQuery(`
+				DELETE
+				FROM messages
+				WHERE ${Date.now()} - createdAt > ${ms("24h")}
+            `);
         }, ms("6h"));
     }
 }
