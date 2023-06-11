@@ -2,7 +2,6 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
-    Colors,
     EmbedBuilder
 } from "discord.js";
 
@@ -10,7 +9,7 @@ import { InfractionSubcommand, InteractionResponseType } from "../../utils/Types
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { fetchInfraction } from "../../db";
-import { getInfractionFlagName, getInfractionName, msToString } from "../../utils";
+import { getInfractionColor, getInfractionFlagName, getInfractionName, msToString } from "../../utils";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -120,7 +119,7 @@ export default class KickCommand extends ChatInputCommand {
 
             const flagName = flag ? `${getInfractionFlagName(flag)} ` : "";
             const embed = new EmbedBuilder()
-                .setColor(Colors.NotQuiteBlack)
+                .setColor(getInfractionColor(type))
                 .setTitle(`${flagName}${getInfractionName(type)} #${id}`)
                 .setFields(fields)
                 .setTimestamp(createdAt * 1000);

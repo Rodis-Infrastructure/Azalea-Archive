@@ -1,5 +1,5 @@
 import { InfractionFlag, InteractionCustomIdFilter, TInfraction } from "./Types";
-import { Collection } from "discord.js";
+import { Collection, Colors } from "discord.js";
 
 import Button from "../handlers/interactions/buttons/Button";
 import Modal from "../handlers/interactions/modals/Modal";
@@ -55,6 +55,23 @@ export function getInfractionName(infractionType: TInfraction) {
             return "Unban";
         default:
             return "Unknown";
+    }
+}
+
+export function getInfractionColor(infractionType: TInfraction) {
+    switch (infractionType) {
+        case TInfraction.Mute:
+            return Colors.Orange;
+        case TInfraction.Kick:
+            return Colors.Red;
+        case TInfraction.Ban:
+            return Colors.Blue;
+        case TInfraction.Note:
+            return Colors.Yellow;
+        case TInfraction.Unban:
+            return Colors.Green;
+        default:
+            return Colors.NotQuiteBlack;
     }
 }
 

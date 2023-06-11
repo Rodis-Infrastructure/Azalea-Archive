@@ -28,6 +28,7 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
     switch (infractionType) {
         case InfractionType.Ban: {
             dbInfractionType = TInfraction.Ban;
+            color = Colors.Blue;
             break;
         }
 
@@ -38,6 +39,7 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
         case InfractionType.Mute: {
             dbInfractionType = TInfraction.Mute;
+            color = Colors.Orange;
             break;
         }
 
