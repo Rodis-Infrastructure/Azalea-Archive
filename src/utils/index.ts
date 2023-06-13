@@ -93,3 +93,9 @@ export function elipsify(str: string, length: number) {
         ? `${newStr}...(${str.length - newStr.length} more characters)`
         : str;
 }
+
+export function stringify(str: string | undefined | null): string | null {
+    return str ? `'${str}'` : null;
+}
+
+export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;

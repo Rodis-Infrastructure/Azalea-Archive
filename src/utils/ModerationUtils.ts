@@ -2,7 +2,7 @@ import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChann
 import { InfractionData, InfractionFlag, InfractionType, LoggingEvent, TInfraction } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
-import { msToString } from "./index";
+import { DURATION_FORMAT_REGEX, msToString } from "./index";
 import { allQuery, storeInfraction } from "../db";
 
 import ClientManager from "../Client";
@@ -130,7 +130,7 @@ export async function muteMember(offender: GuildMember, data: {
     let msMuteDuration = ms(duration);
 
     /* Only allow the duration to be given in days, hours, and minutes */
-    if (!duration.match(/^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi) || msMuteDuration <= 0) return "The duration provided is not valid.";
+    if (!duration.match(DURATION_FORMAT_REGEX) || msMuteDuration <= 0) return "The duration provided is not valid.";
     if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {

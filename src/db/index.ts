@@ -1,6 +1,7 @@
 import { Database } from "sqlite3";
 import { InfractionFlag, TInfraction } from "../utils/Types";
 import * as process from "process";
+import { stringify } from "../utils";
 
 if (!process.env.DB_PATH) throw new Error("No database path provided");
 export const conn = new Database(process.env.DB_PATH);
@@ -14,7 +15,7 @@ export function runQuery(query: string): Promise<void> {
     });
 }
 
-export function getQuery<T>(query: string): Promise<T> {
+export function getQuery<T>(query: string): Promise<T | null> {
     return new Promise((resolve, reject) => {
         conn.get(query, (err, row: T) => {
             if (err) reject(err);
@@ -45,6 +46,7 @@ export async function storeInfraction(data: {
     const { guildId, executorId, targetId, infractionType, requestAuthorId, expiresAt, flag, reason } = data;
 
     // @formatter:off
+    // Stringified parameters are optional
     await runQuery(`
         INSERT INTO infractions (
             guildId,
@@ -57,14 +59,14 @@ export async function storeInfraction(data: {
             reason
         )
         VALUES (
-            ${guildId}, 
-            ${executorId}, 
-            ${targetId}, 
+            '${guildId}', 
+            '${executorId}', 
+            '${targetId}', 
             ${infractionType}, 
-            ${requestAuthorId || null},
+            ${stringify(requestAuthorId)},
             ${expiresAt || null}, 
             ${flag || null},
-            ${reason || null}
+            ${stringify(reason)}
         )
     `);
 }

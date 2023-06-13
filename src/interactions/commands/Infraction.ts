@@ -6,14 +6,22 @@ import {
     GuildMember
 } from "discord.js";
 
-import { Infraction, InfractionSubcommand, InteractionResponseType } from "../../utils/Types";
+import { Infraction, InfractionSubcommand, InteractionResponseType, TInfraction } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import { getQuery, runQuery } from "../../db";
-import { elipsify, getInfractionColor, getInfractionFlagName, getInfractionName, msToString } from "../../utils";
+import {
+    DURATION_FORMAT_REGEX,
+    elipsify,
+    getInfractionColor,
+    getInfractionFlagName,
+    getInfractionName,
+    msToString
+} from "../../utils";
 import Config from "../../utils/Config";
+import ms from "ms";
 
-export default class KickCommand extends ChatInputCommand {
+export default class InfractionCommand extends ChatInputCommand {
     constructor() {
         super({
             name: "infraction",
@@ -43,6 +51,45 @@ export default class KickCommand extends ChatInputCommand {
                         type: ApplicationCommandOptionType.Number,
                         required: true
                     }]
+                },
+                {
+                    name: InfractionSubcommand.Reason,
+                    description: "Update the reason of an infraction",
+                    type: ApplicationCommandOptionType.Subcommand,
+                    options: [
+                        {
+                            name: "id",
+                            description: "The ID of the infraction",
+                            type: ApplicationCommandOptionType.Number,
+                            required: true
+                        },
+                        {
+                            name: "new_reason",
+                            description: "The new reason of the infraction",
+                            type: ApplicationCommandOptionType.String,
+                            max_length: 1024,
+                            required: true
+                        }
+                    ]
+                },
+                {
+                    name: InfractionSubcommand.Duration,
+                    description: "Update the duration of a mute",
+                    type: ApplicationCommandOptionType.Subcommand,
+                    options: [
+                        {
+                            name: "id",
+                            description: "The ID of the infraction",
+                            type: ApplicationCommandOptionType.Number,
+                            required: true
+                        },
+                        {
+                            name: "new_duration",
+                            description: "The new duration of the mute",
+                            type: ApplicationCommandOptionType.String,
+                            required: true
+                        }
+                    ]
                 }
             ]
         });
@@ -50,23 +97,88 @@ export default class KickCommand extends ChatInputCommand {
 
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
+        const id = interaction.options.getNumber("id", true);
         const guildId = interaction.guildId!;
+        let infraction!: Infraction;
 
         const { error, success } = config.emojis;
 
-        if (subcommand === InfractionSubcommand.Delete) {
-            const id = interaction.options.getNumber("id", true);
+        switch (subcommand) {
+            case InfractionSubcommand.Delete:
+            case InfractionSubcommand.Reason:
+            case InfractionSubcommand.Duration: {
+                try {
+                    infraction = await config.canManageInfraction({
+                        infractionId: id,
+                        member: interaction.member as GuildMember
+                    });
+                } catch (err) {
+                    await interaction.editReply(`${error} ${err}`);
+                    return;
+                }
+            }
+        }
+
+        if (subcommand === InfractionSubcommand.Reason) {
+            const reason = interaction.options.getString("new_reason", true);
 
             try {
-                await config.canManageInfraction({
-                    infractionId: id,
-                    member: interaction.member as GuildMember
-                });
+                await runQuery(`
+					UPDATE infractions
+					SET reason    = '${reason}',
+						updatedAt = ${Math.floor(Date.now() / 1000)},
+						updatedBy = ${interaction.user.id}
+					WHERE id = ${id}
+					  AND guildId = ${guildId};
+                `);
+
+                await interaction.editReply(`${success} Successfully updated the reason of infraction **#${id}**`);
             } catch (err) {
-                await interaction.editReply(`${error} ${err}`);
+                console.error(err);
+                await interaction.editReply(`${error} An error occurred while updating the reason of the infraction`);
+            }
+        }
+
+        if (subcommand === InfractionSubcommand.Duration) {
+            const strDuration = interaction.options.getString("new_duration", true);
+
+            if (!strDuration.match(DURATION_FORMAT_REGEX)) {
+                await interaction.editReply(`${error} The duration provided is invalid.`);
                 return;
             }
 
+            const duration = Math.floor(ms(strDuration) / 1000);
+            const now = Math.floor(Date.now() / 1000);
+
+            try {
+                if (infraction.type !== TInfraction.Mute) {
+                    await interaction.editReply(`${error} You can only update the duration of mute infractions`);
+                    return;
+                }
+
+                const offender = await interaction.guild!.members.fetch(infraction.targetId);
+                const expiresAt = duration + infraction.createdAt;
+
+                await Promise.all([
+                    offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${id})`),
+                    runQuery(`
+						UPDATE infractions
+						SET expiresAt = ${expiresAt},
+							updatedAt = ${now},
+							updatedBy = ${interaction.user.id}
+						WHERE id = ${id}
+						  AND guildId = ${guildId};
+                    `)
+                ]);
+
+                await interaction.editReply(`${success} Successfully updated the mute duration of **${offender.user.tag}** to <t:${expiresAt}:F> | Expires <t:${expiresAt}:R>`);
+            } catch (err) {
+                console.error(err);
+                await interaction.editReply(`${error} An error occurred while updating the duration of the mute`);
+            }
+        }
+
+        if (subcommand === InfractionSubcommand.Delete) {
             try {
                 await runQuery(`
 					UPDATE infractions
@@ -93,6 +205,11 @@ export default class KickCommand extends ChatInputCommand {
 				WHERE id = ${id}
 				  AND guildId = ${guildId};
             `);
+
+            if (!infraction) {
+                await interaction.editReply(`${error} Infraction **#${id}** not found`);
+                return;
+            }
 
             const {
                 type,
@@ -133,9 +250,9 @@ export default class KickCommand extends ChatInputCommand {
 
             if (expiresAt) {
                 const offender = await interaction.guild!.members.fetch(targetId);
-                const expiresAtMs = expiresAt * 1000;
+                const msExpiresAt = expiresAt * 1000;
 
-                if (expiresAtMs > Date.now() && offender.isCommunicationDisabled()) {
+                if (msExpiresAt > Date.now() && offender.isCommunicationDisabled()) {
                     fields.push({
                         name: "Expires",
                         value: `<t:${expiresAt}:R>`,
@@ -144,7 +261,7 @@ export default class KickCommand extends ChatInputCommand {
                 } else {
                     fields.push({
                         name: "Duration",
-                        value: `${msToString(expiresAtMs - createdAtMs)}`,
+                        value: `${msToString(msExpiresAt - createdAtMs)}`,
                         inline: true
                     });
                 }

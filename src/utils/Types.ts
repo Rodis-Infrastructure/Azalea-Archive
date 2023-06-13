@@ -98,12 +98,6 @@ export interface MinimalInfraction {
     expiresAt?: number;
 }
 
-export interface ManageableInfractionResponse {
-    executorId: string,
-    deletedAt: number,
-    deletedBy: string
-}
-
 export interface InfractionBase {
     executorId: string;
     createdAt: number;

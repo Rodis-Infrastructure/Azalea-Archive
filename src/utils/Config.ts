@@ -1,5 +1,5 @@
 import { GuildMember, GuildTextBasedChannel } from "discord.js";
-import { ConfigData, LoggingEvent, ManageableInfractionResponse, PermissionData } from "./Types";
+import { ConfigData, Infraction, LoggingEvent, PermissionData } from "./Types";
 
 import ClientManager from "../Client";
 import { getQuery } from "../db";
@@ -137,20 +137,23 @@ export default class Config {
         return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
     }
 
-    async canManageInfraction(data: { infractionId: number, member: GuildMember }): Promise<void> {
+    async canManageInfraction(data: { infractionId: number, member: GuildMember }): Promise<Infraction> {
         const { infractionId, member } = data;
         const canManage = this.actionAllowed(member, {
             permission: "manageInfractions",
             requiredValue: true
         });
 
-        const { executorId, deletedAt, deletedBy } = await getQuery<ManageableInfractionResponse>(`
-            SELECT executorId, deletedAt, deletedBy
+        const infraction = await getQuery<Infraction>(`
+            SELECT *
             FROM infractions
             WHERE id = ${infractionId} AND guildId = ${member.guild.id}
         `);
 
-        if (!canManage && executorId !== member.id) throw "You do not have permission to manage this infraction";
-        if (deletedAt && deletedBy) throw "This infraction has been deleted and cannot be changed";
+        if (!infraction) throw `Infraction **#${infractionId}** not found`;
+        if (!canManage && infraction.executorId !== member.id) throw "You do not have permission to manage this infraction";
+        if (infraction.deletedAt && infraction.deletedBy) throw "This infraction has been deleted and cannot be changed";
+
+        return infraction;
     }
 }
