@@ -14,10 +14,6 @@ export default class Config {
         return this.data.deleteMessageSecondsOnBan ?? 0;
     }
 
-    get channels() {
-        return this.data.channels ?? {};
-    }
-
     get emojis() {
         return this.data.emojis ?? {
             success: "✅",
@@ -39,6 +35,10 @@ export default class Config {
 
     private get groups() {
         return this.data.groups ?? [];
+    }
+
+    private get confirmationChannel() {
+        return this.data.confirmationChannel;
     }
 
     bind(guildId: string) {
@@ -147,9 +147,11 @@ export default class Config {
         channelId?: string
     }) {
         const { guild, authorId, message, reason, full, channelId } = data;
-        if (channelId && channelId === this.channels.staffCommands) return;
 
-        const confirmationChannelId = this.channels.staffCommands;
+        if (!this.confirmationChannel) return;
+        if (channelId && channelId === this.confirmationChannel) return;
+
+        const confirmationChannelId = this.confirmationChannel;
         if (!confirmationChannelId) return;
 
         const confirmationChannel = await guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;

@@ -16,17 +16,6 @@ will be deleted. If set to `0`, the bot will not delete any messages.
 deleteMessageSecondsOnBan = 0
 ```
 
-### Channel Configuration
-
-The `channels` field allows you to configure channels that would be used for specific purposes. The fields listed below:
-
-* `staffCommands` - The channel where responses to moderation commands would be sent if they were used elsewhere.
-
-```toml
-[channels]
-staffCommands = "channel-id"
-```
-
 ### Custom Emojis
 
 The `emojis` section enables you to customize the emojis used for the bot's responses. The fields listed below are the
@@ -54,6 +43,15 @@ excludedCategories = []
 excludedChannels = []
 ```
 
+### Confirmation Messages
+
+When specified, confirmation messages will be sent in the specified channel whenever a moderation action is carried out
+outside said channel.
+
+```toml
+confirmationChannel = "channel-id"
+```
+
 ### Role and Group Configuration
 
 The `roles` and `groups` sections allow you to configure which roles have access to specific message components and
@@ -64,7 +62,7 @@ modals.
 ```toml
 [[roles]]
 id = "role-id"
-staff = false
+guildStaff = false
 selections = []
 buttons = []
 modals = []
@@ -75,7 +73,7 @@ reactions = []
 
 ```toml
 [[groups]]
-staff = false
+guildStaff = false
 roleIds = []
 selectMenus = []
 buttons = []

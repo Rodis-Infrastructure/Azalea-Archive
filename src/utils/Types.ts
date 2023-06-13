@@ -116,6 +116,7 @@ export interface Infraction {
 
 export interface ConfigData {
     deleteMessageSecondsOnBan?: number
+    confirmationChannel?: string
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>,
     groups?: Array<PermissionData & Record<"roleIds", string[]>>,

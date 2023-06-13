@@ -1,4 +1,5 @@
 deleteMessageSecondsOnBan = 0
+confirmationChannel = "channel-id"
 
 [ephemeralResponses]
 enabled = true
