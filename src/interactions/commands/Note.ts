@@ -9,6 +9,7 @@ import { InfractionType, InteractionResponseType } from "../../utils/Types";
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
 import { resolveInfraction, validateModerationAction } from "../../utils/ModerationUtils";
+import { formatReason } from "../../utils";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -64,11 +65,21 @@ export default class KickCommand extends ChatInputCommand {
                 reason: note,
                 infractionType: InfractionType.Note
             });
-
-            await interaction.editReply(`${success} Successfully added a note to **${user.tag}**${note ? ` (\`${note}\`)` : ""}`);
         } catch (err) {
             console.error(err);
-            await interaction.editReply(`${error} An error occurred while adding the note.`);
+            await interaction.editReply(`${error} An error occurred while trying to execute this interaction`);
+            return;
         }
+
+        await Promise.all([
+            interaction.editReply(`${success} Successfully added a note to **${user.tag}**${formatReason(note)}`),
+            config.sendInfractionConfirmation({
+                guild: interaction.guild!,
+                authorId: interaction.user.id,
+                message: `added a note to **${user.tag}**`,
+                channelId: interaction.channelId,
+                reason: note
+            })
+        ]);
     }
 }

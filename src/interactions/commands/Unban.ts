@@ -4,6 +4,7 @@ import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { formatReason } from "../../utils";
 
 export default class UnbanCommand extends ChatInputCommand {
     constructor() {
@@ -42,23 +43,32 @@ export default class UnbanCommand extends ChatInputCommand {
             return;
         }
 
+        const reason = interaction.options.getString("reason") ?? undefined;
+
         try {
-            const reason = interaction.options.getString("reason") ?? undefined;
-
             await interaction.guild!.members.unban(offender, reason);
-            await Promise.all([
-                resolveInfraction({
-                    infractionType: InfractionType.Unban,
-                    moderator: interaction.user,
-                    offender,
-                    guildId: interaction.guildId!,
-                    reason
-                }),
-
-                interaction.editReply(`${success} Successfully unbanned **${offender.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
-            ]);
-        } catch {
-            await interaction.editReply(`${error} An error has occurred while trying to unban this user.`);
+            await resolveInfraction({
+                infractionType: InfractionType.Unban,
+                moderator: interaction.user,
+                offender,
+                guildId: interaction.guildId!,
+                reason
+            });
+        } catch (err) {
+            console.error(err);
+            await interaction.editReply(`${error} An error has occurred while trying to execute this interaction`);
+            return;
         }
+
+        await Promise.all([
+            interaction.editReply(`${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`),
+            config.sendInfractionConfirmation({
+                guild: interaction.guild!,
+                message: `unbanned **${offender.tag}`,
+                authorId: interaction.user.id,
+                channelId: interaction.channelId,
+                reason
+            })
+        ]);
     }
 }

@@ -10,6 +10,7 @@ import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { formatReason } from "../../utils";
 
 export default class KickCommand extends ChatInputCommand {
     constructor() {
@@ -60,23 +61,32 @@ export default class KickCommand extends ChatInputCommand {
             return;
         }
 
+        const reason = interaction.options.getString("reason") ?? undefined;
+
         try {
-            const reason = interaction.options.getString("reason") ?? undefined;
-
             await member.kick(reason);
-            await Promise.all([
-                resolveInfraction({
-                    infractionType: InfractionType.Kick,
-                    moderator: interaction.user,
-                    offender: member.user,
-                    guildId: interaction.guildId!,
-                    reason
-                }),
-
-                interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
-            ]);
-        } catch {
-            await interaction.editReply(`${error} An error has occurred while trying to kick this member.`);
+            await resolveInfraction({
+                infractionType: InfractionType.Kick,
+                moderator: interaction.user,
+                offender: member.user,
+                guildId: interaction.guildId!,
+                reason
+            });
+        } catch (err) {
+            console.error(err);
+            await interaction.editReply(`${error} An error has occurred while trying to execute this interaction.`);
+            return;
         }
+
+        await Promise.all([
+            interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${formatReason(reason)}`),
+            config.sendInfractionConfirmation({
+                guild: interaction.guild!,
+                authorId: interaction.user.id,
+                message: `kicked **${member.user.tag}**`,
+                channelId: interaction.channelId,
+                reason
+            })
+        ]);
     }
 }

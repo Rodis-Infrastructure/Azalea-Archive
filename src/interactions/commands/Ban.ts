@@ -4,6 +4,7 @@ import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { formatReason } from "../../utils";
 
 export default class BanCommand extends ChatInputCommand {
     constructor() {
@@ -68,23 +69,32 @@ export default class BanCommand extends ChatInputCommand {
         /* Maximum value */
         if (deleteMessageSeconds > 604800) deleteMessageSeconds = 604800;
 
+        const reason = interaction.options.getString("reason") ?? undefined;
+
         try {
-            const reason = interaction.options.getString("reason") ?? undefined;
-
             await interaction.guild!.members.ban(user, { deleteMessageSeconds, reason });
-            await Promise.all([
-                resolveInfraction({
-                    infractionType: InfractionType.Ban,
-                    moderator: interaction.user,
-                    offender: user,
-                    guildId: interaction.guildId!,
-                    reason
-                }),
-
-                interaction.editReply(`${success} Successfully banned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
-            ]);
-        } catch {
+        } catch (err) {
+            console.error(err);
             await interaction.editReply(`${error} An error has occurred while trying to ban this user.`);
+            return;
         }
+
+        await Promise.all([
+            interaction.editReply(`${success} Successfully banned **${user.tag}**${formatReason(reason)}`),
+            config.sendInfractionConfirmation({
+                guild: interaction.guild!,
+                authorId: interaction.user.id,
+                message: `banned **${user.tag}**`,
+                channelId: interaction.channelId,
+                reason
+            }),
+            resolveInfraction({
+                infractionType: InfractionType.Ban,
+                moderator: interaction.user,
+                offender: user,
+                guildId: interaction.guildId!,
+                reason
+            })
+        ]);
     }
 }

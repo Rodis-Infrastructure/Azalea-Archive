@@ -1,4 +1,4 @@
-import { codeBlock, Collection, GuildTextBasedChannel, Message } from "discord.js";
+import { codeBlock, Collection, GuildTextBasedChannel, Message, userMention } from "discord.js";
 import { LogData } from "./Types";
 
 import ClientManager from "../Client";
@@ -37,14 +37,14 @@ export async function linkToLog(data: {
     if (typeof content !== "string" && !content.some(({ id }) => cache.data.includes(id))) return;
 
     const config = ClientManager.config(channel.guildId)!;
-    const confirmationChannelId = config.channels.staffCommands;
-    if (!confirmationChannelId) return;
-
-    const confirmationChannel = await channel.guild?.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-    if (!confirmationChannel) return;
 
     if (!url) {
-        confirmationChannel.send(`${config.emojis.error} <@${cache.moderatorId}> Failed to retrieve the log's URL`);
+        await config.sendInfractionConfirmation({
+            message: `${config.emojis.error} ${userMention(cache.moderatorId)} failed to retrieve the log's URL`,
+            guild: channel.guild,
+            full: true
+        });
+
         ClientManager.cache.messages.purged = undefined;
         return;
     }
@@ -56,7 +56,12 @@ export async function linkToLog(data: {
     const amount = typeof content === "string" ? 1 : content.size;
     const plural = amount > 1 ? "s" : "";
 
-    confirmationChannel.send(`${config.emojis.success} <@${cache.moderatorId}> Successfully purged \`${amount}\` message${plural}${author}: ${url}`);
+    await config.sendInfractionConfirmation({
+        message: `purged ${amount} message${plural}${author}: ${url}`,
+        guild: channel.guild,
+        authorId: cache.moderatorId
+    });
+
     ClientManager.cache.messages.purged = undefined;
 }
 

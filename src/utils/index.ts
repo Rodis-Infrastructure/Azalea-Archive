@@ -98,4 +98,12 @@ export function stringify(str: string | undefined | null): string | null {
     return str ? `'${str}'` : null;
 }
 
+export function formatReason(reason: string | null | undefined): string {
+    return reason ? ` (\`${reason}\`)` : "";
+}
+
+export function formatTimestamp(timestamp: number | string, type: "d" | "D" | "f" | "F" | "R" | "t" | "T"): string {
+    return `<t:${timestamp}:${type}>`;
+}
+
 export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;

@@ -1,8 +1,9 @@
-import { GuildMember, GuildTextBasedChannel } from "discord.js";
+import { Guild, GuildMember, GuildTextBasedChannel, userMention } from "discord.js";
 import { ConfigData, Infraction, LoggingEvent, PermissionData } from "./Types";
 
 import ClientManager from "../Client";
 import { getQuery } from "../db";
+import { formatReason } from "./index";
 
 export default class Config {
     // @formatter:off
@@ -135,6 +136,29 @@ export default class Config {
 
     isGuildStaff(member: GuildMember): boolean {
         return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
+    }
+
+    async sendInfractionConfirmation(data: {
+        guild: Guild,
+        authorId?: string,
+        message: string,
+        reason?: string | null,
+        full?: boolean,
+        channelId?: string
+    }) {
+        const { guild, authorId, message, reason, full, channelId } = data;
+        if (channelId && channelId === this.channels.staffCommands) return;
+
+        const confirmationChannelId = this.channels.staffCommands;
+        if (!confirmationChannelId) return;
+
+        const confirmationChannel = await guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+        if (!confirmationChannel) return;
+
+        confirmationChannel.send({
+            content: full ? message : `${this.emojis.success} ${userMention(authorId!)} has successfully ${message}${formatReason(reason)}`,
+            allowedMentions: { parse: [] }
+        });
     }
 
     async canManageInfraction(data: { infractionId: number, member: GuildMember }): Promise<Infraction> {

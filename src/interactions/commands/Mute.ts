@@ -10,6 +10,7 @@ import { muteMember } from "../../utils/ModerationUtils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { formatReason, formatTimestamp } from "../../utils";
 
 export default class MuteCommand extends ChatInputCommand {
     constructor() {
@@ -61,7 +62,18 @@ export default class MuteCommand extends ChatInputCommand {
 
         /* The result is the mute's expiration timestamp */
         if (typeof res === "number") {
-            await interaction.editReply(`${success} Successfully muted **${member.user.tag}** until <t:${res}:F> | Expires <t:${res}:R>${reason ? ` (\`${reason}\`)` : ""}`);
+            const reply = `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
+            await Promise.all([
+                interaction.editReply(`${success} Successfully ${reply}${formatReason(reason)}`),
+                config.sendInfractionConfirmation({
+                    guild: interaction.guild!,
+                    authorId: interaction.user.id,
+                    message: reply,
+                    channelId: interaction.channelId,
+                    reason
+                })
+            ]);
+
             return;
         }
 

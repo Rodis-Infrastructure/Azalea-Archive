@@ -13,6 +13,8 @@ import { getQuery, runQuery } from "../../db";
 import {
     DURATION_FORMAT_REGEX,
     elipsify,
+    formatReason,
+    formatTimestamp,
     getInfractionColor,
     getInfractionFlagName,
     getInfractionName,
@@ -120,23 +122,34 @@ export default class InfractionCommand extends ChatInputCommand {
         }
 
         if (subcommand === InfractionSubcommand.Reason) {
-            const reason = interaction.options.getString("new_reason", true);
+            const newReason = interaction.options.getString("new_reason", true);
 
             try {
                 await runQuery(`
 					UPDATE infractions
-					SET reason    = '${reason}',
+					SET reason    = '${newReason}',
 						updatedAt = ${Math.floor(Date.now() / 1000)},
 						updatedBy = ${interaction.user.id}
 					WHERE id = ${id}
 					  AND guildId = ${guildId};
                 `);
-
-                await interaction.editReply(`${success} Successfully updated the reason of infraction **#${id}**`);
             } catch (err) {
                 console.error(err);
                 await interaction.editReply(`${error} An error occurred while updating the reason of the infraction`);
+                return;
             }
+
+            const reply = `updated the reason${formatReason(newReason)}`;
+            await Promise.all([
+                interaction.editReply(`${success} Successfully ${reply}`),
+                config.sendInfractionConfirmation({
+                    guild: interaction.guild!,
+                    message: newReason,
+                    authorId: interaction.user.id,
+                    channelId: interaction.channelId
+                })
+            ]);
+            return;
         }
 
         if (subcommand === InfractionSubcommand.Duration) {
@@ -150,37 +163,48 @@ export default class InfractionCommand extends ChatInputCommand {
             const duration = Math.floor(ms(strDuration) / 1000);
             const now = Math.floor(Date.now() / 1000);
 
+            if (infraction.type !== TInfraction.Mute) {
+                await interaction.editReply(`${error} You can only update the duration of mute infractions`);
+                return;
+            }
+
+            const offender = await interaction.guild!.members.fetch(infraction.targetId);
+
+            if (!offender.isCommunicationDisabled()) {
+                await interaction.editReply(`${error} The user is not muted`);
+                return;
+            }
+
+            const expiresAt = duration + infraction.createdAt;
+
             try {
-                if (infraction.type !== TInfraction.Mute) {
-                    await interaction.editReply(`${error} You can only update the duration of mute infractions`);
-                    return;
-                }
-
-                const offender = await interaction.guild!.members.fetch(infraction.targetId);
-
-                if (!offender.isCommunicationDisabled()) {
-                    await interaction.editReply(`${error} The user is not muted`);
-                    return;
-                }
-
-                const expiresAt = duration + infraction.createdAt;
-                await Promise.all([
-                    offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${id})`),
-                    runQuery(`
-						UPDATE infractions
-						SET expiresAt = ${expiresAt},
-							updatedAt = ${now},
-							updatedBy = ${interaction.user.id}
-						WHERE id = ${id}
-						  AND guildId = ${guildId};
-                    `)
-                ]);
-
-                await interaction.editReply(`${success} Successfully updated the mute duration of **${offender.user.tag}** to <t:${expiresAt}:F> | Expires <t:${expiresAt}:R>`);
+                await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${id})`);
+                await runQuery(`
+					UPDATE infractions
+					SET expiresAt = ${expiresAt},
+						updatedAt = ${now},
+						updatedBy = ${interaction.user.id}
+					WHERE id = ${id}
+					  AND guildId = ${guildId};
+                `);
             } catch (err) {
                 console.error(err);
                 await interaction.editReply(`${error} An error occurred while updating the duration of the mute`);
+                return;
             }
+
+            const reply = `updated the mute duration to ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
+            await Promise.all([
+                interaction.editReply(`${success} Successfully ${reply}`),
+                config.sendInfractionConfirmation({
+                    guild: interaction.guild!,
+                    message: reply,
+                    authorId: interaction.user.id,
+                    channelId: interaction.channelId
+                })
+            ]);
+
+            return;
         }
 
         if (subcommand === InfractionSubcommand.Delete) {
@@ -192,12 +216,22 @@ export default class InfractionCommand extends ChatInputCommand {
 					WHERE id = ${id}
 					  AND guildId = ${guildId};
                 `);
-
-                await interaction.editReply(`${success} Successfully deleted infraction **#${id}**`);
             } catch (err) {
                 console.error(err);
                 await interaction.editReply(`${error} An error occurred while deleting the infraction`);
+                return;
             }
+
+            const reply = `deleted infraction **#${id}**`;
+            await Promise.all([
+                interaction.editReply(`${success} Successfully ${reply}`),
+                config.sendInfractionConfirmation({
+                    guild: interaction.guild!,
+                    message: reply,
+                    authorId: interaction.user.id,
+                    channelId: interaction.channelId
+                })
+            ]);
 
             return;
         }

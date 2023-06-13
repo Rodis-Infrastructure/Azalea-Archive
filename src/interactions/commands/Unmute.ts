@@ -60,18 +60,26 @@ export default class UnmuteCommand extends ChatInputCommand {
         try {
             /* Clears the timeout */
             await offender.timeout(null);
-            await Promise.all([
-                resolveInfraction({
-                    guildId: interaction.guildId!,
-                    infractionType: InfractionType.Unmute,
-                    offender: offender.user,
-                    moderator: interaction.user
-                }),
-
-                interaction.editReply(`${success} Successfully unmuted **${offender.user.tag}**`)
-            ]);
-        } catch {
+            await resolveInfraction({
+                guildId: interaction.guildId!,
+                infractionType: InfractionType.Unmute,
+                offender: offender.user,
+                moderator: interaction.user
+            });
+        } catch (err) {
+            console.log(err);
             await interaction.editReply(`${error} An error has occurred while trying to unmute this member.`);
+            return;
         }
+
+        await Promise.all([
+            interaction.editReply(`${success} Successfully unmuted **${offender.user.tag}**`),
+            config.sendInfractionConfirmation({
+                guild: interaction.guild!,
+                message: `unmuted **${offender.user.tag}**`,
+                channelId: interaction.channelId,
+                authorId: interaction.user.id
+            })
+        ]);
     }
 }

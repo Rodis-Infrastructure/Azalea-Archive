@@ -47,7 +47,8 @@ export default class PurgeMessageCtxCommand extends ContextMenuCommand {
             }
 
             await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` messages by **${author.tag}**.`);
-        } catch {
+        } catch (err) {
+            console.error(err);
             await interaction.editReply(`${error} Failed to purge messages.`);
         }
     }

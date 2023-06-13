@@ -97,7 +97,8 @@ export default class CleanCommand extends ChatInputCommand {
             const plural = purgedMessages === 1 ? "" : "s";
 
             await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` message${plural}${messageAuthor}.`);
-        } catch {
+        } catch (err) {
+            console.error(err);
             await interaction.editReply(`${error} Failed to purge messages.`);
         }
     }

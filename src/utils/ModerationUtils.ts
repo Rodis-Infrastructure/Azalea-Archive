@@ -147,13 +147,13 @@ export async function muteMember(offender: GuildMember, data: {
 
         return Math.floor((msMuteDuration + Date.now()) / 1000);
     } catch {
-        return "An error has occurred while trying to mute this member.";
+        return "An error has occurred while trying to execute this interaction";
     }
 }
 
 export function muteExpirationTimestamp(member: GuildMember): number | void {
-    const mutedExpirationTimestamp = member.communicationDisabledUntilTimestamp;
-    if (mutedExpirationTimestamp && mutedExpirationTimestamp >= Date.now()) return Math.floor(mutedExpirationTimestamp / 1000);
+    const msExpiresAt = member.communicationDisabledUntilTimestamp;
+    if (msExpiresAt && msExpiresAt >= Date.now()) return Math.floor(msExpiresAt / 1000);
 }
 
 export function validateModerationAction(data: {

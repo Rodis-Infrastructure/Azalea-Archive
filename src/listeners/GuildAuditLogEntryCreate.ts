@@ -1,9 +1,10 @@
-import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, GuildTextBasedChannel, User } from "discord.js";
+import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
 import { resolveInfraction } from "../utils/ModerationUtils";
 import { InfractionFlag, InfractionType } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
+import { formatTimestamp } from "../utils";
 
 export default class GuildAuditLogEntryCreateListener extends EventListener {
     constructor() {
@@ -23,7 +24,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         if (executor.partial) executor = await executor.fetch();
 
         let infractionType: InfractionType | undefined;
-        const channelResponse = [`**${executor.tag}** has successfully`];
+        let muteReply!: Partial<string>;
         const infractionFlag = executor.bot ? InfractionFlag.Automatic : undefined;
 
         switch (log.action) {
@@ -46,24 +47,28 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                     if (!muteDurationDiff.old && muteDurationDiff.new) {
                         infractionType = InfractionType.Mute;
 
-                        const parsedMuteExpiration = Date.parse(muteDurationDiff.new as string);
-                        const muteExpirationTimestamp = Math.floor(parsedMuteExpiration / 1000);
+                        const msDuration = Date.parse(muteDurationDiff.new as string);
+                        const expiresAt = Math.floor(msDuration / 1000);
+                        const duration = msDuration - Date.now();
 
-                        channelResponse.push(`until <t:${muteExpirationTimestamp}:F> | Expires <t:${muteExpirationTimestamp}:R>`);
+                        muteReply = `muted until ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
 
-                        const muteDurationTimestamp = parsedMuteExpiration - Date.now();
-                        await resolveInfraction({
-                            moderator: executor,
-                            offender: target as User,
-                            guildId: guild.id,
-                            infractionType,
-                            flag: infractionFlag,
-                            reason,
-                            /* Prevent mute duration from being less than 1 minute */
-                            duration: muteDurationTimestamp < 60000
-                                ? 60000
-                                : muteDurationTimestamp
-                        });
+                        try {
+                            await resolveInfraction({
+                                moderator: executor,
+                                offender: target as User,
+                                guildId: guild.id,
+                                infractionType,
+                                flag: infractionFlag,
+                                reason,
+                                /* Prevent mute duration from being less than 1 minute */
+                                duration: duration < 60000
+                                    ? 60000
+                                    : duration
+                            });
+                        } catch (err) {
+                            console.error(err);
+                        }
                     }
 
                     if (muteDurationDiff.old && !muteDurationDiff.new) infractionType = InfractionType.Unmute;
@@ -86,16 +91,14 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             }
 
             const config = ClientManager.config(guild.id)!;
-            const channelId = config.channels.staffCommands;
-            if (!channelId) return;
+            const action = infractionType.split(" ")[1].toLowerCase();
 
-            const channel = await guild.channels.fetch(channelId) as GuildTextBasedChannel;
-            if (!channel) return;
-
-            channelResponse.splice(1, 0, `${infractionType.split(" ")[1].toLowerCase()} **${(target as User).tag}**`);
-            if (infractionType !== InfractionType.Unmute && reason) channelResponse.push(`(\`${reason}\`)`);
-
-            await channel.send(`${config.emojis.success} ${channelResponse.join(" ")}`);
+            await config.sendInfractionConfirmation({
+                guild,
+                message: `${action} **${(target as User).tag}** ${muteReply || ""}`,
+                authorId: executor.id,
+                reason
+            });
         }
     }
 }
