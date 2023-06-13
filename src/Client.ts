@@ -24,7 +24,8 @@ class ClientManager {
             store: new Collection<string, CachedMessage>(),
             remove: new Set<string>(),
             purged: undefined
-        }
+        },
+        activeMutes: new Collection<string, number>()
     };
 
     public client = new Client({

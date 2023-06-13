@@ -19,7 +19,7 @@ export function msToString(timestamp: number): string {
             return count && `${count} ${unit}${count > 1 ? "s" : ""}`;
         })
         .filter(Boolean)
-        .join(" ");
+        .join(" ") || "< 1 minute";
 }
 
 export function validateCustomId<T extends Button | Modal | SelectMenu>(items: Collection<InteractionCustomIdFilter, T>, customId: string): T | undefined {

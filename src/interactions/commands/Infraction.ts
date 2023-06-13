@@ -157,8 +157,13 @@ export default class InfractionCommand extends ChatInputCommand {
                 }
 
                 const offender = await interaction.guild!.members.fetch(infraction.targetId);
-                const expiresAt = duration + infraction.createdAt;
 
+                if (!offender.isCommunicationDisabled()) {
+                    await interaction.editReply(`${error} The user is not muted`);
+                    return;
+                }
+
+                const expiresAt = duration + infraction.createdAt;
                 await Promise.all([
                     offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${id})`),
                     runQuery(`
@@ -226,7 +231,7 @@ export default class InfractionCommand extends ChatInputCommand {
                 flag
             } = infraction;
 
-            const createdAtMs = createdAt * 1000;
+            const msCreatedAt = createdAt * 1000;
             const fields = [
                 {
                     name: "Offender",
@@ -261,7 +266,7 @@ export default class InfractionCommand extends ChatInputCommand {
                 } else {
                     fields.push({
                         name: "Duration",
-                        value: `${msToString(msExpiresAt - createdAtMs)}`,
+                        value: `${msToString(msExpiresAt - msCreatedAt)}`,
                         inline: true
                     });
                 }
@@ -295,7 +300,7 @@ export default class InfractionCommand extends ChatInputCommand {
                 .setColor(getInfractionColor(type))
                 .setTitle(`${flagName}${getInfractionName(type)} #${id}`)
                 .setFields(fields)
-                .setTimestamp(createdAtMs);
+                .setTimestamp(msCreatedAt);
 
             await interaction.editReply({ embeds: [embed] });
         }

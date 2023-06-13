@@ -98,27 +98,20 @@ export interface MinimalInfraction {
     expiresAt?: number;
 }
 
-export interface InfractionBase {
-    executorId: string;
-    createdAt: number;
-    expiresAt?: number;
-    type: number;
-    flag?: number;
-    reason?: string;
-}
-
-export interface UserInfraction extends InfractionBase {
+export interface Infraction {
     id: number;
-    targetId: string;
-}
-
-export interface Infraction extends InfractionBase {
     targetId: string;
     requestAuthorId?: string;
     updatedBy?: string;
     deletedBy?: string;
     deletedAt?: number;
     updatedAt?: number;
+    executorId: string;
+    createdAt: number;
+    expiresAt?: number;
+    type: number;
+    flag?: number;
+    reason?: string;
 }
 
 export interface ConfigData {
@@ -167,6 +160,7 @@ export interface Cache {
             data: string[];
         }
     }
+    activeMutes: Collection<string, number>
 }
 
 export interface CachedMessage {

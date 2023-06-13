@@ -1,7 +1,9 @@
 import { Database } from "sqlite3";
-import { InfractionFlag, TInfraction } from "../utils/Types";
-import * as process from "process";
+import { Infraction, InfractionFlag, TInfraction } from "../utils/Types";
 import { stringify } from "../utils";
+
+import ClientManager from "../Client";
+import * as process from "process";
 
 if (!process.env.DB_PATH) throw new Error("No database path provided");
 export const conn = new Database(process.env.DB_PATH);
@@ -47,7 +49,7 @@ export async function storeInfraction(data: {
 
     // @formatter:off
     // Stringified parameters are optional
-    await runQuery(`
+    const infraction = await getQuery<Pick<Infraction, "id">>(`
         INSERT INTO infractions (
             guildId,
             executorId,
@@ -68,5 +70,8 @@ export async function storeInfraction(data: {
             ${flag || null},
             ${stringify(reason)}
         )
+        RETURNING id;
     `);
+
+    if (infractionType === TInfraction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction!.id as number);
 }
