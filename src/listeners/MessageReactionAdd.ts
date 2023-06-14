@@ -20,8 +20,6 @@ export default class MessageReactionAddEventListener extends EventListener {
         const config = ClientManager.config(reaction.message.guildId!)!;
         const member = await message.guild.members.fetch(user.id);
 
-        if (!config.isGuildStaff(member)) return;
-
         const emojiId = emoji.id ?? emoji.name ?? "N/A";
         const { emojis } = config;
 

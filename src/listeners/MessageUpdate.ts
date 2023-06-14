@@ -3,6 +3,7 @@ import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "di
 import EventListener from "../handlers/listeners/EventListener";
 import { formatLogContent, sendLog } from "../utils/LoggingUtils";
 import { LoggingEvent } from "../utils/Types";
+import { referenceLog } from "../utils";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -56,30 +57,9 @@ export default class MessageDeleteEventListener extends EventListener {
         }];
 
         if (newMessage.reference) {
-            const reference = await newMessage.fetchReference();
-            const referenceData = new EmbedBuilder()
-                .setColor(Colors.NotQuiteBlack)
-                .setAuthor({
-                    name: "Reference",
-                    iconURL: "attachment://reply.png",
-                    url: reference.url
-                })
-                .setFields([
-                    {
-                        name: "Author",
-                        value: `${reference.author} (\`${reference.author.id}\`)`
-                    },
-                    {
-                        name: "Content",
-                        value: formatLogContent(reference.content)
-                    }
-                ]);
-
-            embeds.unshift(referenceData);
-            files.push({
-                attachment: "./icons/reply.png",
-                name: "reply.png"
-            });
+            const res = await referenceLog(newMessage);
+            embeds.unshift(res.embed);
+            files.push(res.icon);
         }
 
         await sendLog({

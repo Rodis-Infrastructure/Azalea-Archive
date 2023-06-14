@@ -8,6 +8,7 @@ excludedChannels = ["channel-id"]
 
 [[groups]]
 guildStaff = false
+manageInfractions = false
 roleIds = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
@@ -17,6 +18,7 @@ reactions = ["emoji-name"]
 [[roles]]
 id = "role-id"
 guildStaff = false
+manageInfractions = false
 selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]

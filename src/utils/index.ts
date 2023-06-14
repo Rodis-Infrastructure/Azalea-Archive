@@ -1,9 +1,10 @@
 import { InfractionFlag, InteractionCustomIdFilter, TInfraction } from "./Types";
-import { Collection, Colors } from "discord.js";
+import { Collection, Colors, EmbedBuilder, Message } from "discord.js";
 
 import Button from "../handlers/interactions/buttons/Button";
 import Modal from "../handlers/interactions/modals/Modal";
 import SelectMenu from "../handlers/interactions/select_menus/SelectMenu";
+import { formatLogContent } from "./LoggingUtils";
 
 export function msToString(timestamp: number): string {
     const units = [
@@ -104,6 +105,35 @@ export function formatReason(reason: string | null | undefined): string {
 
 export function formatTimestamp(timestamp: number | string, type: "d" | "D" | "f" | "F" | "R" | "t" | "T"): string {
     return `<t:${timestamp}:${type}>`;
+}
+
+export async function referenceLog(message: Message) {
+    const reference = await message.fetchReference();
+    const referenceData = new EmbedBuilder()
+        .setColor(Colors.NotQuiteBlack)
+        .setAuthor({
+            name: "Reference",
+            iconURL: "attachment://reply.png",
+            url: reference.url
+        })
+        .setFields([
+            {
+                name: "Author",
+                value: `${reference.author} (\`${reference.author.id}\`)`
+            },
+            {
+                name: "Content",
+                value: formatLogContent(reference.content)
+            }
+        ]);
+
+    return {
+        embed: referenceData,
+        icon: {
+            attachment: "./icons/reply.png",
+            name: "reply.png"
+        }
+    };
 }
 
 export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;

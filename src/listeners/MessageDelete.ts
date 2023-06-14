@@ -4,6 +4,7 @@ import { cacheMessage } from "../utils/Cache";
 import { LoggingEvent } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
+import { referenceLog } from "../utils";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -42,30 +43,9 @@ export default class MessageDeleteEventListener extends EventListener {
         }];
 
         if (message.reference) {
-            const reference = await message.fetchReference();
-            const referenceData = new EmbedBuilder()
-                .setColor(Colors.NotQuiteBlack)
-                .setAuthor({
-                    name: "Reference",
-                    iconURL: "attachment://reply.png",
-                    url: reference.url
-                })
-                .setFields([
-                    {
-                        name: "Author",
-                        value: `${reference.author} (\`${reference.author.id}\`)`
-                    },
-                    {
-                        name: "Content",
-                        value: formatLogContent(reference.content)
-                    }
-                ]);
-
-            embeds.unshift(referenceData);
-            files.push({
-                attachment: "./icons/reply.png",
-                name: "reply.png"
-            });
+            const res = await referenceLog(message);
+            embeds.unshift(res.embed);
+            files.push(res.icon);
         }
 
         const url = await sendLog({

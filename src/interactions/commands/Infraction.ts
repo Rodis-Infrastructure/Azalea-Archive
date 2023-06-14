@@ -1,3 +1,6 @@
+import { Infraction, InfractionSubcommand, InteractionResponseType, TInfraction } from "../../utils/Types";
+import { getQuery, runQuery } from "../../db";
+
 import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
@@ -6,10 +9,6 @@ import {
     GuildMember
 } from "discord.js";
 
-import { Infraction, InfractionSubcommand, InteractionResponseType, TInfraction } from "../../utils/Types";
-
-import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
-import { getQuery, runQuery } from "../../db";
 import {
     DURATION_FORMAT_REGEX,
     elipsify,
@@ -20,6 +19,8 @@ import {
     getInfractionName,
     msToString
 } from "../../utils";
+
+import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
 import ms from "ms";
 
@@ -100,8 +101,12 @@ export default class InfractionCommand extends ChatInputCommand {
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
         const id = interaction.options.getNumber("id", true);
-        const guildId = interaction.guildId!;
-        let infraction!: Infraction;
+        const infraction = await getQuery<Infraction>(`
+			SELECT *
+			FROM infractions
+			WHERE id = ${id}
+			  AND guildId = ${interaction.guildId}
+        `) as Infraction;
 
         const { error, success } = config.emojis;
 
@@ -110,10 +115,7 @@ export default class InfractionCommand extends ChatInputCommand {
             case InfractionSubcommand.Reason:
             case InfractionSubcommand.Duration: {
                 try {
-                    infraction = await config.canManageInfraction({
-                        infractionId: id,
-                        member: interaction.member as GuildMember
-                    });
+                    await config.canManageInfraction(infraction, interaction.member as GuildMember);
                 } catch (err) {
                     await interaction.editReply(`${error} ${err}`);
                     return;
@@ -121,222 +123,199 @@ export default class InfractionCommand extends ChatInputCommand {
             }
         }
 
-        if (subcommand === InfractionSubcommand.Reason) {
-            const newReason = interaction.options.getString("new_reason", true);
+        try {
+            let response!: string;
 
-            try {
-                await runQuery(`
-					UPDATE infractions
-					SET reason    = '${newReason}',
-						updatedAt = ${Math.floor(Date.now() / 1000)},
-						updatedBy = ${interaction.user.id}
-					WHERE id = ${id}
-					  AND guildId = ${guildId};
-                `);
-            } catch (err) {
-                console.error(err);
-                await interaction.editReply(`${error} An error occurred while updating the reason of the infraction`);
-                return;
+            switch (subcommand) {
+                case InfractionSubcommand.Reason:
+                    response = await handleReasonChange(id, interaction);
+                    break;
+                case InfractionSubcommand.Duration:
+                    response = await handleDurationChange(infraction, interaction);
+                    break;
+                case InfractionSubcommand.Delete:
+                    response = await handleInfractionDeletion(id, interaction);
+                    break;
+                case InfractionSubcommand.Info: {
+                    const embed = handleInfractionInfo(infraction);
+                    await interaction.editReply({ embeds: [embed] });
+                    return;
+                }
+                default:
+                    await interaction.editReply(`${error} Unknown subcommand: \`${subcommand}\``);
+                    return;
             }
 
-            const reply = `updated the reason${formatReason(newReason)}`;
             await Promise.all([
-                interaction.editReply(`${success} Successfully ${reply}`),
+                interaction.editReply(`${success} Successfully ${response}`),
                 config.sendInfractionConfirmation({
                     guild: interaction.guild!,
-                    message: newReason,
+                    message: response,
                     authorId: interaction.user.id,
                     channelId: interaction.channelId
                 })
             ]);
-            return;
-        }
-
-        if (subcommand === InfractionSubcommand.Duration) {
-            const strDuration = interaction.options.getString("new_duration", true);
-
-            if (!strDuration.match(DURATION_FORMAT_REGEX)) {
-                await interaction.editReply(`${error} The duration provided is invalid.`);
-                return;
-            }
-
-            const duration = Math.floor(ms(strDuration) / 1000);
-            const now = Math.floor(Date.now() / 1000);
-
-            if (infraction.type !== TInfraction.Mute) {
-                await interaction.editReply(`${error} You can only update the duration of mute infractions`);
-                return;
-            }
-
-            const offender = await interaction.guild!.members.fetch(infraction.targetId);
-
-            if (!offender.isCommunicationDisabled()) {
-                await interaction.editReply(`${error} The user is not muted`);
-                return;
-            }
-
-            const expiresAt = duration + infraction.createdAt;
-
-            try {
-                await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${id})`);
-                await runQuery(`
-					UPDATE infractions
-					SET expiresAt = ${expiresAt},
-						updatedAt = ${now},
-						updatedBy = ${interaction.user.id}
-					WHERE id = ${id}
-					  AND guildId = ${guildId};
-                `);
-            } catch (err) {
-                console.error(err);
-                await interaction.editReply(`${error} An error occurred while updating the duration of the mute`);
-                return;
-            }
-
-            const reply = `updated the mute duration to ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
-            await Promise.all([
-                interaction.editReply(`${success} Successfully ${reply}`),
-                config.sendInfractionConfirmation({
-                    guild: interaction.guild!,
-                    message: reply,
-                    authorId: interaction.user.id,
-                    channelId: interaction.channelId
-                })
-            ]);
-
-            return;
-        }
-
-        if (subcommand === InfractionSubcommand.Delete) {
-            try {
-                await runQuery(`
-					UPDATE infractions
-					SET deletedAt = ${Math.floor(Date.now() / 1000)},
-						deletedBy = ${interaction.user.id}
-					WHERE id = ${id}
-					  AND guildId = ${guildId};
-                `);
-            } catch (err) {
-                console.error(err);
-                await interaction.editReply(`${error} An error occurred while deleting the infraction`);
-                return;
-            }
-
-            const reply = `deleted infraction **#${id}**`;
-            await Promise.all([
-                interaction.editReply(`${success} Successfully ${reply}`),
-                config.sendInfractionConfirmation({
-                    guild: interaction.guild!,
-                    message: reply,
-                    authorId: interaction.user.id,
-                    channelId: interaction.channelId
-                })
-            ]);
-
-            return;
-        }
-
-        if (subcommand === InfractionSubcommand.Info) {
-            const id = interaction.options.getNumber("id", true);
-            const infraction = await getQuery<Infraction>(`
-				SELECT *
-				FROM infractions
-				WHERE id = ${id}
-				  AND guildId = ${guildId};
-            `);
-
-            if (!infraction) {
-                await interaction.editReply(`${error} Infraction **#${id}** not found`);
-                return;
-            }
-
-            const {
-                type,
-                targetId,
-                requestAuthorId,
-                reason,
-                expiresAt,
-                updatedAt,
-                updatedBy,
-                deletedBy,
-                deletedAt,
-                createdAt,
-                executorId,
-                flag
-            } = infraction;
-
-            const msCreatedAt = createdAt * 1000;
-            const fields = [
-                {
-                    name: "Offender",
-                    value: `<@${targetId}>`,
-                    inline: true
-                },
-                {
-                    name: "Moderator",
-                    value: `<@${executorId}>`,
-                    inline: true
-                }
-            ];
-
-            if (requestAuthorId) {
-                fields.push({
-                    name: "Requested by",
-                    value: `<@${requestAuthorId}>`,
-                    inline: true
-                });
-            }
-
-            if (expiresAt) {
-                const offender = await interaction.guild!.members.fetch(targetId);
-                const msExpiresAt = expiresAt * 1000;
-
-                if (msExpiresAt > Date.now() && offender.isCommunicationDisabled()) {
-                    fields.push({
-                        name: "Expires",
-                        value: `<t:${expiresAt}:R>`,
-                        inline: true
-                    });
-                } else {
-                    fields.push({
-                        name: "Duration",
-                        value: `${msToString(msExpiresAt - msCreatedAt)}`,
-                        inline: true
-                    });
-                }
-            }
-
-            if ((updatedBy && updatedAt) || (deletedBy && deletedAt)) {
-                const changes = [];
-
-                if (deletedBy && deletedAt) changes.push(`- Deleted by <@${deletedBy}> (<t:${deletedAt}:R>)`);
-                if (updatedBy && updatedAt) changes.push(`- Updated by <@${updatedBy}> (<t:${updatedAt}:R>)`);
-
-                if (changes.length) {
-                    fields.push({
-                        name: "Recent Changes",
-                        value: changes.join("\n"),
-                        inline: false
-                    });
-                }
-            }
-
-            if (reason) {
-                fields.push({
-                    name: "Reason",
-                    value: elipsify(reason, 1024),
-                    inline: false
-                });
-            }
-
-            const flagName = flag ? `${getInfractionFlagName(flag)} ` : "";
-            const embed = new EmbedBuilder()
-                .setColor(getInfractionColor(type))
-                .setTitle(`${flagName}${getInfractionName(type)} #${id}`)
-                .setFields(fields)
-                .setTimestamp(msCreatedAt);
-
-            await interaction.editReply({ embeds: [embed] });
+        } catch (err) {
+            await interaction.editReply(`${error} ${err}`);
         }
     }
+}
+
+async function handleReasonChange(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
+    const newReason = interaction.options.getString("new_reason", true);
+
+    try {
+        await runQuery(`
+			UPDATE infractions
+			SET reason    = '${newReason}',
+				updatedAt = ${Math.floor(Date.now() / 1000)},
+				updatedBy = ${interaction.user.id}
+			WHERE id = ${infractionId}
+			  AND guildId = ${interaction.guildId};
+        `);
+    } catch (err) {
+        console.error(err);
+        throw "An error occurred while updating the reason of the infraction";
+    }
+
+    return `updated the reason of infraction **#${infractionId}**${formatReason(newReason)}`;
+}
+
+async function handleDurationChange(infraction: Infraction, interaction: ChatInputCommandInteraction): Promise<string> {
+    const strDuration = interaction.options.getString("new_duration", true);
+    if (!strDuration.match(DURATION_FORMAT_REGEX)) throw "The duration provided is invalid.";
+
+    const duration = Math.floor(ms(strDuration) / 1000);
+    const now = Math.floor(Date.now() / 1000);
+
+    if (infraction.type !== TInfraction.Mute) throw "You can only update the duration of mute infractions";
+
+    const offender = await interaction.guild!.members.fetch(infraction.targetId);
+    if (!offender.isCommunicationDisabled()) throw "This user does not have an active mute";
+
+    const expiresAt = duration + infraction.createdAt;
+
+    try {
+        await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.id})`);
+        await runQuery(`
+			UPDATE infractions
+			SET expiresAt = ${expiresAt},
+				updatedAt = ${now},
+				updatedBy = ${interaction.user.id}
+			WHERE id = ${infraction.id}
+			  AND guildId = ${interaction.guildId};
+        `);
+    } catch (err) {
+        console.error(err);
+        throw "An error occurred while updating the duration of the mute";
+    }
+
+    return `updated the duration of infraction **#${infraction.id}** to ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
+}
+
+async function handleInfractionDeletion(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
+    try {
+        await runQuery(`
+			UPDATE infractions
+			SET deletedAt = ${Math.floor(Date.now() / 1000)},
+				deletedBy = ${interaction.user.id}
+			WHERE id = ${infractionId}
+			  AND guildId = ${interaction.guildId};
+        `);
+    } catch (err) {
+        console.error(err);
+        throw "An error occurred while deleting the infraction";
+    }
+
+    return `deleted infraction **#${infractionId}**`;
+}
+
+function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
+    const {
+        id,
+        type,
+        targetId,
+        requestAuthorId,
+        reason,
+        expiresAt,
+        updatedAt,
+        updatedBy,
+        deletedBy,
+        deletedAt,
+        createdAt,
+        executorId,
+        flag
+    } = infraction;
+
+    const msCreatedAt = createdAt * 1000;
+    const fields = [
+        {
+            name: "Offender",
+            value: `<@${targetId}>`,
+            inline: true
+        },
+        {
+            name: "Moderator",
+            value: `<@${executorId}>`,
+            inline: true
+        }
+    ];
+
+    if (requestAuthorId) {
+        fields.push({
+            name: "Requested by",
+            value: `<@${requestAuthorId}>`,
+            inline: true
+        });
+    }
+
+    /* The infraction is temporary */
+    if (expiresAt) {
+        const msExpiresAt = expiresAt * 1000;
+
+        if (msExpiresAt > Date.now()) {
+            fields.push({
+                name: "Expires",
+                value: `<t:${expiresAt}:R>`,
+                inline: true
+            });
+        } else {
+            fields.push({
+                name: "Duration",
+                value: `${msToString(msExpiresAt - msCreatedAt)}`,
+                inline: true
+            });
+        }
+    }
+
+    /* The infraction has either been updated or deleted */
+    if ((updatedBy && updatedAt) || (deletedBy && deletedAt)) {
+        const changes = [];
+
+        if (deletedBy && deletedAt) changes.push(`- Deleted by <@${deletedBy}> (<t:${deletedAt}:R>)`);
+        if (updatedBy && updatedAt) changes.push(`- Updated by <@${updatedBy}> (<t:${updatedAt}:R>)`);
+
+        if (changes.length) {
+            fields.push({
+                name: "Recent Changes",
+                value: changes.join("\n"),
+                inline: false
+            });
+        }
+    }
+
+    if (reason) {
+        fields.push({
+            name: "Reason",
+            value: elipsify(reason, 1024),
+            inline: false
+        });
+    }
+
+    const flagName = flag ? `${getInfractionFlagName(flag)} ` : "";
+    return new EmbedBuilder()
+        .setColor(getInfractionColor(type))
+        .setTitle(`${flagName}${getInfractionName(type)} #${id}`)
+        .setFields(fields)
+        .setTimestamp(msCreatedAt);
 }

@@ -57,12 +57,16 @@ confirmationChannel = "channel-id"
 The `roles` and `groups` sections allow you to configure which roles have access to specific message components and
 modals.
 
+- `guildStaff` - Prevents the user from being given an infraction.
+- `manageInfractions` - Allows the user to modify or delete any infraction.
+
 #### Role Configuration
 
 ```toml
 [[roles]]
 id = "role-id"
 guildStaff = false
+manageInfractions = false
 selections = []
 buttons = []
 modals = []
@@ -74,6 +78,7 @@ reactions = []
 ```toml
 [[groups]]
 guildStaff = false
+manageInfractions = false
 roleIds = []
 selectMenus = []
 buttons = []
