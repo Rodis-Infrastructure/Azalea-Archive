@@ -71,11 +71,11 @@ export default class ModalHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        const ephemeral = config.ephemeralResponseIn(usageChannel)
-            ? true
-            : modal.data.ephemeral;
-
-        await interaction.deferReply({ ephemeral });
+        await config.applyDeferralState({
+            interaction,
+            state: modal.data.defer,
+            ephemeral: modal.data.ephemeral
+        });
 
         try {
             await modal.execute(interaction, config);

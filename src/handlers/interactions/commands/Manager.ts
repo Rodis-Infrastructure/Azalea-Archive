@@ -1,6 +1,6 @@
 import { ApplicationCommandType, Collection, Colors, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 
-import { Command, CommandInteraction, InteractionResponseType, LoggingEvent } from "../../../utils/Types";
+import { Command, CommandInteraction, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
@@ -60,20 +60,11 @@ export default class CommandHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        const replyDeferralType = config.ephemeralResponseIn(usageChannel)
-            ? InteractionResponseType.EphemeralDefer
-            : command.data.defer;
-
-        switch (replyDeferralType) {
-            case InteractionResponseType.Defer: {
-                await interaction.deferReply();
-                break;
-            }
-
-            case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ ephemeral: true });
-            }
-        }
+        await config.applyDeferralState({
+            interaction,
+            state: command.data.defer,
+            ephemeral: command.data.ephemeral
+        });
 
         try {
             await command.execute(interaction, config);

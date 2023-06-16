@@ -1,12 +1,14 @@
 import Modal from "../../handlers/interactions/modals/Modal";
 import { ModalSubmitInteraction } from "discord.js";
+import { InteractionResponseType } from "../../utils/Types";
 
 export default class SampleModal extends Modal {
     constructor() {
         super({
             name: "sample-modal",
             ephemeral: true,
-            skipInternalUsageCheck: false
+            skipInternalUsageCheck: false,
+            defer: InteractionResponseType.Defer
         });
     }
 

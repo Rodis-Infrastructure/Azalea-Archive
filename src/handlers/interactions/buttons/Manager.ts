@@ -1,4 +1,4 @@
-import { InteractionCustomIdFilter, InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
+import { InteractionCustomIdFilter, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { ButtonInteraction, Collection, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel } from "discord.js";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -63,20 +63,11 @@ export default class ButtonHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        const responseDeferralType = config.ephemeralResponseIn(usageChannel)
-            ? InteractionResponseType.EphemeralDefer
-            : button.data.defer;
-
-        switch (responseDeferralType) {
-            case InteractionResponseType.Defer: {
-                await interaction.deferReply();
-                break;
-            }
-
-            case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ ephemeral: true });
-            }
-        }
+        await config.applyDeferralState({
+            interaction,
+            state: button.data.defer,
+            ephemeral: button.data.ephemeral
+        });
 
         try {
             await button.execute(interaction, config);

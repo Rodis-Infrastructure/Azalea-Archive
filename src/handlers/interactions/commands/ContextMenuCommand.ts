@@ -12,6 +12,7 @@ type ContextMenuCommandData = MessageApplicationCommandData | UserApplicationCom
 type CustomContextMenuCommandProperties = ContextMenuCommandData & {
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
+    ephemeral?: boolean;
 }
 
 export default abstract class ContextMenuCommand {

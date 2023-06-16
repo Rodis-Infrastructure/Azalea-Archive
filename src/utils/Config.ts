@@ -1,5 +1,20 @@
-import { Guild, GuildMember, GuildTextBasedChannel, userMention } from "discord.js";
-import { ConfigData, Infraction, LoggingEvent, PermissionData } from "./Types";
+import {
+    ButtonInteraction,
+    Guild,
+    GuildMember,
+    GuildTextBasedChannel,
+    ModalSubmitInteraction,
+    SelectMenuInteraction,
+    userMention
+} from "discord.js";
+import {
+    CommandInteraction,
+    ConfigData,
+    Infraction,
+    InteractionResponseType,
+    LoggingEvent,
+    PermissionData
+} from "./Types";
 
 import ClientManager from "../Client";
 import { formatReason } from "./index";
@@ -171,5 +186,26 @@ export default class Config {
         if (!infraction) throw "Infraction not found";
         if (!canManage && infraction.executorId !== member.id) throw "You do not have permission to manage this infraction";
         if (infraction.deletedAt && infraction.deletedBy) throw "This infraction has been deleted and cannot be changed";
+    }
+
+    async applyDeferralState(data: {
+        interaction: ModalSubmitInteraction | ButtonInteraction | SelectMenuInteraction | CommandInteraction,
+        state: InteractionResponseType,
+        ephemeral?: boolean
+    }) {
+        const { interaction, state } = data;
+        const ephemeral = this.ephemeralResponseIn(interaction.channel as GuildTextBasedChannel) || data.ephemeral;
+
+        switch (state) {
+            case InteractionResponseType.Defer: {
+                await interaction.deferReply({ ephemeral });
+                break;
+            }
+
+            case InteractionResponseType.DeferUpdate: {
+                if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) throw "Cannot defer update on a slash/context menu command";
+                await interaction.deferUpdate();
+            }
+        }
     }
 }

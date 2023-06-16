@@ -10,9 +10,10 @@ export default class QuickMute30Command extends ContextMenuCommand {
     constructor() {
         super({
             name: "Quick mute (30m)",
-            defer: InteractionResponseType.EphemeralDefer,
+            defer: InteractionResponseType.Defer,
             type: ApplicationCommandType.Message,
-            skipInternalUsageCheck: false
+            skipInternalUsageCheck: false,
+            ephemeral: true
         });
     }
 

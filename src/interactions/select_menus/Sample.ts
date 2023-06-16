@@ -7,7 +7,7 @@ export default class SampleSelectMenu extends SelectMenu {
     constructor() {
         super({
             name: "sample-select-menu",
-            defer: InteractionResponseType.EphemeralDefer,
+            defer: InteractionResponseType.Defer,
             skipInternalUsageCheck: false
         });
     }

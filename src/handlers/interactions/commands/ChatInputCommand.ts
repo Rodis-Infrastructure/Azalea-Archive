@@ -11,6 +11,7 @@ import Config from "../../../utils/Config";
 type CustomChatInputCommandProperties = ChatInputApplicationCommandData & {
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
+    ephemeral?: boolean;
 }
 
 export default abstract class ChatInputCommand {

@@ -7,7 +7,7 @@ import {
     StringSelectMenuInteraction
 } from "discord.js";
 
-import { InteractionCustomIdFilter, InteractionResponseType, LoggingEvent, RolePermission } from "../../../utils/Types";
+import { InteractionCustomIdFilter, LoggingEvent, RolePermission } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
@@ -71,20 +71,11 @@ export default class SelectMenuHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        const responseDeferralType = config.ephemeralResponseIn(usageChannel)
-            ? InteractionResponseType.EphemeralDefer
-            : selectMenu.data.defer;
-
-        switch (responseDeferralType) {
-            case InteractionResponseType.Defer: {
-                await interaction.deferReply();
-                break;
-            }
-
-            case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ ephemeral: true });
-            }
-        }
+        await config.applyDeferralState({
+            interaction,
+            state: selectMenu.data.defer,
+            ephemeral: selectMenu.data.ephemeral
+        });
 
         try {
             await selectMenu.execute(interaction, config);

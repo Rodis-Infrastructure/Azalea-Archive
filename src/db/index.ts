@@ -49,7 +49,7 @@ export async function storeInfraction(data: {
 
     // @formatter:off
     // Stringified parameters are optional
-    const infraction = await getQuery<Pick<Infraction, "id">>(`
+    const infraction = await getQuery<Pick<Infraction, "id" | "createdAt">>(`
         INSERT INTO infractions (
             guildId,
             executorId,
@@ -70,8 +70,24 @@ export async function storeInfraction(data: {
             ${flag || null},
             ${stringify(reason)}
         )
-        RETURNING id;
+        RETURNING id, createdAt;
     `);
 
-    if (infractionType === TInfraction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction!.id as number);
+    // @formatter:on
+    if (infraction) {
+        if (infractionType === TInfraction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.id);
+        const { data: infractions } = ClientManager.cache.infractions.get(targetId) || {};
+
+        infractions?.push({
+            id: infraction.id,
+            executorId,
+            type: infractionType,
+            expiresAt: expiresAt || undefined,
+            createdAt: infraction.createdAt,
+            deletedAt: undefined,
+            deletedBy: undefined,
+            reason: reason || undefined,
+            flag
+        });
+    }
 }

@@ -25,7 +25,7 @@ export enum InfractionSubcommand {
 export enum InteractionResponseType {
     Default = 0,
     Defer = 1,
-    EphemeralDefer = 2,
+    DeferUpdate = 2,
 }
 
 export enum RolePermission {
@@ -90,14 +90,6 @@ interface ChannelData {
     staffCommands?: string
 }
 
-export interface MinimalInfraction {
-    id: number;
-    executorId: string;
-    targetId: string;
-    createdAt: number;
-    expiresAt?: number;
-}
-
 export interface Infraction {
     id: number;
     targetId: string;
@@ -112,6 +104,14 @@ export interface Infraction {
     type: number;
     flag?: number;
     reason?: string;
+}
+
+export type MinimalInfraction = Pick<Infraction, "id" | "createdAt" | "reason" | "executorId" | "flag" | "deletedAt" | "deletedBy" | "expiresAt" | "type">;
+
+export enum InfractionFilter {
+    All = "All",
+    Automatic = "Automatic",
+    Deleted = "Deleted",
 }
 
 export interface ConfigData {
@@ -149,6 +149,7 @@ export interface CustomComponentProperties {
     name: InteractionCustomIdFilter;
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
+    ephemeral?: boolean;
 }
 
 export interface Cache {
@@ -161,7 +162,20 @@ export interface Cache {
             data: string[];
         }
     }
-    activeMutes: Collection<string, number>
+    activeMutes: Collection<string, number>;
+    infractions: Collection<string, CachedInfractions>;
+}
+
+export interface CachedInfractions {
+    messages: Collection<string, CachedInfractionSearchMessage>;
+    data: MinimalInfraction[];
+    timeout?: NodeJS.Timeout;
+}
+
+interface CachedInfractionSearchMessage {
+    filter: InfractionFilter | null;
+    authorId: string;
+    page: number;
 }
 
 export interface CachedMessage {
@@ -169,12 +183,6 @@ export interface CachedMessage {
     channelId: string;
     guildId: string;
     createdAt: number;
-}
-
-export interface CustomModalProperties {
-    name: InteractionCustomIdFilter;
-    skipInternalUsageCheck: boolean;
-    ephemeral: boolean;
 }
 
 export type Command = ChatInputCommand | ContextMenuCommand;

@@ -1,10 +1,22 @@
-import { Infraction, InfractionSubcommand, InteractionResponseType, TInfraction } from "../../utils/Types";
-import { getQuery, runQuery } from "../../db";
+import {
+    Infraction,
+    InfractionFilter,
+    InfractionSubcommand,
+    InteractionResponseType,
+    MinimalInfraction,
+    TInfraction
+} from "../../utils/Types";
+import { allQuery, getQuery, runQuery } from "../../db";
 
 import {
+    ActionRowBuilder,
     ApplicationCommandOptionType,
     ApplicationCommandType,
+    ButtonBuilder,
+    ButtonStyle,
     ChatInputCommandInteraction,
+    Collection,
+    Colors,
     EmbedBuilder,
     GuildMember
 } from "discord.js";
@@ -17,10 +29,12 @@ import {
     getInfractionColor,
     getInfractionFlagName,
     getInfractionName,
+    mapInfractionsToFields,
     msToString
 } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
+import ClientManager from "../../Client";
 import Config from "../../utils/Config";
 import ms from "ms";
 
@@ -93,6 +107,28 @@ export default class InfractionCommand extends ChatInputCommand {
                             required: true
                         }
                     ]
+                },
+                {
+                    name: InfractionSubcommand.Search,
+                    description: "View a list of infractions",
+                    type: ApplicationCommandOptionType.Subcommand,
+                    options: [
+                        {
+                            name: "user",
+                            description: "The user whose infractions to view",
+                            type: ApplicationCommandOptionType.User,
+                            required: true
+                        },
+                        {
+                            name: "filter_by",
+                            description: "The type of infractions to view",
+                            type: ApplicationCommandOptionType.String,
+                            choices: Object.values(InfractionFilter).map(filter => ({
+                                name: filter,
+                                value: filter
+                            }))
+                        }
+                    ]
                 }
             ]
         });
@@ -100,7 +136,7 @@ export default class InfractionCommand extends ChatInputCommand {
 
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
-        const id = interaction.options.getNumber("id", true);
+        const id = interaction.options.getNumber("id") as number;
         const infraction = await getQuery<Infraction>(`
 			SELECT *
 			FROM infractions
@@ -136,6 +172,10 @@ export default class InfractionCommand extends ChatInputCommand {
                 case InfractionSubcommand.Delete:
                     response = await handleInfractionDeletion(id, interaction);
                     break;
+                case InfractionSubcommand.Search: {
+                    await handleUserInfractionSearch(interaction);
+                    return;
+                }
                 case InfractionSubcommand.Info: {
                     const embed = handleInfractionInfo(infraction);
                     await interaction.editReply({ embeds: [embed] });
@@ -158,6 +198,104 @@ export default class InfractionCommand extends ChatInputCommand {
         } catch (err) {
             await interaction.editReply(`${error} ${err}`);
         }
+    }
+}
+
+async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction) {
+    const user = interaction.options.getUser("user", true);
+    const filter = interaction.options.getString("filter_by") as InfractionFilter | null;
+    const cachedInfractions = ClientManager.cache.infractions.get(user.id);
+    let infractions = cachedInfractions?.data || [];
+
+    if (!cachedInfractions) {
+        infractions = await allQuery<MinimalInfraction>(`
+			SELECT id,
+				   executorId,
+				   createdAt,
+				   reason,
+				   deletedBy,
+				   deletedAt,
+				   flag,
+				   expiresAt,
+				   type
+			FROM infractions
+			WHERE targetId = ${user.id}
+			  AND guildId = ${interaction.guildId}
+			ORDER BY createdAt DESC
+        `) || [];
+    }
+
+    const components: ActionRowBuilder<ButtonBuilder>[] = [];
+    const embed = new EmbedBuilder()
+        .setColor(Colors.NotQuiteBlack)
+        .setAuthor({ name: `Infractions of ${user.tag}`, iconURL: user.displayAvatarURL() })
+        .setFooter({ text: `ID: ${user.id}` });
+
+    if (filter) embed.setTitle(`Filter: ${filter}`);
+
+    if (!infractions.length) {
+        embed.setDescription("This user has no infractions");
+    } else {
+        const [maxPageCount, fields] = mapInfractionsToFields({
+            infractions,
+            filter,
+            page: 1
+        });
+
+        if (fields.length) embed.setFields(fields);
+
+        if (maxPageCount > 1) {
+            const nextBtn = new ButtonBuilder()
+                .setCustomId(`inf-page-next-${user.id}`)
+                .setLabel("\u2192")
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(infractions.length <= 5);
+
+            const pageCountBtn = new ButtonBuilder()
+                .setCustomId("x")
+                .setLabel(`1 / ${maxPageCount}`)
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(true);
+
+            const previousBtn = new ButtonBuilder()
+                .setCustomId(`inf-page-back-${user.id}`)
+                .setLabel("\u2190")
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(true);
+
+            const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents([previousBtn, pageCountBtn, nextBtn]);
+            components.push(actionRow);
+        }
+    }
+
+    const message = await interaction.editReply({ embeds: [embed], components });
+    let timeout!: NodeJS.Timeout | undefined;
+
+    if (components.length) {
+        timeout = setTimeout(() => {
+            ClientManager.cache.infractions.delete(user.id);
+        }, 300_000);
+    }
+
+    const messageData = {
+        authorId: interaction.user.id,
+        filter,
+        page: 1
+    };
+
+    if (cachedInfractions) {
+        if (timeout) {
+            clearTimeout(cachedInfractions.timeout);
+            cachedInfractions.timeout = timeout;
+        }
+
+        cachedInfractions.messages.set(message.id, messageData);
+    } else if (components.length) {
+        ClientManager.cache.infractions.set(user.id, {
+            data: infractions,
+            messages: new Collection([[message.id, messageData]]),
+            timeout
+        });
     }
 }
 

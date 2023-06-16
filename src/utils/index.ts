@@ -1,5 +1,5 @@
-import { InfractionFlag, InteractionCustomIdFilter, TInfraction } from "./Types";
-import { Collection, Colors, EmbedBuilder, Message } from "discord.js";
+import { InfractionFilter, InfractionFlag, InteractionCustomIdFilter, MinimalInfraction, TInfraction } from "./Types";
+import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
 
 import Button from "../handlers/interactions/buttons/Button";
 import Modal from "../handlers/interactions/modals/Modal";
@@ -76,14 +76,14 @@ export function getInfractionColor(infractionType: TInfraction) {
     }
 }
 
-export function getInfractionFlagName(infractionFlag: InfractionFlag) {
+export function getInfractionFlagName(infractionFlag: InfractionFlag | number | undefined) {
     switch (infractionFlag) {
         case InfractionFlag.Automatic:
             return "Automatic";
         case InfractionFlag.Quick:
-            return "Quick Mute";
+            return "Quick";
         default:
-            return "Unknown";
+            return "";
     }
 }
 
@@ -134,6 +134,73 @@ export async function referenceLog(message: Message) {
             name: "reply.png"
         }
     };
+}
+
+export function currentTimestamp(): number {
+    return Math.floor(Date.now() / 1000);
+}
+
+export function mapInfractionsToFields(data: {
+    infractions: MinimalInfraction[],
+    filter: InfractionFilter | null,
+    page: number
+}): [number, { name: string, value: string }[]] {
+    const { infractions, filter, page } = data;
+    const filteredInfractions = infractions.filter(infraction => {
+        switch (filter) {
+            case InfractionFilter.All:
+                return !infraction.deletedAt && !infraction.deletedBy;
+            case InfractionFilter.Automatic:
+                return infraction.flag === InfractionFlag.Automatic;
+            case InfractionFilter.Deleted:
+                return infraction.deletedAt && infraction.deletedBy;
+            default:
+                return infraction.flag !== InfractionFlag.Automatic
+                    && !infraction.deletedAt
+                    && !infraction.deletedBy;
+        }
+    });
+
+    const fields = filteredInfractions.slice((page * 5) - 5, page * 5).map(infraction => {
+        let flag = getInfractionFlagName(infraction.flag);
+        flag &&= `${flag} `;
+
+        const data = [
+            {
+                key: "Created",
+                val: formatTimestamp(infraction.createdAt, "R")
+            },
+            {
+                key: "Moderator",
+                val: userMention(infraction.executorId)
+            },
+            {
+                key: "Reason",
+                val: elipsify(infraction.reason || "No reason provided", 200)
+            }
+        ];
+
+        if (infraction.expiresAt) {
+            if (infraction.expiresAt > currentTimestamp()) {
+                data.splice(1, 0, {
+                    key: "Expires",
+                    val: formatTimestamp(infraction.expiresAt, "R")
+                });
+            } else {
+                data.splice(1, 0, {
+                    key: "Duration",
+                    val: msToString(infraction.expiresAt - infraction.createdAt)
+                });
+            }
+        }
+
+        return {
+            name: `${flag}${getInfractionName(infraction.type)} #${infraction.id}`,
+            value: data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")
+        };
+    });
+
+    return [Math.ceil(filteredInfractions.length / 5), fields];
 }
 
 export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
