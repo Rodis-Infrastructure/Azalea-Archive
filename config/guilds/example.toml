@@ -6,6 +6,10 @@ enabled = true
 excludedCategories = ["category-id"]
 excludedChannels = ["channel-id"]
 
+[[userFlags]]
+name = "flag-name"
+roleIds = ["role-id"]
+
 [[groups]]
 guildStaff = false
 manageInfractions = false

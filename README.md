@@ -52,6 +52,17 @@ outside said channel.
 confirmationChannel = "channel-id"
 ```
 
+### User Flags
+
+When the configuration is set, the `/info` command now includes the names of the flags associated with the user in its
+response.
+
+```toml
+[[userFlags]]
+name = "flag-name"
+roleIds = ["role-id"]
+```
+
 ### Role and Group Configuration
 
 The `roles` and `groups` sections allow you to configure which roles have access to specific message components and
