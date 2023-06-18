@@ -24,7 +24,7 @@ export function msToString(timestamp: number): string {
         .map(({ unit, value }) => {
             const count = Math.floor(timestamp / value);
             timestamp %= value;
-            return count && `${count} ${unit}${count > 1 ? "s" : ""}`;
+            return count && `${count} ${pluralize(unit, count)}`;
         })
         .filter(Boolean)
         .join(" ") || "< 1 minute";

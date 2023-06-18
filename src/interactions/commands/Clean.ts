@@ -11,6 +11,7 @@ import { purgeMessages, validateModerationAction } from "../../utils/ModerationU
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { pluralize } from "../../utils";
 
 export default class CleanCommand extends ChatInputCommand {
     constructor() {
@@ -94,9 +95,8 @@ export default class CleanCommand extends ChatInputCommand {
 
             let messageAuthor = "";
             if (action === "user") messageAuthor = ` by **${user!.tag}**`;
-            const plural = purgedMessages === 1 ? "" : "s";
 
-            await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` message${plural}${messageAuthor}.`);
+            await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` ${pluralize("message", purgedMessages)}${messageAuthor}.`);
         } catch (err) {
             console.error(err);
             await interaction.editReply(`${error} Failed to purge messages.`);

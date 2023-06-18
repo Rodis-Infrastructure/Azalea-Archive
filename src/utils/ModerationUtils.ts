@@ -2,7 +2,7 @@ import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChann
 import { InfractionData, InfractionFlag, InfractionType, LoggingEvent, TInfraction } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
-import { DURATION_FORMAT_REGEX, msToString } from "./index";
+import { DURATION_FORMAT_REGEX, formatTimestamp, msToString } from "./index";
 import { allQuery, storeInfraction } from "../db";
 
 import ClientManager from "../Client";
@@ -125,7 +125,7 @@ export async function muteMember(offender: GuildMember, data: {
     if (notModerateableReason) return notModerateableReason;
 
     const expiresAt = await muteExpirationTimestamp(offender);
-    if (expiresAt) return `This member has already been muted until <t:${expiresAt}:F> (expires <t:${expiresAt}:R>).`;
+    if (expiresAt) return `This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`;
 
     let msMuteDuration = ms(duration);
 

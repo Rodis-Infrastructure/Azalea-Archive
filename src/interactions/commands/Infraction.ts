@@ -24,6 +24,7 @@ import {
 } from "discord.js";
 
 import {
+    currentTimestamp,
     DURATION_FORMAT_REGEX,
     elipsify,
     formatReason,
@@ -323,7 +324,7 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
         await runQuery(`
 			UPDATE infractions
 			SET reason    = '${newReason}',
-				updatedAt = ${Math.floor(Date.now() / 1000)},
+				updatedAt = ${currentTimestamp()},
 				updatedBy = ${interaction.user.id}
 			WHERE id = ${infractionId}
 			  AND guildId = ${interaction.guildId};
@@ -341,7 +342,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
     if (!strDuration.match(DURATION_FORMAT_REGEX)) throw "The duration provided is invalid.";
 
     const duration = Math.floor(ms(strDuration) / 1000);
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(currentTimestamp());
 
     if (infraction.type !== TInfraction.Mute) throw "You can only update the duration of mute infractions";
 
@@ -372,7 +373,7 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
     try {
         await runQuery(`
 			UPDATE infractions
-			SET deletedAt = ${Math.floor(Date.now() / 1000)},
+			SET deletedAt = ${currentTimestamp()},
 				deletedBy = ${interaction.user.id}
 			WHERE id = ${infractionId}
 			  AND guildId = ${interaction.guildId};
@@ -431,7 +432,7 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
         if (msExpiresAt > Date.now()) {
             fields.push({
                 name: "Expires",
-                value: `<t:${expiresAt}:R>`,
+                value: formatTimestamp(expiresAt, "R"),
                 inline: true
             });
         } else {
@@ -447,8 +448,8 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
     if ((updatedBy && updatedAt) || (deletedBy && deletedAt)) {
         const changes = [];
 
-        if (deletedBy && deletedAt) changes.push(`- Deleted by <@${deletedBy}> (<t:${deletedAt}:R>)`);
-        if (updatedBy && updatedAt) changes.push(`- Updated by <@${updatedBy}> (<t:${updatedAt}:R>)`);
+        if (deletedBy && deletedAt) changes.push(`- Deleted by <@${deletedBy}> (${formatTimestamp(deletedAt, "R")})`);
+        if (updatedBy && updatedAt) changes.push(`- Updated by <@${updatedBy}> (${formatTimestamp(updatedAt, "R")})`);
 
         if (changes.length) {
             fields.push({

@@ -2,7 +2,7 @@ import { codeBlock, Collection, GuildTextBasedChannel, Message, userMention } fr
 import { LogData } from "./Types";
 
 import ClientManager from "../Client";
-import { elipsify } from "./index";
+import { elipsify, pluralize } from "./index";
 
 export async function sendLog(data: LogData): Promise<string | void> {
     const { event, channel, guildId, options } = data;
@@ -54,10 +54,8 @@ export async function linkToLog(data: {
         : "";
 
     const amount = typeof content === "string" ? 1 : content.size;
-    const plural = amount > 1 ? "s" : "";
-
     await config.sendInfractionConfirmation({
-        message: `purged ${amount} message${plural}${author}: ${url}`,
+        message: `purged ${amount} ${pluralize("message", amount)}${author}: ${url}`,
         guild: channel.guild,
         authorId: cache.moderatorId
     });

@@ -3,6 +3,7 @@ import { Events, GuildMember } from "discord.js";
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
 import { runQuery } from "../db";
+import { currentTimestamp } from "../utils";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
@@ -17,7 +18,7 @@ export default class InteractionCreateEventListener extends EventListener {
                 ClientManager.cache.activeMutes.delete(newMember.id);
                 await runQuery(`
 					UPDATE infractions
-					SET expiresAt = ${Math.ceil(Date.now() / 1000)}
+					SET expiresAt = ${currentTimestamp()}
 					WHERE guildId = ${newMember.guild.id}
 					  AND id = ${infractionId};
                 `);
