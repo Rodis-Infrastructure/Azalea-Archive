@@ -64,7 +64,7 @@ export default class UnbanCommand extends ChatInputCommand {
             interaction.editReply(`${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`),
             config.sendInfractionConfirmation({
                 guild: interaction.guild!,
-                message: `unbanned **${offender.tag}`,
+                message: `unbanned **${offender.tag}**`,
                 authorId: interaction.user.id,
                 channelId: interaction.channelId,
                 reason
