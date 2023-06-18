@@ -173,7 +173,7 @@ export default class InfractionCommand extends ChatInputCommand {
                     response = await handleInfractionDeletion(id, interaction);
                     break;
                 case InfractionSubcommand.Search: {
-                    await handleUserInfractionSearch(interaction);
+                    await handleUserInfractionSearch(interaction, config);
                     return;
                 }
                 case InfractionSubcommand.Info: {
@@ -201,8 +201,15 @@ export default class InfractionCommand extends ChatInputCommand {
     }
 }
 
-async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction) {
+async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction, config: Config) {
     const user = interaction.options.getUser("user", true);
+    const member = interaction.options.getMember("user");
+
+    if (member && config.isGuildStaff(member as GuildMember)) {
+        await interaction.editReply(`${config.emojis.error} You can't view the infractions of a staff member.`);
+        return;
+    }
+
     const filter = interaction.options.getString("filter_by") as InfractionFilter | null;
     const cachedInfractions = ClientManager.cache.infractions.get(user.id);
     let infractions = cachedInfractions?.data || [];
