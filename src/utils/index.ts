@@ -203,4 +203,8 @@ export function mapInfractionsToFields(data: {
     return [Math.ceil(filteredInfractions.length / 5), fields];
 }
 
+export function pluralize(str: string, count: number) {
+    return count === 1 ? str : `${str}s`;
+}
+
 export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;

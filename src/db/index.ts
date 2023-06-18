@@ -17,7 +17,7 @@ export function runQuery(query: string): Promise<void> {
     });
 }
 
-export function getQuery<T>(query: string): Promise<T | null> {
+export function getQuery<T, N extends boolean = false>(query: string): Promise<N extends true ? T : T | null> {
     return new Promise((resolve, reject) => {
         conn.get(query, (err, row: T) => {
             if (err) reject(err);

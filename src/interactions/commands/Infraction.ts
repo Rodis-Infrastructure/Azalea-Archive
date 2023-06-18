@@ -13,12 +13,14 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ButtonBuilder,
+    ButtonInteraction,
     ButtonStyle,
     ChatInputCommandInteraction,
     Collection,
     Colors,
     EmbedBuilder,
-    GuildMember
+    GuildMember,
+    User
 } from "discord.js";
 
 import {
@@ -201,16 +203,24 @@ export default class InfractionCommand extends ChatInputCommand {
     }
 }
 
-async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction, config: Config) {
-    const user = interaction.options.getUser("user", true);
-    const member = interaction.options.getMember("user");
+export async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config) {
+    let filter: InfractionFilter | null = null;
+    let member: GuildMember | null = null;
+    let user!: User;
 
-    if (member && config.isGuildStaff(member as GuildMember)) {
+    if (interaction.isChatInputCommand()) {
+        user = interaction.options.getUser("user", true);
+        member = interaction.options.getMember("user") as GuildMember | null;
+        filter = interaction.options.getString("filter_by") as InfractionFilter | null;
+    } else {
+        user = await ClientManager.client.users.fetch(interaction.customId.split("-")[2]);
+    }
+
+    if (member && config.isGuildStaff(member)) {
         await interaction.editReply(`${config.emojis.error} You can't view the infractions of a staff member.`);
         return;
     }
 
-    const filter = interaction.options.getString("filter_by") as InfractionFilter | null;
     const cachedInfractions = ClientManager.cache.infractions.get(user.id);
     let infractions = cachedInfractions?.data || [];
 
