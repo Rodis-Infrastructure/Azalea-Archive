@@ -3,6 +3,7 @@ import {
     InfractionFilter,
     InfractionSubcommand,
     InteractionResponseType,
+    LoggingEvent,
     MinimalInfraction,
     TInfraction
 } from "../../utils/Types";
@@ -40,6 +41,7 @@ import ChatInputCommand from "../../handlers/interactions/commands/ChatInputComm
 import ClientManager from "../../Client";
 import Config from "../../utils/Config";
 import ms from "ms";
+import { sendLog } from "../../utils/LoggingUtils";
 
 export default class InfractionCommand extends ChatInputCommand {
     constructor() {
@@ -334,6 +336,34 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
         throw "An error occurred while updating the reason of the infraction";
     }
 
+    const log = new EmbedBuilder()
+        .setColor(Colors.Yellow)
+        .setAuthor({ name: "Reason Changed", iconURL: "attachment://infractionUpdate.png" })
+        .setFields([
+            {
+                name: "Moderator",
+                value: `${interaction.user}`
+            },
+            {
+                name: "New Reason",
+                value: newReason
+            }
+        ])
+        .setFooter({ text: `#${infractionId}` })
+        .setTimestamp();
+
+    await sendLog({
+        event: LoggingEvent.Infraction,
+        guildId: interaction.guildId!,
+        options: {
+            embeds: [log],
+            files: [{
+                attachment: "./icons/infractionUpdate.png",
+                name: "infractionUpdate.png"
+            }]
+        }
+    });
+
     return `updated the reason of infraction **#${infractionId}**${formatReason(newReason)}`;
 }
 
@@ -342,7 +372,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
     if (!strDuration.match(DURATION_FORMAT_REGEX)) throw "The duration provided is invalid.";
 
     const duration = Math.floor(ms(strDuration) / 1000);
-    const now = Math.floor(currentTimestamp());
+    const now = currentTimestamp();
 
     if (infraction.type !== TInfraction.Mute) throw "You can only update the duration of mute infractions";
 
@@ -366,6 +396,34 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
         throw "An error occurred while updating the duration of the mute";
     }
 
+    const log = new EmbedBuilder()
+        .setColor(Colors.Yellow)
+        .setAuthor({ name: "Duration Changed", iconURL: "attachment://infractionUpdate.png" })
+        .setFields([
+            {
+                name: "Moderator",
+                value: `${interaction.user}`
+            },
+            {
+                name: "New Duration",
+                value: msToString(duration * 1000)
+            }
+        ])
+        .setFooter({ text: `#${infraction.id}` })
+        .setTimestamp();
+
+    await sendLog({
+        event: LoggingEvent.Infraction,
+        guildId: interaction.guildId!,
+        options: {
+            embeds: [log],
+            files: [{
+                attachment: "./icons/infractionUpdate.png",
+                name: "infractionUpdate.png"
+            }]
+        }
+    });
+
     return `updated the duration of infraction **#${infraction.id}** to ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
 }
 
@@ -382,6 +440,28 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
         console.error(err);
         throw "An error occurred while deleting the infraction";
     }
+
+    const log = new EmbedBuilder()
+        .setColor(Colors.Red)
+        .setAuthor({ name: "Infraction Deleted", iconURL: "attachment://infractionDelete.png" })
+        .setFields({
+            name: "Moderator",
+            value: `${interaction.user}`
+        })
+        .setFooter({ text: `#${infractionId}` })
+        .setTimestamp();
+
+    await sendLog({
+        event: LoggingEvent.Infraction,
+        guildId: interaction.guildId!,
+        options: {
+            embeds: [log],
+            files: [{
+                attachment: "./icons/infractionDelete.png",
+                name: "infractionDelete.png"
+            }]
+        }
+    });
 
     return `deleted infraction **#${infractionId}**`;
 }
