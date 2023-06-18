@@ -66,6 +66,7 @@ export enum InfractionFlag {
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
     guildStaff?: boolean
     manageInfractions?: boolean
+    viewModerationActivity?: boolean
 }
 
 type LoggingData =
@@ -88,6 +89,13 @@ interface EmojiData {
 
 interface ChannelData {
     staffCommands?: string
+}
+
+export interface InfractionCount {
+    note: number;
+    mute: number;
+    kick: number;
+    ban: number;
 }
 
 export interface Infraction {

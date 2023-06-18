@@ -1,4 +1,11 @@
-import { InfractionFilter, InfractionFlag, InteractionCustomIdFilter, MinimalInfraction, TInfraction } from "./Types";
+import {
+    InfractionCount,
+    InfractionFilter,
+    InfractionFlag,
+    InteractionCustomIdFilter,
+    MinimalInfraction,
+    TInfraction
+} from "./Types";
 import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
 
 import Button from "../handlers/interactions/buttons/Button";
@@ -205,6 +212,12 @@ export function mapInfractionsToFields(data: {
 
 export function pluralize(str: string, count: number) {
     return count === 1 ? str : `${str}s`;
+}
+
+export function mapInfractionCount(infractions: InfractionCount) {
+    return Object.entries(infractions)
+        .map(([type, count]) => `\`${count}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
+        .join("\n");
 }
 
 export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;

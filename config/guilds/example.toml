@@ -13,6 +13,7 @@ roleIds = ["role-id"]
 [[groups]]
 guildStaff = false
 manageInfractions = false
+viewModerationActivity = false
 roleIds = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
@@ -23,6 +24,7 @@ reactions = ["emoji-name"]
 id = "role-id"
 guildStaff = false
 manageInfractions = false
+viewModerationActivity = false
 selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]

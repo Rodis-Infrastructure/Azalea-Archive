@@ -70,6 +70,7 @@ modals.
 
 - `guildStaff` - Prevents the user from being given an infraction.
 - `manageInfractions` - Allows the user to modify or delete any infraction.
+- `viewModerationActivity` - Allows the user to view the number of infractions a staff member has given out.
 
 #### Role Configuration
 
@@ -78,6 +79,7 @@ modals.
 id = "role-id"
 guildStaff = false
 manageInfractions = false
+viewModerationActivity = false
 selections = []
 buttons = []
 modals = []
@@ -90,6 +92,7 @@ reactions = []
 [[groups]]
 guildStaff = false
 manageInfractions = false
+viewModerationActivity = false
 roleIds = []
 selectMenus = []
 buttons = []

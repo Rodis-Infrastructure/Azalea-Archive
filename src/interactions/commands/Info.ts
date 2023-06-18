@@ -11,8 +11,8 @@ import {
     inlineCode
 } from "discord.js";
 
-import { InteractionResponseType, TInfraction } from "../../utils/Types";
-import { formatTimestamp, pluralize } from "../../utils";
+import { InfractionCount, InteractionResponseType, TInfraction } from "../../utils/Types";
+import { formatTimestamp, mapInfractionCount } from "../../utils";
 import { getQuery } from "../../db";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
@@ -103,33 +103,31 @@ export default class InfoCommand extends ChatInputCommand {
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member as GuildMember)) {
             const infractions = ClientManager.cache.infractions.get(user.id)?.data;
             let infCount = {
-                notes: 0,
-                mutes: 0,
-                kicks: 0,
-                bans: 0
+                note: 0,
+                mute: 0,
+                kick: 0,
+                ban: 0
             };
 
             if (infractions) {
                 for (const infraction of infractions) {
                     switch (infraction.type) {
                         case TInfraction.Note:
-                            infCount.notes++;
+                            infCount.note++;
                             break;
                         case TInfraction.Mute:
-                            infCount.mutes++;
+                            infCount.mute++;
                             break;
                         case TInfraction.Kick:
-                            infCount.kicks++;
+                            infCount.kick++;
                             break;
                         case TInfraction.Ban:
-                            infCount.bans++;
-                            break;
-                        default:
+                            infCount.ban++;
                             break;
                     }
                 }
             } else {
-                const fetchedInfCount = await getQuery<typeof infCount>(`
+                const fetchedInfCount = await getQuery<InfractionCount>(`
 					SELECT (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Note}) AS notes,
 						   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Mute}) AS mutes,
 						   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Kick}) AS kicks,
@@ -144,10 +142,7 @@ export default class InfoCommand extends ChatInputCommand {
 
             embed.addFields({
                 name: "Infractions",
-                value: `\`${infCount.notes}\` ${pluralize("Note", infCount.notes)}\n`
-                    + `\`${infCount.mutes}\` ${pluralize("Mute", infCount.mutes)}\n`
-                    + `\`${infCount.kicks}\` ${pluralize("Kick", infCount.kicks)}\n`
-                    + `\`${infCount.bans}\` ${pluralize("Ban", infCount.bans)}`,
+                value: mapInfractionCount(infCount),
                 inline: flags.length > 0
             });
 
@@ -158,6 +153,32 @@ export default class InfoCommand extends ChatInputCommand {
 
             const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(infractionsBtn);
             components.push(actionRow);
+        }
+
+        if (
+            flags.includes("Staff") &&
+            config.actionAllowed(interaction.member as GuildMember, {
+                permission: "viewModerationActivity",
+                requiredValue: true
+            })
+        ) {
+            const dealtInfCount = await getQuery<InfractionCount>(`
+				SELECT (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Note}) AS note,
+					   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Mute}) AS mute,
+					   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Kick}) AS kick,
+					   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Ban})  AS ban
+				FROM infractions
+				WHERE (executorId = ${user.id} OR requestAuthorId = ${user.id})
+				  AND guildId = ${interaction.guildId!};
+            `);
+
+            if (dealtInfCount) {
+                embed.addFields({
+                    name: "Infractions Dealt",
+                    value: mapInfractionCount(dealtInfCount),
+                    inline: true
+                });
+            }
         }
 
         if (flags.length) {

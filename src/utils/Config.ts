@@ -209,7 +209,7 @@ export default class Config {
         }
     }
 
-    userFlags(member: GuildMember) {
+    userFlags(member: GuildMember): string[] {
         const flags = [];
 
         for (const flag of this.data.userFlags || []) {
