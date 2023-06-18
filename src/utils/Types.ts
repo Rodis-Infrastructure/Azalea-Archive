@@ -118,11 +118,17 @@ export interface ConfigData {
     deleteMessageSecondsOnBan?: number
     confirmationChannel?: string
     ephemeralResponses?: ToggleableProperty
-    roles?: Array<PermissionData & Record<"id", string>>,
-    groups?: Array<PermissionData & Record<"roleIds", string[]>>,
-    logging?: LoggingData,
-    emojis?: EmojiData,
+    roles?: Array<PermissionData & Record<"id", string>>
+    groups?: Array<PermissionData & Record<"roleIds", string[]>>
+    logging?: LoggingData
+    emojis?: EmojiData
     channels?: ChannelData
+    userFlags?: UserFlag[]
+}
+
+interface UserFlag {
+    name: string;
+    roleIds: string[];
 }
 
 export type InfractionData = {

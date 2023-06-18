@@ -30,19 +30,20 @@ export default class InfoCommand extends ChatInputCommand {
             options: [{
                 name: "user",
                 description: "The user to get information about.",
-                type: ApplicationCommandOptionType.User,
-                required: true
+                type: ApplicationCommandOptionType.User
             }]
         });
     }
 
     async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
-        const user = interaction.options.getUser("user", true);
-        const member = interaction.options.getMember("user") as GuildMember;
+        const user = interaction.options.getUser("user") || interaction.user;
         const components = [];
         const flags = [];
 
+        let member = interaction.options.getMember("user") as GuildMember;
+
         if (user.bot) flags.push("Bot");
+        if (!member && user.id === interaction.user.id) member = interaction.member as GuildMember;
 
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
@@ -59,6 +60,7 @@ export default class InfoCommand extends ChatInputCommand {
             .setFooter({ text: `ID: ${user.id}` });
 
         if (member) {
+            flags.push(...config.userFlags(member));
             if (config.isGuildStaff(member)) flags.push("Staff");
 
             embed.addFields([

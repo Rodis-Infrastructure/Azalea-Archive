@@ -208,4 +208,16 @@ export default class Config {
             }
         }
     }
+
+    userFlags(member: GuildMember) {
+        const flags = [];
+
+        for (const flag of this.data.userFlags || []) {
+            if (member.roles.cache.some(role => flag.roleIds.includes(role.id))) {
+                flags.push(flag.name);
+            }
+        }
+
+        return flags;
+    }
 }
