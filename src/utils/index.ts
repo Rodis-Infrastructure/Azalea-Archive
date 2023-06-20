@@ -1,10 +1,10 @@
 import {
+    InfractionAction,
     InfractionCount,
     InfractionFilter,
     InfractionFlag,
     InteractionCustomIdFilter,
-    MinimalInfraction,
-    TInfraction
+    MinimalInfraction
 } from "./Types";
 import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
 
@@ -49,42 +49,42 @@ export function formatCustomId(customId: InteractionCustomIdFilter): string {
         : Object.values(customId)[0];
 }
 
-export function getInfractionName(infractionType: TInfraction) {
-    switch (infractionType) {
-        case TInfraction.Note:
+export function getActionName(action: InfractionAction) {
+    switch (action) {
+        case InfractionAction.Note:
             return "Note";
-        case TInfraction.Mute:
+        case InfractionAction.Mute:
             return "Mute";
-        case TInfraction.Kick:
+        case InfractionAction.Kick:
             return "Kick";
-        case TInfraction.Ban:
+        case InfractionAction.Ban:
             return "Ban";
-        case TInfraction.Unban:
+        case InfractionAction.Unban:
             return "Unban";
         default:
             return "Unknown";
     }
 }
 
-export function getInfractionColor(infractionType: TInfraction) {
-    switch (infractionType) {
-        case TInfraction.Mute:
+export function getActionColor(action: InfractionAction) {
+    switch (action) {
+        case InfractionAction.Mute:
             return Colors.Orange;
-        case TInfraction.Kick:
+        case InfractionAction.Kick:
             return Colors.Red;
-        case TInfraction.Ban:
+        case InfractionAction.Ban:
             return Colors.Blue;
-        case TInfraction.Note:
+        case InfractionAction.Note:
             return Colors.Yellow;
-        case TInfraction.Unban:
+        case InfractionAction.Unban:
             return Colors.Green;
         default:
             return Colors.NotQuiteBlack;
     }
 }
 
-export function getInfractionFlagName(infractionFlag: InfractionFlag | number | undefined) {
-    switch (infractionFlag) {
+export function getInfractionFlagName(flag: InfractionFlag | number | undefined) {
+    switch (flag) {
         case InfractionFlag.Automatic:
             return "Automatic";
         case InfractionFlag.Quick:
@@ -202,7 +202,7 @@ export function mapInfractionsToFields(data: {
         }
 
         return {
-            name: `${flag}${getInfractionName(infraction.type)} #${infraction.id}`,
+            name: `${flag}${getActionName(infraction.action)} #${infraction.infractionId}`,
             value: data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")
         };
     });

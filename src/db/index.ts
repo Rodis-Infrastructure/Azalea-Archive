@@ -1,5 +1,5 @@
 import { Database } from "sqlite3";
-import { Infraction, InfractionFlag, TInfraction } from "../utils/Types";
+import { Infraction, InfractionAction, InfractionFlag } from "../utils/Types";
 import { stringify } from "../utils";
 
 import ClientManager from "../Client";
@@ -38,7 +38,7 @@ export function allQuery<T>(query: string): Promise<T[]> {
 export async function storeInfraction(data: {
     executorId: string;
     targetId: string;
-    infractionType: TInfraction;
+    infractionType: InfractionAction;
     guildId: string;
     requestAuthorId?: string;
     expiresAt?: number | null;
@@ -49,12 +49,12 @@ export async function storeInfraction(data: {
 
     // @formatter:off
     // Stringified parameters are optional
-    const infraction = await getQuery<Pick<Infraction, "id" | "createdAt">>(`
+    const infraction = await getQuery<Pick<Infraction, "infractionId" | "createdAt">>(`
         INSERT INTO infractions (
             guildId,
             executorId,
             targetId,
-            type,
+            action,
             requestAuthorId,
             expiresAt,
             flag,
@@ -70,18 +70,18 @@ export async function storeInfraction(data: {
             ${flag || null},
             ${stringify(reason)}
         )
-        RETURNING id, createdAt;
+        RETURNING infractionId, createdAt;
     `);
 
     // @formatter:on
     if (infraction) {
-        if (infractionType === TInfraction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.id);
+        if (infractionType === InfractionAction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.infractionId);
         const { data: infractions } = ClientManager.cache.infractions.get(targetId) || {};
 
         infractions?.push({
-            id: infraction.id,
+            infractionId: infraction.infractionId,
             executorId,
-            type: infractionType,
+            action: infractionType,
             expiresAt: expiresAt || undefined,
             createdAt: infraction.createdAt,
             deletedAt: undefined,

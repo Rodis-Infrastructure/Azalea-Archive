@@ -50,7 +50,7 @@ export enum InfractionType {
     Note = "Note Added",
 }
 
-export enum TInfraction {
+export enum InfractionAction {
     Note = 1,
     Mute = 2,
     Kick = 3,
@@ -99,7 +99,7 @@ export interface InfractionCount {
 }
 
 export interface Infraction {
-    id: number;
+    infractionId: number;
     targetId: string;
     requestAuthorId?: string;
     updatedBy?: string;
@@ -109,12 +109,12 @@ export interface Infraction {
     executorId: string;
     createdAt: number;
     expiresAt?: number;
-    type: number;
+    action: number;
     flag?: number;
     reason?: string;
 }
 
-export type MinimalInfraction = Pick<Infraction, "id" | "createdAt" | "reason" | "executorId" | "flag" | "deletedAt" | "deletedBy" | "expiresAt" | "type">;
+export type MinimalInfraction = Pick<Infraction, "infractionId" | "createdAt" | "reason" | "executorId" | "flag" | "deletedAt" | "deletedBy" | "expiresAt" | "action">;
 
 export enum InfractionFilter {
     All = "All",
@@ -149,7 +149,7 @@ export type InfractionData = {
 } & (
     { infractionType: InfractionType.Mute, duration: number } |
     { infractionType: Exclude<InfractionType, InfractionType.Mute>, duration?: never }
-);
+    );
 
 export type LogData = {
     event: LoggingEvent,
@@ -157,7 +157,7 @@ export type LogData = {
 } & (
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }
-);
+    );
 
 export interface CustomComponentProperties {
     name: InteractionCustomIdFilter;

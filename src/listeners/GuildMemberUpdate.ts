@@ -20,7 +20,7 @@ export default class InteractionCreateEventListener extends EventListener {
 					UPDATE infractions
 					SET expiresAt = ${currentTimestamp()}
 					WHERE guildId = ${newMember.guild.id}
-					  AND id = ${infractionId};
+					  AND infractionId = ${infractionId};
                 `);
             }
         }

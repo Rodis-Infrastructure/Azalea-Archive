@@ -2,7 +2,7 @@ BEGIN EXCLUSIVE;
 
 CREATE TABLE IF NOT EXISTS messages
 (
-    id        TEXT      NOT NULL PRIMARY KEY,
+    messageId TEXT      NOT NULL PRIMARY KEY,
     authorId  TEXT      NOT NULL,
     channelId TEXT      NOT NULL,
     guildId   TEXT      NOT NULL,
@@ -11,12 +11,12 @@ CREATE TABLE IF NOT EXISTS messages
 
 CREATE TABLE IF NOT EXISTS infractions
 (
-    id              INTEGER   NOT NULL PRIMARY KEY AUTOINCREMENT,
+    infractionId    INTEGER   NOT NULL PRIMARY KEY AUTOINCREMENT,
     guildId         TEXT      NOT NULL,
     executorId      TEXT      NOT NULL,
     targetId        TEXT      NOT NULL,
     createdAt       TIMESTAMP NOT NULL DEFAULT (STRFTIME('%s', 'now')),
-    type            TINYINT   NOT NULL,
+    action          TINYINT   NOT NULL,
     requestAuthorId TEXT,
     updatedBy       TEXT,
     deletedBy       TEXT,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS infractions
     deletedAt       TIMESTAMP,
     updatedAt       TIMESTAMP,
     flag            TINYINT,
-    reason          TEXT
+    reason          TEXT CHECK (length(reason) <= 1024)
 );
 
 COMMIT;

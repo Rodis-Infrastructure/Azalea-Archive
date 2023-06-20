@@ -1,11 +1,11 @@
 import {
     Infraction,
+    InfractionAction,
     InfractionFilter,
     InfractionSubcommand,
     InteractionResponseType,
     LoggingEvent,
-    MinimalInfraction,
-    TInfraction
+    MinimalInfraction
 } from "../../utils/Types";
 import { allQuery, getQuery, runQuery } from "../../db";
 
@@ -30,9 +30,9 @@ import {
     elipsify,
     formatReason,
     formatTimestamp,
-    getInfractionColor,
+    getActionColor,
+    getActionName,
     getInfractionFlagName,
-    getInfractionName,
     mapInfractionsToFields,
     msToString
 } from "../../utils";
@@ -145,7 +145,7 @@ export default class InfractionCommand extends ChatInputCommand {
         const infraction = await getQuery<Infraction>(`
 			SELECT *
 			FROM infractions
-			WHERE id = ${id}
+			WHERE infractionId = ${id}
 			  AND guildId = ${interaction.guildId}
         `) as Infraction;
 
@@ -229,7 +229,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
 
     if (!cachedInfractions) {
         infractions = await allQuery<MinimalInfraction>(`
-			SELECT id,
+			SELECT infractionId,
 				   executorId,
 				   createdAt,
 				   reason,
@@ -237,7 +237,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
 				   deletedAt,
 				   flag,
 				   expiresAt,
-				   type
+				   action
 			FROM infractions
 			WHERE targetId = ${user.id}
 			  AND guildId = ${interaction.guildId}
@@ -328,7 +328,7 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
 			SET reason    = '${newReason}',
 				updatedAt = ${currentTimestamp()},
 				updatedBy = ${interaction.user.id}
-			WHERE id = ${infractionId}
+			WHERE infractionId = ${infractionId}
 			  AND guildId = ${interaction.guildId};
         `);
     } catch (err) {
@@ -374,7 +374,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
     const duration = Math.floor(ms(strDuration) / 1000);
     const now = currentTimestamp();
 
-    if (infraction.type !== TInfraction.Mute) throw "You can only update the duration of mute infractions";
+    if (infraction.action !== InfractionAction.Mute) throw "You can only update the duration of mute infractions";
 
     const offender = await interaction.guild!.members.fetch(infraction.targetId);
     if (!offender.isCommunicationDisabled()) throw "This user does not have an active mute";
@@ -382,13 +382,13 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
     const expiresAt = duration + infraction.createdAt;
 
     try {
-        await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.id})`);
+        await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.infractionId})`);
         await runQuery(`
 			UPDATE infractions
 			SET expiresAt = ${expiresAt},
 				updatedAt = ${now},
 				updatedBy = ${interaction.user.id}
-			WHERE id = ${infraction.id}
+			WHERE infractionId = ${infraction.infractionId}
 			  AND guildId = ${interaction.guildId};
         `);
     } catch (err) {
@@ -409,7 +409,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
                 value: msToString(duration * 1000)
             }
         ])
-        .setFooter({ text: `#${infraction.id}` })
+        .setFooter({ text: `#${infraction.infractionId}` })
         .setTimestamp();
 
     await sendLog({
@@ -424,7 +424,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
         }
     });
 
-    return `updated the duration of infraction **#${infraction.id}** to ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
+    return `updated the duration of infraction **#${infraction.infractionId}** to ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
 }
 
 async function handleInfractionDeletion(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
@@ -433,7 +433,7 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
 			UPDATE infractions
 			SET deletedAt = ${currentTimestamp()},
 				deletedBy = ${interaction.user.id}
-			WHERE id = ${infractionId}
+			WHERE infractionId = ${infractionId}
 			  AND guildId = ${interaction.guildId};
         `);
     } catch (err) {
@@ -468,8 +468,8 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
 
 function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
     const {
-        id,
-        type,
+        infractionId,
+        action,
         targetId,
         requestAuthorId,
         reason,
@@ -550,8 +550,8 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
 
     const flagName = flag ? `${getInfractionFlagName(flag)} ` : "";
     return new EmbedBuilder()
-        .setColor(getInfractionColor(type))
-        .setTitle(`${flagName}${getInfractionName(type)} #${id}`)
+        .setColor(getActionColor(action))
+        .setTitle(`${flagName}${getActionName(action)} #${infractionId}`)
         .setFields(fields)
         .setTimestamp(msCreatedAt);
 }

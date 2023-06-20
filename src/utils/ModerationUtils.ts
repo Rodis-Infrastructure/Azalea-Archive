@@ -1,5 +1,5 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData, InfractionFlag, InfractionType, LoggingEvent, TInfraction } from "./Types";
+import { InfractionAction, InfractionData, InfractionFlag, InfractionType, LoggingEvent } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
 import { DURATION_FORMAT_REGEX, formatTimestamp, msToString } from "./index";
@@ -23,35 +23,35 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     let color: ColorResolvable = Colors.Red;
     let icon = "memberDelete.png";
-    let dbInfractionType: TInfraction | null = null;
+    let dbInfractionType: InfractionAction | null = null;
 
     switch (infractionType) {
         case InfractionType.Ban: {
-            dbInfractionType = TInfraction.Ban;
+            dbInfractionType = InfractionAction.Ban;
             color = Colors.Blue;
             break;
         }
 
         case InfractionType.Kick: {
-            dbInfractionType = TInfraction.Kick;
+            dbInfractionType = InfractionAction.Kick;
             break;
         }
 
         case InfractionType.Mute: {
-            dbInfractionType = TInfraction.Mute;
+            dbInfractionType = InfractionAction.Mute;
             color = Colors.Orange;
             break;
         }
 
         case InfractionType.Note: {
-            dbInfractionType = TInfraction.Note;
+            dbInfractionType = InfractionAction.Note;
             color = Colors.Yellow;
             icon = "note.png";
             break;
         }
 
         case InfractionType.Unban: {
-            dbInfractionType = TInfraction.Unban;
+            dbInfractionType = InfractionAction.Unban;
             icon = "memberCreate.png";
             color = Colors.Green;
             break;
@@ -201,15 +201,15 @@ export async function purgeMessages(data: {
             // @formatter:off
             const storedMessages = await allQuery<{ id: string }>(`
                 DELETE FROM messages
-                WHERE id IN (
-                    SELECT id FROM messages
+                WHERE messageId IN (
+                    SELECT messageId FROM messages
                     WHERE channelId = ${channel.id} ${authorCondition} 
                         AND guildId = ${channel.guildId}
-                        AND id NOT IN (${excludedIds})
+                        AND messageId NOT IN (${excludedIds})
                     ORDER BY createdAt DESC
                     LIMIT ${messagesToFetch}
                 )
-                RETURNING id;
+                RETURNING messageId;
             `);
 
             removableMessageIds.push(...storedMessages.map(({ id }) => id));

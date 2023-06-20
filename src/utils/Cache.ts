@@ -44,9 +44,9 @@ export function cacheMessage(message: Message | string, params?: { deleted: bool
 
 export async function processCachedMessages(): Promise<void> {
     const cache = ClientManager.cache.messages;
-    const remove = conn.prepare("DELETE FROM messages WHERE id = ?");
+    const remove = conn.prepare("DELETE FROM messages WHERE messageId = ?");
     const store = conn.prepare(`
-		INSERT INTO messages (id, authorId, channelId, guildId, createdAt)
+		INSERT INTO messages (messageId, authorId, channelId, guildId, createdAt)
 		VALUES (?, ?, ?, ?, ?)
     `);
 

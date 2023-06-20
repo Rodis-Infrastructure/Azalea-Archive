@@ -11,7 +11,7 @@ import {
     inlineCode
 } from "discord.js";
 
-import { InfractionCount, InteractionResponseType, TInfraction } from "../../utils/Types";
+import { InfractionAction, InfractionCount, InteractionResponseType } from "../../utils/Types";
 import { formatTimestamp, mapInfractionCount } from "../../utils";
 import { getQuery } from "../../db";
 
@@ -87,8 +87,8 @@ export default class InfoCommand extends ChatInputCommand {
 					FROM infractions
 					WHERE targetId = ${user.id}
 					  AND guildId = ${interaction.guildId!}
-					  AND type = ${TInfraction.Ban}
-					ORDER BY id DESC
+					  AND action = ${InfractionAction.Ban}
+					ORDER BY infractionId DESC
 					LIMIT 1;
                 `);
 
@@ -111,27 +111,27 @@ export default class InfoCommand extends ChatInputCommand {
 
             if (infractions) {
                 for (const infraction of infractions) {
-                    switch (infraction.type) {
-                        case TInfraction.Note:
+                    switch (infraction.action) {
+                        case InfractionAction.Note:
                             infCount.note++;
                             break;
-                        case TInfraction.Mute:
+                        case InfractionAction.Mute:
                             infCount.mute++;
                             break;
-                        case TInfraction.Kick:
+                        case InfractionAction.Kick:
                             infCount.kick++;
                             break;
-                        case TInfraction.Ban:
+                        case InfractionAction.Ban:
                             infCount.ban++;
                             break;
                     }
                 }
             } else {
                 const fetchedInfCount = await getQuery<InfractionCount>(`
-					SELECT (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Note}) AS notes,
-						   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Mute}) AS mutes,
-						   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Kick}) AS kicks,
-						   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Ban})  AS bans
+					SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS notes,
+						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mutes,
+						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Kick}) AS kicks,
+						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Ban})  AS bans
 					FROM infractions
 					WHERE targetId = ${user.id}
 					  AND guildId = ${interaction.guildId!};
@@ -163,10 +163,10 @@ export default class InfoCommand extends ChatInputCommand {
             })
         ) {
             const dealtInfCount = await getQuery<InfractionCount>(`
-				SELECT (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Note}) AS note,
-					   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Mute}) AS mute,
-					   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Kick}) AS kick,
-					   (SELECT COUNT(*) FROM infractions WHERE type = ${TInfraction.Ban})  AS ban
+				SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS note,
+					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mute,
+					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Kick}) AS kick,
+					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Ban})  AS ban
 				FROM infractions
 				WHERE (executorId = ${user.id} OR requestAuthorId = ${user.id})
 				  AND guildId = ${interaction.guildId!};
