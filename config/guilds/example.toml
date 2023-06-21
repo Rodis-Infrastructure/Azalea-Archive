@@ -30,9 +30,6 @@ buttons = ["interaction-name"]
 modals = ["interaction-name"]
 reactions = ["emoji-type"]
 
-[channels]
-staffCommands = "channel-id"
-
 [emojis]
 success = "👌"
 error = "<:emoji-name:emoji-id>"
