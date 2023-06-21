@@ -62,6 +62,7 @@ export default class InfoCommand extends ChatInputCommand {
         if (member) {
             flags.push(...config.userFlags(member));
             if (config.isGuildStaff(member)) flags.push("Staff");
+            if (member.isCommunicationDisabled()) flags.push("Muted");
 
             embed.addFields([
                 {
