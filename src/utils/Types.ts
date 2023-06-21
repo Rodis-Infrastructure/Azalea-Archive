@@ -87,10 +87,6 @@ interface EmojiData {
     purgeMessages?: string
 }
 
-interface ChannelData {
-    staffCommands?: string
-}
-
 export interface InfractionCount {
     note: number;
     mute: number;
@@ -130,7 +126,6 @@ export interface ConfigData {
     groups?: Array<PermissionData & Record<"roleIds", string[]>>
     logging?: LoggingData
     emojis?: EmojiData
-    channels?: ChannelData
     userFlags?: UserFlag[]
 }
 
@@ -149,7 +144,7 @@ export type InfractionData = {
 } & (
     { infractionType: InfractionType.Mute, duration: number } |
     { infractionType: Exclude<InfractionType, InfractionType.Mute>, duration?: never }
-    );
+);
 
 export type LogData = {
     event: LoggingEvent,
@@ -157,7 +152,7 @@ export type LogData = {
 } & (
     { channel: GuildTextBasedChannel, guildId?: never } |
     { channel?: never, guildId: string }
-    );
+);
 
 export interface CustomComponentProperties {
     name: InteractionCustomIdFilter;
