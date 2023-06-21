@@ -10,7 +10,7 @@ export default class InfractionsNextButton extends Button {
     constructor() {
         super({
             name: { startsWith: "inf-page" },
-            defer: InteractionResponseType.DeferUpdate,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false
         });
     }
@@ -24,7 +24,7 @@ export default class InfractionsNextButton extends Button {
 
         if (!cachedInfractions) {
             await Promise.all([
-                interaction.editReply({ components: [] }),
+                interaction.update({ components: [] }),
                 interaction.followUp({
                     content: `${error} Too much time has passed since \`/infraction search\` was used on this user. Please use the command again to change pages.`,
                     ephemeral: true
@@ -59,6 +59,6 @@ export default class InfractionsNextButton extends Button {
         nextBtn.setDisabled(newPageCount === maxPageCount);
 
         const embed = new EmbedBuilder(interaction.message.embeds[0].toJSON()).setFields(fields);
-        await interaction.editReply({ embeds: [embed], components: [actionRow] });
+        await interaction.update({ embeds: [embed], components: [actionRow] });
     }
 }

@@ -9,7 +9,7 @@ export default class InfractionSearchButton extends Button {
     constructor() {
         super({
             name: { startsWith: "inf-search" },
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false
         });
     }
