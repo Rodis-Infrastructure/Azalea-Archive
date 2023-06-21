@@ -1,28 +1,30 @@
 import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "discord.js";
+import { formatReason, formatTimestamp } from "../../utils";
 import { InteractionResponseType } from "../../utils/Types";
 import { muteMember } from "../../utils/ModerationUtils";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/ContextMenuCommand";
 import Config from "../../utils/Config";
-import { formatReason, formatTimestamp } from "../../utils";
 
 export default class QuickMute60Command extends ContextMenuCommand {
     constructor() {
         super({
             name: "Quick mute (60m)",
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             type: ApplicationCommandType.Message,
-            skipInternalUsageCheck: false,
-            ephemeral: true
+            skipInternalUsageCheck: false
         });
     }
 
-    async execute(interaction: MessageContextMenuCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: MessageContextMenuCommandInteraction, _: never, config: Config): Promise<void> {
         const message = interaction.targetMessage;
         const { success, error } = config.emojis;
 
         if (!message.member) {
-            await interaction.editReply(`${error} Failed to fetch the message author.`);
+            await interaction.reply({
+                content: `${error} Failed to fetch the message author.`,
+                ephemeral: true
+            });
             return;
         }
 
@@ -40,7 +42,10 @@ export default class QuickMute60Command extends ContextMenuCommand {
             const reply = `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}${formatReason(reason)}`;
 
             await Promise.all([
-                interaction.editReply(`${success} Successfully ${reply}`),
+                interaction.reply({
+                    content: `${success} Successfully ${reply}`,
+                    ephemeral: true
+                }),
                 config.sendInfractionConfirmation({
                     guild: interaction.guild!,
                     message: reply,
@@ -50,11 +55,13 @@ export default class QuickMute60Command extends ContextMenuCommand {
                 }),
                 message.delete()
             ]);
-
             return;
         }
 
         /* The result is an error message */
-        await interaction.editReply(`${error} ${res}`);
+        await interaction.reply({
+            content: `${error} ${res}`,
+            ephemeral: true
+        });
     }
 }

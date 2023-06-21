@@ -11,13 +11,13 @@ import Config from "../../utils/Config";
 import { resolveInfraction, validateModerationAction } from "../../utils/ModerationUtils";
 import { formatReason } from "../../utils";
 
-export default class KickCommand extends ChatInputCommand {
+export default class NoteCommand extends ChatInputCommand {
     constructor() {
         super({
             name: "note",
             description: "Add a note to a member's infraction history.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -37,7 +37,7 @@ export default class KickCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const user = interaction.options.getUser("user", true);
         const member = interaction.options.getMember("user") as GuildMember;
         const note = interaction.options.getString("note", true);
@@ -52,7 +52,10 @@ export default class KickCommand extends ChatInputCommand {
             });
 
             if (notModerateableReason) {
-                await interaction.editReply(`${error} ${notModerateableReason}`);
+                await interaction.reply({
+                    content: `${error} ${notModerateableReason}`,
+                    ephemeral
+                });
                 return;
             }
         }
@@ -67,12 +70,18 @@ export default class KickCommand extends ChatInputCommand {
             });
         } catch (err) {
             console.error(err);
-            await interaction.editReply(`${error} An error occurred while trying to execute this interaction`);
+            await interaction.reply({
+                content: `${error} An error occurred while trying to execute this interaction`,
+                ephemeral
+            });
             return;
         }
 
         await Promise.all([
-            interaction.editReply(`${success} Successfully added a note to **${user.tag}**${formatReason(note)}`),
+            interaction.reply({
+                content: `${success} Successfully added a note to **${user.tag}**${formatReason(note)}`,
+                ephemeral
+            }),
             config.sendInfractionConfirmation({
                 guild: interaction.guild!,
                 authorId: interaction.user.id,

@@ -7,5 +7,5 @@ export default abstract class SelectMenu {
     // @formatter:off
     // eslint-disable-next-line no-empty-function
     protected constructor(public data: CustomComponentProperties) {}
-    abstract execute(interaction: SelectMenuInteraction, config: Config): Promise<void>;
+    abstract execute(interaction: SelectMenuInteraction, ephemeral: boolean, config: Config): Promise<void>;
 }

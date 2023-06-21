@@ -60,14 +60,15 @@ export default class CommandHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        await config.applyDeferralState({
+        const ephemeral = await config.applyDeferralState({
             interaction,
             state: command.data.defer,
+            skipInternalUsageCheck: command.data.skipInternalUsageCheck,
             ephemeral: command.data.ephemeral
         });
 
         try {
-            await command.execute(interaction, config);
+            await command.execute(interaction, ephemeral, config);
         } catch (err) {
             console.log(`Failed to execute command: ${command.data.name}`);
             console.error(err);

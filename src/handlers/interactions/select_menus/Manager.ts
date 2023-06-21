@@ -71,14 +71,15 @@ export default class SelectMenuHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        await config.applyDeferralState({
+        const ephemeral = await config.applyDeferralState({
             interaction,
             state: selectMenu.data.defer,
+            skipInternalUsageCheck: selectMenu.data.skipInternalUsageCheck,
             ephemeral: selectMenu.data.ephemeral
         });
 
         try {
-            await selectMenu.execute(interaction, config);
+            await selectMenu.execute(interaction, ephemeral, config);
         } catch (err) {
             console.log(`Failed to execute select menu: ${formattedCustomId}`);
             console.error(err);

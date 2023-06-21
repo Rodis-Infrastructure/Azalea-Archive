@@ -12,7 +12,7 @@ export default class BanCommand extends ChatInputCommand {
             name: "ban",
             description: "Ban a user from the guild.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -31,7 +31,7 @@ export default class BanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const user = interaction.options.getUser("user", true);
         const [member, isBanned] = await Promise.all([
             interaction.guild!.members.fetch(user.id),
@@ -52,13 +52,19 @@ export default class BanCommand extends ChatInputCommand {
             });
 
             if (notModerateableReason) {
-                await interaction.editReply(`${error} ${notModerateableReason}`);
+                await interaction.reply({
+                    content: `${error} ${notModerateableReason}`,
+                    ephemeral
+                });
                 return;
             }
         }
 
         if (isBanned) {
-            await interaction.editReply(`${error} This user has already been banned.`);
+            await interaction.reply({
+                content: `${error} This user has already been banned.`,
+                ephemeral
+            });
             return;
         }
 
@@ -75,12 +81,18 @@ export default class BanCommand extends ChatInputCommand {
             await interaction.guild!.members.ban(user, { deleteMessageSeconds, reason });
         } catch (err) {
             console.error(err);
-            await interaction.editReply(`${error} An error has occurred while trying to ban this user.`);
+            await interaction.reply({
+                content: `${error} An error has occurred while trying to ban this user.`,
+                ephemeral
+            });
             return;
         }
 
         await Promise.all([
-            interaction.editReply(`${success} Successfully banned **${user.tag}**${formatReason(reason)}`),
+            interaction.reply({
+                content: `${success} Successfully banned **${user.tag}**${formatReason(reason)}`,
+                ephemeral
+            }),
             config.sendInfractionConfirmation({
                 guild: interaction.guild!,
                 authorId: interaction.user.id,

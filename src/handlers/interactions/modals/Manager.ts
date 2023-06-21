@@ -71,14 +71,15 @@ export default class ModalHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        await config.applyDeferralState({
+        const ephemeral = await config.applyDeferralState({
             interaction,
             state: modal.data.defer,
+            skipInternalUsageCheck: modal.data.skipInternalUsageCheck,
             ephemeral: modal.data.ephemeral
         });
 
         try {
-            await modal.execute(interaction, config);
+            await modal.execute(interaction, ephemeral, config);
         } catch (err) {
             console.log(`Failed to execute modal: ${formattedCustomId}`);
             console.error(err);

@@ -191,10 +191,13 @@ export default class Config {
     async applyDeferralState(data: {
         interaction: ModalSubmitInteraction | ButtonInteraction | SelectMenuInteraction | CommandInteraction,
         state: InteractionResponseType,
+        skipInternalUsageCheck: boolean
         ephemeral?: boolean
     }) {
-        const { interaction, state } = data;
-        const ephemeral = this.ephemeralResponseIn(interaction.channel as GuildTextBasedChannel) || data.ephemeral;
+        const { interaction, state, skipInternalUsageCheck } = data;
+        const ephemeral = (!skipInternalUsageCheck && this.ephemeralResponseIn(interaction.channel as GuildTextBasedChannel))
+            || data.ephemeral
+            || false;
 
         switch (state) {
             case InteractionResponseType.Defer: {
@@ -207,6 +210,8 @@ export default class Config {
                 await interaction.deferUpdate();
             }
         }
+
+        return ephemeral;
     }
 
     userFlags(member: GuildMember): string[] {

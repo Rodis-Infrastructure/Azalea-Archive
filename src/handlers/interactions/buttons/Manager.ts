@@ -63,14 +63,15 @@ export default class ButtonHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        await config.applyDeferralState({
+        const ephemeral = await config.applyDeferralState({
             interaction,
             state: button.data.defer,
+            skipInternalUsageCheck: button.data.skipInternalUsageCheck,
             ephemeral: button.data.ephemeral
         });
 
         try {
-            await button.execute(interaction, config);
+            await button.execute(interaction, ephemeral, config);
         } catch (err) {
             console.log(`Failed to execute button: ${formattedCustomId}`);
             console.error(err);

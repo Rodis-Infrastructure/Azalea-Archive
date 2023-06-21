@@ -18,7 +18,7 @@ export default abstract class ChatInputCommand {
     // @formatter:off
     // eslint-disable-next-line no-empty-function
     protected constructor(public data: CustomChatInputCommandProperties) {}
-    abstract execute(interaction: CommandInteraction, config: Config): Promise<void>;
+    abstract execute(interaction: CommandInteraction, ephemeral: boolean, config: Config): Promise<void>;
 
     build(): ChatInputApplicationCommandData {
         return {

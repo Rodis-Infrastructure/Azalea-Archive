@@ -19,7 +19,7 @@ export default abstract class ContextMenuCommand {
     // @formatter:off
     // eslint-disable-next-line no-empty-function
     protected constructor(public data: CustomContextMenuCommandProperties) {}
-    abstract execute(interaction: CommandInteraction, config: Config): Promise<void>;
+    abstract execute(interaction: CommandInteraction, ephemeral: boolean, config: Config): Promise<void>;
 
     build(): ContextMenuCommandData {
         return {

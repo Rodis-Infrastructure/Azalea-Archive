@@ -49,7 +49,7 @@ export default class InfractionCommand extends ChatInputCommand {
             name: "infraction",
             description: "All infraction-related commands",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -139,7 +139,7 @@ export default class InfractionCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
         const id = interaction.options.getNumber("id") as number;
         const infraction = await getQuery<Infraction>(`
@@ -158,7 +158,10 @@ export default class InfractionCommand extends ChatInputCommand {
                 try {
                     await config.canManageInfraction(infraction, interaction.member as GuildMember);
                 } catch (err) {
-                    await interaction.editReply(`${error} ${err}`);
+                    await interaction.reply({
+                        content: `${error} ${err}`,
+                        ephemeral
+                    });
                     return;
                 }
             }
@@ -178,21 +181,30 @@ export default class InfractionCommand extends ChatInputCommand {
                     response = await handleInfractionDeletion(id, interaction);
                     break;
                 case InfractionSubcommand.Search: {
-                    await handleUserInfractionSearch(interaction, config);
+                    await handleUserInfractionSearch(interaction, config, ephemeral);
                     return;
                 }
                 case InfractionSubcommand.Info: {
                     const embed = handleInfractionInfo(infraction);
-                    await interaction.editReply({ embeds: [embed] });
+                    await interaction.reply({
+                        embeds: [embed],
+                        ephemeral
+                    });
                     return;
                 }
                 default:
-                    await interaction.editReply(`${error} Unknown subcommand: \`${subcommand}\``);
+                    await interaction.reply({
+                        content: `${error} Unknown subcommand: \`${subcommand}\``,
+                        ephemeral
+                    });
                     return;
             }
 
             await Promise.all([
-                interaction.editReply(`${success} Successfully ${response}`),
+                interaction.reply({
+                    content: `${success} Successfully ${response}`,
+                    ephemeral
+                }),
                 config.sendInfractionConfirmation({
                     guild: interaction.guild!,
                     message: response,
@@ -201,12 +213,15 @@ export default class InfractionCommand extends ChatInputCommand {
                 })
             ]);
         } catch (err) {
-            await interaction.editReply(`${error} ${err}`);
+            await interaction.reply({
+                content: `${error} ${err}`,
+                ephemeral
+            });
         }
     }
 }
 
-export async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config) {
+export async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config, ephemeral: boolean) {
     let filter: InfractionFilter | null = null;
     let member: GuildMember | null = null;
     let user!: User;
@@ -220,7 +235,10 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     }
 
     if (member && config.isGuildStaff(member)) {
-        await interaction.editReply(`${config.emojis.error} You can't view the infractions of a staff member.`);
+        await interaction.reply({
+            content: `${config.emojis.error} You can't view the infractions of a staff member.`,
+            ephemeral
+        });
         return;
     }
 
@@ -288,7 +306,12 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
         }
     }
 
-    const message = await interaction.editReply({ embeds: [embed], components });
+    const message = await interaction.reply({
+        embeds: [embed],
+        components,
+        ephemeral
+    });
+
     let timeout!: NodeJS.Timeout | undefined;
 
     if (components.length) {

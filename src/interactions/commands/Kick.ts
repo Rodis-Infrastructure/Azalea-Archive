@@ -18,7 +18,7 @@ export default class KickCommand extends ChatInputCommand {
             name: "kick",
             description: "Kick a member from the guild.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -37,12 +37,15 @@ export default class KickCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const member = interaction.options.getMember("member") as GuildMember;
         const { success, error } = config.emojis;
 
         if (!member) {
-            await interaction.editReply(`${error} The user provided is not a member of the server.`);
+            await interaction.reply({
+                content: `${error} The user provided is not a member of the server.`,
+                ephemeral
+            });
             return;
         }
 
@@ -57,7 +60,10 @@ export default class KickCommand extends ChatInputCommand {
         });
 
         if (notModerateableReason) {
-            await interaction.editReply(`${error} ${notModerateableReason}`);
+            await interaction.reply({
+                content: `${error} ${notModerateableReason}`,
+                ephemeral
+            });
             return;
         }
 
@@ -74,12 +80,18 @@ export default class KickCommand extends ChatInputCommand {
             });
         } catch (err) {
             console.error(err);
-            await interaction.editReply(`${error} An error has occurred while trying to execute this interaction.`);
+            await interaction.reply({
+                content: `${error} An error has occurred while trying to execute this interaction.`,
+                ephemeral
+            });
             return;
         }
 
         await Promise.all([
-            interaction.editReply(`${success} Successfully kicked **${member.user.tag}**${formatReason(reason)}`),
+            interaction.reply({
+                content: `${success} Successfully kicked **${member.user.tag}**${formatReason(reason)}`,
+                ephemeral
+            }),
             config.sendInfractionConfirmation({
                 guild: interaction.guild!,
                 authorId: interaction.user.id,

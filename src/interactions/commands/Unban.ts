@@ -12,7 +12,7 @@ export default class UnbanCommand extends ChatInputCommand {
             name: "unban",
             description: "Unbans a banned user.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -31,7 +31,7 @@ export default class UnbanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const offender = interaction.options.getUser("user", true);
         const banInfo = await interaction.guild!.bans.fetch(offender.id)
             .catch(() => null);
@@ -39,7 +39,10 @@ export default class UnbanCommand extends ChatInputCommand {
         const { success, error } = config.emojis;
 
         if (!banInfo) {
-            await interaction.editReply(`${error} This user is not banned.`);
+            await interaction.reply({
+                content: `${error} This user is not banned.`,
+                ephemeral
+            });
             return;
         }
 
@@ -56,12 +59,18 @@ export default class UnbanCommand extends ChatInputCommand {
             });
         } catch (err) {
             console.error(err);
-            await interaction.editReply(`${error} An error has occurred while trying to execute this interaction`);
+            await interaction.reply({
+                content: `${error} An error has occurred while trying to execute this interaction`,
+                ephemeral
+            });
             return;
         }
 
         await Promise.all([
-            interaction.editReply(`${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`),
+            interaction.reply({
+                content: `${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`,
+                ephemeral
+            }),
             config.sendInfractionConfirmation({
                 guild: interaction.guild!,
                 message: `unbanned **${offender.tag}**`,

@@ -19,7 +19,7 @@ export default class CleanCommand extends ChatInputCommand {
             name: "clean",
             description: "Purge messages in the channel.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -59,7 +59,7 @@ export default class CleanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const action = interaction.options.getSubcommand(true);
         const amount = interaction.options.getInteger("amount") ?? 100;
         const user = interaction.options.getUser("user");
@@ -75,7 +75,10 @@ export default class CleanCommand extends ChatInputCommand {
             });
 
             if (notModerateableReason) {
-                await interaction.editReply(`${error} ${notModerateableReason}`);
+                await interaction.reply({
+                    content: `${error} ${notModerateableReason}`,
+                    ephemeral
+                });
                 return;
             }
         }
@@ -89,17 +92,26 @@ export default class CleanCommand extends ChatInputCommand {
             });
 
             if (!purgedMessages) {
-                await interaction.editReply(`${error} There are no messages to purge.`);
+                await interaction.reply({
+                    content: `${error} There are no messages to purge.`,
+                    ephemeral
+                });
                 return;
             }
 
             let messageAuthor = "";
             if (action === "user") messageAuthor = ` by **${user!.tag}**`;
 
-            await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` ${pluralize("message", purgedMessages)}${messageAuthor}.`);
+            await interaction.reply({
+                content: `${success} Successfully purged \`${purgedMessages}\` ${pluralize("message", purgedMessages)}${messageAuthor}.`,
+                ephemeral
+            });
         } catch (err) {
             console.error(err);
-            await interaction.editReply(`${error} Failed to purge messages.`);
+            await interaction.reply({
+                content: `${error} Failed to purge messages.`,
+                ephemeral
+            });
         }
     }
 }

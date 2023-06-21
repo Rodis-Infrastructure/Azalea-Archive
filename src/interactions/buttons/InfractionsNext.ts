@@ -15,7 +15,7 @@ export default class InfractionsNextButton extends Button {
         });
     }
 
-    async execute(interaction: ButtonInteraction, config: Config): Promise<void> {
+    async execute(interaction: ButtonInteraction, _: never, config: Config): Promise<void> {
         const [direction, offenderId] = interaction.customId.split("-").slice(2);
         const cachedInfractions = ClientManager.cache.infractions.get(offenderId);
         const message = cachedInfractions?.messages.get(interaction.message.id);
@@ -30,7 +30,6 @@ export default class InfractionsNextButton extends Button {
                     ephemeral: true
                 })
             ]);
-
             return;
         }
 
@@ -39,7 +38,6 @@ export default class InfractionsNextButton extends Button {
                 content: `${error} You cannot change pages on an infraction search that you did not initiate.`,
                 ephemeral: true
             });
-
             return;
         }
 

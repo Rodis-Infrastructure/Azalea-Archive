@@ -19,7 +19,7 @@ export default class ConfigCommand extends ChatInputCommand {
             name: "config",
             description: "View guild configuration.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [{
                 name: "guild_id",
@@ -29,7 +29,7 @@ export default class ConfigCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId!;
         const config = { ...(ClientManager.config(guildId)?.data) } as unknown as JsonMap;
 
@@ -43,6 +43,9 @@ export default class ConfigCommand extends ChatInputCommand {
                 iconURL: interaction.guild!.iconURL() ?? undefined
             });
 
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.reply({
+            embeds: [embed],
+            ephemeral
+        });
     }
 }

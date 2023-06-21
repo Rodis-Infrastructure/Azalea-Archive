@@ -14,9 +14,9 @@ export default class InfractionSearchButton extends Button {
         });
     }
 
-    async execute(interaction: ButtonInteraction, config: Config): Promise<void> {
+    async execute(interaction: ButtonInteraction, ephemeral: boolean, config: Config): Promise<void> {
         await Promise.all([
-            handleUserInfractionSearch(interaction, config),
+            handleUserInfractionSearch(interaction, config, ephemeral),
             interaction.message.edit({ components: [] })
         ]);
     }

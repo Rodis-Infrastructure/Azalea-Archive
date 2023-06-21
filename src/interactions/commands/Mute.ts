@@ -6,11 +6,11 @@ import {
 } from "discord.js";
 
 import { InteractionResponseType } from "../../utils/Types";
+import { formatReason, formatTimestamp } from "../../utils";
 import { muteMember } from "../../utils/ModerationUtils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
-import { formatReason, formatTimestamp } from "../../utils";
 
 export default class MuteCommand extends ChatInputCommand {
     constructor() {
@@ -18,7 +18,7 @@ export default class MuteCommand extends ChatInputCommand {
             name: "mute",
             description: "Temporarily restrict a user's ability to communicate.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -42,12 +42,15 @@ export default class MuteCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const member = interaction.options.getMember("member") as GuildMember;
         const { success, error } = config.emojis;
 
         if (!member) {
-            await interaction.editReply(`${error} The user provided is not a member of the server.`);
+            await interaction.reply({
+                content: `${error} The user provided is not a member of the server.`,
+                ephemeral
+            });
             return;
         }
 
@@ -64,7 +67,10 @@ export default class MuteCommand extends ChatInputCommand {
         if (typeof res === "number") {
             const reply = `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
             await Promise.all([
-                interaction.editReply(`${success} Successfully ${reply}${formatReason(reason)}`),
+                interaction.reply({
+                    content: `${success} Successfully ${reply}${formatReason(reason)}`,
+                    ephemeral
+                }),
                 config.sendInfractionConfirmation({
                     guild: interaction.guild!,
                     authorId: interaction.user.id,
@@ -73,11 +79,13 @@ export default class MuteCommand extends ChatInputCommand {
                     reason
                 })
             ]);
-
             return;
         }
 
         /* The result is an error message */
-        await interaction.editReply(`${error} ${res}`);
+        await interaction.reply({
+            content: `${error} ${res}`,
+            ephemeral
+        });
     }
 }

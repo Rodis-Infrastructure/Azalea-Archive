@@ -17,7 +17,7 @@ export default class UnmuteCommand extends ChatInputCommand {
             name: "unmute",
             description: "Revoke a user's timeout.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [{
                 name: "member",
@@ -28,12 +28,15 @@ export default class UnmuteCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const offender = interaction.options.getMember("member") as GuildMember;
         const { success, error } = config.emojis;
 
         if (!offender) {
-            await interaction.editReply(`${error} The user provided is not a member of the server.`);
+            await interaction.reply({
+                content: `${error} The user provided is not a member of the server.`,
+                ephemeral
+            });
             return;
         }
 
@@ -48,12 +51,18 @@ export default class UnmuteCommand extends ChatInputCommand {
         });
 
         if (notModerateableReason) {
-            await interaction.editReply(`${error} ${notModerateableReason}`);
+            await interaction.reply({
+                content: `${error} ${notModerateableReason}`,
+                ephemeral
+            });
             return;
         }
 
         if (!muteExpirationTimestamp(offender)) {
-            await interaction.editReply(`${error} This member is not muted.`);
+            await interaction.reply({
+                content: `${error} This member is not muted.`,
+                ephemeral
+            });
             return;
         }
 
@@ -68,12 +77,18 @@ export default class UnmuteCommand extends ChatInputCommand {
             });
         } catch (err) {
             console.log(err);
-            await interaction.editReply(`${error} An error has occurred while trying to unmute this member.`);
+            await interaction.reply({
+                content: `${error} An error has occurred while trying to unmute this member.`,
+                ephemeral
+            });
             return;
         }
 
         await Promise.all([
-            interaction.editReply(`${success} Successfully unmuted **${offender.user.tag}**`),
+            interaction.reply({
+                content: `${success} Successfully unmuted **${offender.user.tag}**`,
+                ephemeral
+            }),
             config.sendInfractionConfirmation({
                 guild: interaction.guild!,
                 message: `unmuted **${offender.user.tag}**`,

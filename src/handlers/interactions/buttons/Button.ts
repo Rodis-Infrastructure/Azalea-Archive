@@ -7,5 +7,5 @@ export default abstract class Button {
     // @formatter:off
     // eslint-disable-next-line no-empty-function
     protected constructor(public data: CustomComponentProperties) {}
-    abstract execute(interaction: ButtonInteraction, config: Config): Promise<void>;
+    abstract execute(interaction: ButtonInteraction, ephemeral: boolean, config: Config): Promise<void>;
 }

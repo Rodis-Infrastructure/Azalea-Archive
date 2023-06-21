@@ -25,7 +25,7 @@ export default class InfoCommand extends ChatInputCommand {
             name: "info",
             description: "Get information about a user.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [{
                 name: "user",
@@ -35,7 +35,7 @@ export default class InfoCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const user = interaction.options.getUser("user") || interaction.user;
         const components = [];
         const flags = [];
@@ -61,6 +61,7 @@ export default class InfoCommand extends ChatInputCommand {
 
         if (member) {
             flags.push(...config.userFlags(member));
+
             if (config.isGuildStaff(member)) flags.push("Staff");
             if (member.isCommunicationDisabled()) flags.push("Muted");
 
@@ -129,10 +130,10 @@ export default class InfoCommand extends ChatInputCommand {
                 }
             } else {
                 const fetchedInfCount = await getQuery<InfractionCount>(`
-					SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS notes,
-						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mutes,
-						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Kick}) AS kicks,
-						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Ban})  AS bans
+					SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS note,
+						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mute,
+						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Kick}) AS kick,
+						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Ban})  AS ban
 					FROM infractions
 					WHERE targetId = ${user.id}
 					  AND guildId = ${interaction.guildId!};
@@ -163,6 +164,7 @@ export default class InfoCommand extends ChatInputCommand {
                 requiredValue: true
             })
         ) {
+            ephemeral = true;
             const dealtInfCount = await getQuery<InfractionCount>(`
 				SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS note,
 					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mute,
@@ -197,9 +199,10 @@ export default class InfoCommand extends ChatInputCommand {
             ]);
         }
 
-        await interaction.editReply({
+        await interaction.reply({
             embeds: [embed],
-            components
+            components,
+            ephemeral
         });
     }
 }
