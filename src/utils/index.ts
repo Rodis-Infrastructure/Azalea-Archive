@@ -203,7 +203,7 @@ export function mapInfractionsToFields(data: {
 
         return {
             name: `${flag}${getActionName(infraction.action)} #${infraction.infractionId}`,
-            value: data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")
+            value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
         };
     });
 

@@ -23,18 +23,16 @@ export default class InfractionsNextButton extends Button {
         const { error } = config.emojis;
 
         if (!cachedInfractions) {
-            await Promise.all([
-                interaction.update({ components: [] }),
-                interaction.followUp({
-                    content: `${error} Too much time has passed since \`/infraction search\` was used on this user. Please use the command again to change pages.`,
-                    ephemeral: true
-                })
-            ]);
+            await interaction.update({ components: [] });
+            await interaction.followUp({
+                content: `${error} Too much time has passed since \`/infraction search\` was used on this user. Please use the command again to change pages.`,
+                ephemeral: true
+            });
             return;
         }
 
         if (message?.authorId !== interaction.user.id) {
-            await interaction.followUp({
+            await interaction.reply({
                 content: `${error} You cannot change pages on an infraction search that you did not initiate.`,
                 ephemeral: true
             });

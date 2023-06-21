@@ -307,6 +307,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     }
 
     const message = await interaction.reply({
+        fetchReply: true,
         embeds: [embed],
         components,
         ephemeral
