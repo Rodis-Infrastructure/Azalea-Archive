@@ -93,7 +93,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             const config = ClientManager.config(guild.id)!;
             const action = infractionType.split(" ")[1].toLowerCase();
 
-            await config.sendInfractionConfirmation({
+            await config.sendConfirmation({
                 guild,
                 message: `${action} **${(target as User).tag}** ${muteReply || ""}`,
                 authorId: executor.id,

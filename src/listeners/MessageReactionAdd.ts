@@ -51,7 +51,7 @@ export default class MessageReactionAddEventListener extends EventListener {
             /* The result is the mute's expiration timestamp */
             if (typeof res === "number") {
                 await Promise.all([
-                    config.sendInfractionConfirmation({
+                    config.sendConfirmation({
                         guild: message.guild,
                         message: `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
                         authorId: user.id,
@@ -66,7 +66,7 @@ export default class MessageReactionAddEventListener extends EventListener {
             /* The result is an error message */
             await Promise.all([
                 reaction.remove(),
-                config.sendInfractionConfirmation({
+                config.sendConfirmation({
                     guild: message.guild,
                     message: `${emojis.error} ${user} ${res}`,
                     full: true
@@ -90,7 +90,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                 });
 
                 if (notModerateableReason) {
-                    await config.sendInfractionConfirmation({
+                    await config.sendConfirmation({
                         guild: message.guild,
                         message: `${emojis.error} ${user} ${notModerateableReason}`,
                         full: true

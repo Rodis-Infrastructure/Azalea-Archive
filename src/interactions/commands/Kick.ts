@@ -92,7 +92,7 @@ export default class KickCommand extends ChatInputCommand {
                 content: `${success} Successfully kicked **${member.user.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendInfractionConfirmation({
+            config.sendConfirmation({
                 guild: interaction.guild!,
                 authorId: interaction.user.id,
                 message: `kicked **${member.user.tag}**`,

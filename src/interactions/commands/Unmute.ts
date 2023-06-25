@@ -89,7 +89,7 @@ export default class UnmuteCommand extends ChatInputCommand {
                 content: `${success} Successfully unmuted **${offender.user.tag}**`,
                 ephemeral
             }),
-            config.sendInfractionConfirmation({
+            config.sendConfirmation({
                 guild: interaction.guild!,
                 message: `unmuted **${offender.user.tag}**`,
                 channelId: interaction.channelId,

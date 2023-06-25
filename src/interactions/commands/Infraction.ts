@@ -205,7 +205,7 @@ export default class InfractionCommand extends ChatInputCommand {
                     content: `${success} Successfully ${response}`,
                     ephemeral
                 }),
-                config.sendInfractionConfirmation({
+                config.sendConfirmation({
                     guild: interaction.guild!,
                     message: response,
                     authorId: interaction.user.id,

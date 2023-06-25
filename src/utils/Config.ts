@@ -152,7 +152,7 @@ export default class Config {
         return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
     }
 
-    async sendInfractionConfirmation(data: {
+    async sendConfirmation(data: {
         guild: Guild,
         authorId?: string,
         message: string,

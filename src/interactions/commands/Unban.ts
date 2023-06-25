@@ -71,7 +71,7 @@ export default class UnbanCommand extends ChatInputCommand {
                 content: `${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendInfractionConfirmation({
+            config.sendConfirmation({
                 guild: interaction.guild!,
                 message: `unbanned **${offender.tag}**`,
                 authorId: interaction.user.id,

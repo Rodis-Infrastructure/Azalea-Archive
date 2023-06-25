@@ -46,7 +46,7 @@ export default class QuickMute30Command extends ContextMenuCommand {
                     content: `${success} Successfully ${reply}`,
                     ephemeral: true
                 }),
-                config.sendInfractionConfirmation({
+                config.sendConfirmation({
                     guild: interaction.guild!,
                     message: reply,
                     authorId: message.author.id,

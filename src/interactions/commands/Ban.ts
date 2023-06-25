@@ -93,7 +93,7 @@ export default class BanCommand extends ChatInputCommand {
                 content: `${success} Successfully banned **${user.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendInfractionConfirmation({
+            config.sendConfirmation({
                 guild: interaction.guild!,
                 authorId: interaction.user.id,
                 message: `banned **${user.tag}**`,

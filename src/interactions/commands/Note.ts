@@ -82,7 +82,7 @@ export default class NoteCommand extends ChatInputCommand {
                 content: `${success} Successfully added a note to **${user.tag}**${formatReason(note)}`,
                 ephemeral
             }),
-            config.sendInfractionConfirmation({
+            config.sendConfirmation({
                 guild: interaction.guild!,
                 authorId: interaction.user.id,
                 message: `added a note to **${user.tag}**`,

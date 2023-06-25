@@ -71,7 +71,7 @@ export default class MuteCommand extends ChatInputCommand {
                     content: `${success} Successfully ${reply}${formatReason(reason)}`,
                     ephemeral
                 }),
-                config.sendInfractionConfirmation({
+                config.sendConfirmation({
                     guild: interaction.guild!,
                     authorId: interaction.user.id,
                     message: reply,

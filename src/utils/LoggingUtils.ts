@@ -39,7 +39,7 @@ export async function linkToLog(data: {
     const config = ClientManager.config(channel.guildId)!;
 
     if (!url) {
-        await config.sendInfractionConfirmation({
+        await config.sendConfirmation({
             message: `${config.emojis.error} ${userMention(cache.moderatorId)} failed to retrieve the log's URL`,
             guild: channel.guild,
             full: true
@@ -54,7 +54,7 @@ export async function linkToLog(data: {
         : "";
 
     const amount = typeof content === "string" ? 1 : content.size;
-    await config.sendInfractionConfirmation({
+    await config.sendConfirmation({
         message: `purged ${amount} ${pluralize("message", amount)}${author}: ${url}`,
         guild: channel.guild,
         authorId: cache.moderatorId
