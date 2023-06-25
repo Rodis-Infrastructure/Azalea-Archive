@@ -24,7 +24,7 @@ export async function sendLog(data: LogData): Promise<string | void> {
     return message.url;
 }
 
-export async function linkToLog(data: {
+export async function linkToPurgeLog(data: {
     channel: GuildTextBasedChannel,
     content: string | Collection<string, Message>,
     url: string | void
@@ -55,7 +55,7 @@ export async function linkToLog(data: {
 
     const amount = typeof content === "string" ? 1 : content.size;
     await config.sendConfirmation({
-        message: `purged ${amount} ${pluralize("message", amount)}${author}: ${url}`,
+        message: `purged \`${amount}\` ${pluralize("message", amount)}${author}: ${url}`,
         guild: channel.guild,
         authorId: cache.moderatorId
     });

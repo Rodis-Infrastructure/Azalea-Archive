@@ -1,5 +1,5 @@
 import { AttachmentBuilder, Collection, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { linkToLog, sendLog } from "../utils/LoggingUtils";
+import { linkToPurgeLog, sendLog } from "../utils/LoggingUtils";
 import { cacheMessage } from "../utils/Cache";
 import { LoggingEvent } from "../utils/Types";
 
@@ -34,7 +34,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             }
         });
 
-        await linkToLog({
+        await linkToPurgeLog({
             channel,
             content: messages,
             url

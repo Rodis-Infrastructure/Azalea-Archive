@@ -1,5 +1,5 @@
 import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { formatLogContent, linkToLog, sendLog } from "../utils/LoggingUtils";
+import { formatLogContent, linkToPurgeLog, sendLog } from "../utils/LoggingUtils";
 import { cacheMessage } from "../utils/Cache";
 import { LoggingEvent } from "../utils/Types";
 
@@ -54,7 +54,7 @@ export default class MessageDeleteEventListener extends EventListener {
             channel
         });
 
-        await linkToLog({
+        await linkToPurgeLog({
             channel,
             content: message.id,
             url
