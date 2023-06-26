@@ -1,4 +1,4 @@
-## moderation-bot
+## Azalea Moderation Bot
 
 This file serves as documentation for the Roblox Discord's moderation bot.
 
