@@ -26,7 +26,7 @@ export default abstract class ContextMenuCommand {
             name: this.data.name,
             dmPermission: false,
             type: this.data.type,
-            defaultMemberPermissions: [PermissionFlagsBits.Administrator]
+            defaultMemberPermissions: [PermissionFlagsBits.ManageGuild]
         };
     }
 }
