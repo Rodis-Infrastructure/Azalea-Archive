@@ -27,4 +27,13 @@ CREATE TABLE IF NOT EXISTS infractions
     reason          TEXT CHECK (length(reason) <= 1024)
 );
 
+CREATE INDEX IF NOT EXISTS idxLatestUserInfractionByType
+    ON infractions (targetId, guildId, action, infractionId DESC);
+
+CREATE INDEX IF NOT EXISTS idxUserInfractionsDescending
+    ON infractions (targetId, guildId, createdAt DESC);
+
+CREATE INDEX IF NOT EXISTS idxInfraction
+    ON infractions (infractionId, guildId);
+
 COMMIT;
