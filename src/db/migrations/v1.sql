@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS messages
     createdAt TIMESTAMP NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_created_at ON messages (createdAt);
+CREATE INDEX IF NOT EXISTS idx_channel_messages ON messages (messageId, channelId, guildId, createdAt DESC);
+
 CREATE TABLE IF NOT EXISTS infractions
 (
     infractionId    INTEGER   NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -27,13 +30,13 @@ CREATE TABLE IF NOT EXISTS infractions
     reason          TEXT CHECK (length(reason) <= 1024)
 );
 
-CREATE INDEX IF NOT EXISTS idxLatestUserInfractionByType
+CREATE INDEX IF NOT EXISTS idx_latest_user_infraction_by_type
     ON infractions (targetId, guildId, action, infractionId DESC);
 
-CREATE INDEX IF NOT EXISTS idxUserInfractionsDescending
+CREATE INDEX IF NOT EXISTS idx_user_infractions_descending
     ON infractions (targetId, guildId, createdAt DESC);
 
-CREATE INDEX IF NOT EXISTS idxInfraction
+CREATE INDEX IF NOT EXISTS idx_infraction
     ON infractions (infractionId, guildId);
 
 COMMIT;

@@ -6,7 +6,7 @@ import ClientManager from "../Client";
 import * as process from "process";
 
 if (!process.env.DB_PATH) throw new Error("No database path provided");
-export const conn = new Database(process.env.DB_PATH);
+const conn = new Database(process.env.DB_PATH);
 
 export function runQuery(query: string): Promise<void> {
     return new Promise((resolve, reject) => {

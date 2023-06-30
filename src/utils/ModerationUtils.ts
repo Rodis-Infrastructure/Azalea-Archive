@@ -199,7 +199,7 @@ export async function purgeMessages(data: {
             const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
 
             // @formatter:off
-            const storedMessages = await allQuery<{ id: string }>(`
+            const storedMessages = await allQuery<{ messageId: string }>(`
                 DELETE FROM messages
                 WHERE messageId IN (
                     SELECT messageId FROM messages
@@ -212,7 +212,7 @@ export async function purgeMessages(data: {
                 RETURNING messageId;
             `);
 
-            removableMessageIds.push(...storedMessages.map(({ id }) => id));
+            removableMessageIds.push(...storedMessages.map(({ messageId }) => messageId));
         } catch (err) {
             console.error(err);
         }
