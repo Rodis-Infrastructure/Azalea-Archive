@@ -130,13 +130,14 @@ export default class InfoCommand extends ChatInputCommand {
                 }
             } else {
                 const fetchedInfCount = await getQuery<InfractionCount>(`
-					SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS note,
-						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mute,
-						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Kick}) AS kick,
-						   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Ban})  AS ban
+					SELECT SUM(action = ${InfractionAction.Note}) AS note,
+						   SUM(action = ${InfractionAction.Mute}) AS mute,
+						   SUM(action = ${InfractionAction.Kick}) AS kick,
+						   SUM(action = ${InfractionAction.Ban})  AS ban
 					FROM infractions
 					WHERE targetId = ${user.id}
 					  AND guildId = ${interaction.guildId!};
+
                 `);
 
                 if (fetchedInfCount) infCount = fetchedInfCount;
@@ -166,13 +167,14 @@ export default class InfoCommand extends ChatInputCommand {
         ) {
             ephemeral = true;
             const dealtInfCount = await getQuery<InfractionCount>(`
-				SELECT (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Note}) AS note,
-					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Mute}) AS mute,
-					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Kick}) AS kick,
-					   (SELECT COUNT(*) FROM infractions WHERE action = ${InfractionAction.Ban})  AS ban
+				SELECT SUM(action = ${InfractionAction.Note}) AS note,
+					   SUM(action = ${InfractionAction.Mute}) AS mute,
+					   SUM(action = ${InfractionAction.Kick}) AS kick,
+					   SUM(action = ${InfractionAction.Ban})  AS ban
 				FROM infractions
-				WHERE (executorId = ${user.id} OR requestAuthorId = ${user.id})
+				WHERE (targetId = ${user.id} OR requestAuthorId = ${user.id})
 				  AND guildId = ${interaction.guildId!};
+
             `);
 
             if (dealtInfCount) {
