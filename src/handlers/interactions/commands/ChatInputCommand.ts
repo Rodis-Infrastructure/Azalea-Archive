@@ -27,7 +27,7 @@ export default abstract class ChatInputCommand {
             options: this.data.options ?? [],
             dmPermission: false,
             type: ApplicationCommandType.ChatInput,
-            defaultMemberPermissions: [PermissionFlagsBits.ManageGuild]
+            defaultMemberPermissions: [PermissionFlagsBits.ManageChannels]
         };
     }
 }
