@@ -5,9 +5,9 @@ import {
     GuildMember
 } from "discord.js";
 
-import { InteractionResponseType } from "../interaction.types";
+import { InteractionResponseType } from "../../types/interactions";
 import { formatReason, formatTimestamp } from "../../utils";
-import { muteMember } from "../../utils/moderationUtils";
+import { muteMember } from "../../utils/moderation";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";

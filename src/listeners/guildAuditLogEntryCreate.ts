@@ -1,7 +1,6 @@
 import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
-import { resolveInfraction } from "../utils/moderationUtils";
-import { InfractionType } from "../utils/utils.types";
-import { InfractionFlag } from "../db/db.types";
+import { resolveInfraction } from "../utils/moderation";
+import { InfractionFlag, InfractionPunishment } from "../types/database";
 import { formatTimestamp } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
@@ -20,21 +19,26 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         if (executor.id === ClientManager.client.user?.id) return;
         if (executor.partial) executor = await executor.fetch();
 
-        let infractionType: InfractionType | undefined;
+        let punishment: InfractionPunishment | undefined;
         let muteReply!: Partial<string>;
+        let action!: string;
+
         const infractionFlag = executor.bot ? InfractionFlag.Automatic : undefined;
 
         switch (log.action) {
             case AuditLogEvent.MemberKick:
-                infractionType = InfractionType.Kick;
+                punishment = InfractionPunishment.Kick;
+                action = "kicked";
                 break;
 
             case AuditLogEvent.MemberBanAdd:
-                infractionType = InfractionType.Ban;
+                punishment = InfractionPunishment.Ban;
+                action = "banned";
                 break;
 
             case AuditLogEvent.MemberBanRemove:
-                infractionType = InfractionType.Unban;
+                punishment = InfractionPunishment.Unban;
+                action = "unbanned";
                 break;
 
             case AuditLogEvent.MemberUpdate: {
@@ -42,7 +46,8 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
                 if (muteDurationDiff) {
                     if (!muteDurationDiff.old && muteDurationDiff.new) {
-                        infractionType = InfractionType.Mute;
+                        punishment = InfractionPunishment.Mute;
+                        action = "muted";
 
                         const msDuration = Date.parse(muteDurationDiff.new as string);
                         const expiresAt = Math.floor(msDuration / 1000);
@@ -52,10 +57,10 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
                         try {
                             await resolveInfraction({
-                                moderator: executor,
-                                offender: target as User,
+                                executor: executor,
+                                target: target as User,
                                 guildId: guild.id,
-                                infractionType,
+                                punishment: punishment,
                                 flag: infractionFlag,
                                 reason,
                                 /* Prevent mute duration from being less than 1 minute */
@@ -68,28 +73,29 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                         }
                     }
 
-                    if (muteDurationDiff.old && !muteDurationDiff.new) infractionType = InfractionType.Unmute;
+                    if (muteDurationDiff.old && !muteDurationDiff.new) {
+                        punishment = InfractionPunishment.Unmute;
+                        action = "unmuted";
+                    }
                 }
 
                 break;
             }
         }
 
-        if (infractionType) {
-            if (infractionType !== InfractionType.Mute) {
+        if (punishment) {
+            if (punishment !== InfractionPunishment.Mute) {
                 await resolveInfraction({
-                    moderator: executor,
-                    offender: target as User,
+                    executor: executor,
+                    target: target as User,
                     guildId: guild.id,
-                    infractionType,
+                    punishment: punishment,
                     flag: infractionFlag,
                     reason
                 });
             }
 
             const config = ClientManager.config(guild.id)!;
-            const action = infractionType.split(" ")[1].toLowerCase();
-
             await config.sendConfirmation({
                 guild,
                 message: `${action} **${(target as User).tag}** ${muteReply || ""}`,

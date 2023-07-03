@@ -11,9 +11,9 @@ import {
     inlineCode
 } from "discord.js";
 
-import { InfractionAction, InfractionCount } from "../../db/db.types";
+import { InfractionCount, InfractionPunishment } from "../../types/database";
 import { formatTimestamp, mapInfractionCount } from "../../utils";
-import { InteractionResponseType } from "../interaction.types";
+import { InteractionResponseType } from "../../types/interactions";
 import { getQuery } from "../../db";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -93,13 +93,13 @@ export default class InfoCommand extends ChatInputCommand {
 
             if (ban) {
                 const banData = await getQuery<{ reason: string }>(`
-					SELECT reason
-					FROM infractions
-					WHERE target_id = ${user.id}
-					  AND guild_id = ${interaction.guildId!}
-					  AND action = ${InfractionAction.Ban}
-					ORDER BY infraction_id DESC
-					LIMIT 1;
+                    SELECT reason
+                    FROM infractions
+                    WHERE target_id = ${user.id}
+                      AND guild_id = ${interaction.guildId!}
+                      AND action = ${InfractionPunishment.Ban}
+                    ORDER BY infraction_id DESC
+                    LIMIT 1;
                 `);
 
                 embed.setTitle("Banned");
@@ -122,29 +122,29 @@ export default class InfoCommand extends ChatInputCommand {
             if (infractions) {
                 for (const infraction of infractions) {
                     switch (infraction.action) {
-                        case InfractionAction.Note:
+                        case InfractionPunishment.Note:
                             infCount.note++;
                             break;
-                        case InfractionAction.Mute:
+                        case InfractionPunishment.Mute:
                             infCount.mute++;
                             break;
-                        case InfractionAction.Kick:
+                        case InfractionPunishment.Kick:
                             infCount.kick++;
                             break;
-                        case InfractionAction.Ban:
+                        case InfractionPunishment.Ban:
                             infCount.ban++;
                             break;
                     }
                 }
             } else {
                 const fetchedInfCount = await getQuery<InfractionCount>(`
-					SELECT SUM(action = ${InfractionAction.Note}) AS note,
-						   SUM(action = ${InfractionAction.Mute}) AS mute,
-						   SUM(action = ${InfractionAction.Kick}) AS kick,
-						   SUM(action = ${InfractionAction.Ban})  AS ban
-					FROM infractions
-					WHERE target_id = ${user.id}
-					  AND guild_id = ${interaction.guildId!};
+                    SELECT SUM(action = ${InfractionPunishment.Note}) AS note,
+                           SUM(action = ${InfractionPunishment.Mute}) AS mute,
+                           SUM(action = ${InfractionPunishment.Kick}) AS kick,
+                           SUM(action = ${InfractionPunishment.Ban})  AS ban
+                    FROM infractions
+                    WHERE target_id = ${user.id}
+                      AND guild_id = ${interaction.guildId!};
 
                 `);
 
@@ -175,13 +175,13 @@ export default class InfoCommand extends ChatInputCommand {
         ) {
             ephemeral = true;
             const dealtInfCount = await getQuery<InfractionCount>(`
-				SELECT SUM(action = ${InfractionAction.Note}) AS note,
-					   SUM(action = ${InfractionAction.Mute}) AS mute,
-					   SUM(action = ${InfractionAction.Kick}) AS kick,
-					   SUM(action = ${InfractionAction.Ban})  AS ban
-				FROM infractions
-				WHERE (target_id = ${user.id} OR request_author_id = ${user.id})
-				  AND guild_id = ${interaction.guildId!};
+                SELECT SUM(action = ${InfractionPunishment.Note}) AS note,
+                       SUM(action = ${InfractionPunishment.Mute}) AS mute,
+                       SUM(action = ${InfractionPunishment.Kick}) AS kick,
+                       SUM(action = ${InfractionPunishment.Ban})  AS ban
+                FROM infractions
+                WHERE (target_id = ${user.id} OR request_author_id = ${user.id})
+                  AND guild_id = ${interaction.guildId!};
 
             `);
 

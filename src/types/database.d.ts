@@ -9,7 +9,7 @@ export interface Infraction {
     executor_id: string;
     created_at: number;
     expires_at?: number;
-    action: InfractionAction;
+    action: InfractionPunishment;
     flag?: InfractionFlag;
     reason?: string;
 }
@@ -21,12 +21,13 @@ export interface InfractionCount {
     ban: number;
 }
 
-export enum InfractionAction {
+export enum InfractionPunishment {
     Note = 1,
     Mute = 2,
     Kick = 3,
     Ban = 4,
-    Unban = 5
+    Unban = 5,
+    Unmute = 6
 }
 
 export enum InfractionFlag {
@@ -34,4 +35,4 @@ export enum InfractionFlag {
     Quick = 2,
 }
 
-export type MinimalInfraction = Pick<Infraction, "infraction_id" | "created_at" | "reason" | "executor_id" | "flag" | "deleted_at" | "deleted_by" | "expires_at" | "action">;
+export type MinimalInfraction = Omit<Infraction, "updated_by" | "updated_at" | "request_author_id" | "target_id">

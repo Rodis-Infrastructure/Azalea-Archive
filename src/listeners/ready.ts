@@ -1,6 +1,6 @@
 import { processCachedMessages } from "../utils/cache";
 import { readdir, readFile } from "node:fs/promises";
-import { ConfigData } from "../utils/utils.types";
+import { ConfigData } from "../types/config";
 import { parse } from "@iarna/toml";
 import { Events } from "discord.js";
 import { runQuery } from "../db";
@@ -45,9 +45,9 @@ export default class ReadyEventListener extends EventListener {
         // Removes old data from the database
         setInterval(async() => {
             await runQuery(`
-				DELETE
-				FROM messages
-				WHERE ${Date.now()} - created_at > ${ms("24h")}
+                DELETE
+                FROM messages
+                WHERE ${Date.now()} - created_at > ${ms("24h")}
             `);
         }, ms("3h"));
     }

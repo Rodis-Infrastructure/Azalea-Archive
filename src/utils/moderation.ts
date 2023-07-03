@@ -1,22 +1,23 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData, InfractionType, LoggingEvent } from "./utils.types";
+import { InfractionData } from "../types/utils";
 import { formatTimestamp, msToString, MUTE_DURATION_VALIDATION_REGEX } from "./index";
-import { InfractionAction, InfractionFlag } from "../db/db.types";
+import { InfractionFlag, InfractionPunishment } from "../types/database";
 import { cacheMessage, getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
-import { sendLog } from "./loggingUtils";
+import { sendLog } from "./logging";
 
 import ClientManager from "../client";
 import Config from "./config";
 import ms from "ms";
+import { LoggingEvent } from "../types/config";
 
 export async function resolveInfraction(data: InfractionData): Promise<void> {
     const {
-        moderator,
-        offender,
+        executor,
+        target,
         reason,
         guildId,
-        infractionType,
+        punishment,
         duration,
         requestAuthor,
         flag
@@ -24,41 +25,42 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     let color: ColorResolvable = Colors.Red;
     let icon = "memberDelete.png";
-    let dbInfractionType: InfractionAction | null = null;
+    let authorText = "Failed to resolve punishment type";
 
-    switch (infractionType) {
-        case InfractionType.Ban: {
-            dbInfractionType = InfractionAction.Ban;
+    switch (punishment) {
+        case InfractionPunishment.Ban: {
+            authorText = "Member Banned";
             color = Colors.Blue;
             break;
         }
 
-        case InfractionType.Kick: {
-            dbInfractionType = InfractionAction.Kick;
+        case InfractionPunishment.Kick: {
+            authorText = "Member Kicked";
             break;
         }
 
-        case InfractionType.Mute: {
-            dbInfractionType = InfractionAction.Mute;
+        case InfractionPunishment.Mute: {
+            authorText = "Member Muted";
             color = Colors.Orange;
             break;
         }
 
-        case InfractionType.Note: {
-            dbInfractionType = InfractionAction.Note;
+        case InfractionPunishment.Note: {
+            authorText = "Note Added";
             color = Colors.Yellow;
             icon = "note.png";
             break;
         }
 
-        case InfractionType.Unban: {
-            dbInfractionType = InfractionAction.Unban;
+        case InfractionPunishment.Unban: {
+            authorText = "Member Unbanned";
             icon = "memberCreate.png";
             color = Colors.Green;
             break;
         }
 
-        case InfractionType.Unmute:
+        case InfractionPunishment.Unmute:
+            authorText = "Member Unmuted";
             icon = "memberCreate.png";
             color = Colors.Green;
             break;
@@ -66,10 +68,10 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     const log = new EmbedBuilder()
         .setColor(color)
-        .setAuthor({ name: infractionType, iconURL: `attachment://${icon}` })
+        .setAuthor({ name: authorText, iconURL: `attachment://${icon}` })
         .setFields([
-            { name: "Member", value: `${offender} (\`${offender.id}\`)` },
-            { name: "Moderator", value: `${moderator} (\`${moderator.id}\`)` }
+            { name: "Member", value: `${target} (\`${target.id}\`)` },
+            { name: "Moderator", value: `${executor} (\`${executor.id}\`)` }
         ])
         .setTimestamp();
 
@@ -78,12 +80,12 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     const expiresAt = duration ? Math.floor((Date.now() + duration) / 1000) : null;
 
-    if (dbInfractionType) {
+    if (punishment !== InfractionPunishment.Unmute) {
         await storeInfraction({
             guildId: guildId,
-            action: dbInfractionType,
-            executorId: moderator.id,
-            targetId: offender.id,
+            action: punishment,
+            executorId: executor.id,
+            targetId: target.id,
             expiresAt: expiresAt,
             requestAuthorId: requestAuthor?.id,
             reason,
@@ -138,11 +140,11 @@ export async function muteMember(offender: GuildMember, data: {
         await offender.timeout(msMuteDuration, reason ?? undefined);
         await resolveInfraction({
             guildId: offender.guild.id,
-            infractionType: InfractionType.Mute,
-            offender: offender.user,
+            punishment: InfractionPunishment.Mute,
+            target: offender.user,
             duration: msMuteDuration,
             flag: quick ? InfractionFlag.Quick : undefined,
-            moderator,
+            executor: moderator,
             reason
         });
 

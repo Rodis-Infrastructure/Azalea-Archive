@@ -1,4 +1,4 @@
-import { CustomComponentProperties } from "../../../interactions/interaction.types";
+import { CustomComponentProperties } from "../../../types/interactions";
 import { SelectMenuInteraction } from "discord.js";
 
 import Config from "../../../utils/config";

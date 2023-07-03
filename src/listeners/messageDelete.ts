@@ -1,6 +1,6 @@
 import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { formatLogContent, linkToPurgeLog, sendLog } from "../utils/loggingUtils";
-import { LoggingEvent } from "../utils/utils.types";
+import { formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
+import { LoggingEvent } from "../types/config";
 import { cacheMessage } from "../utils/cache";
 import { referenceLog } from "../utils";
 

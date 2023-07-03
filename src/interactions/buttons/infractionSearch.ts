@@ -1,5 +1,5 @@
 import { handleUserInfractionSearch } from "../commands/infraction";
-import { InteractionResponseType } from "../interaction.types";
+import { InteractionResponseType } from "../../types/interactions";
 import { ButtonInteraction } from "discord.js";
 
 import Button from "../../handlers/interactions/buttons/button";

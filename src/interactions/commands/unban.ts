@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { resolveInfraction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
-import { InfractionType } from "../../utils/utils.types";
+import { InteractionResponseType } from "../../types/interactions";
+import { resolveInfraction } from "../../utils/moderation";
+import { InfractionPunishment } from "../../types/database";
 import { formatReason } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -52,9 +52,9 @@ export default class UnbanCommand extends ChatInputCommand {
         try {
             await interaction.guild!.members.unban(offender, reason);
             await resolveInfraction({
-                infractionType: InfractionType.Unban,
-                moderator: interaction.user,
-                offender,
+                punishment: InfractionPunishment.Unban,
+                executor: interaction.user,
+                target: offender,
                 guildId: interaction.guildId!,
                 reason
             });

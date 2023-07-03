@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { resolveInfraction, validateModerationAction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
-import { InfractionType } from "../../utils/utils.types";
+import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
+import { InteractionResponseType } from "../../types/interactions";
+import { InfractionPunishment } from "../../types/database";
 import { formatReason } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -102,9 +102,9 @@ export default class BanCommand extends ChatInputCommand {
                 reason
             }),
             resolveInfraction({
-                infractionType: InfractionType.Ban,
-                moderator: interaction.user,
-                offender: user,
+                punishment: InfractionPunishment.Ban,
+                executor: interaction.user,
+                target: user,
                 guildId: interaction.guildId!,
                 reason
             })

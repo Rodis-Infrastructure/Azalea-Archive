@@ -1,6 +1,6 @@
-import { muteMember, purgeMessages, validateModerationAction } from "../utils/moderationUtils";
+import { muteMember, purgeMessages, validateModerationAction } from "../utils/moderation";
 import { Events, GuildTextBasedChannel, MessageReaction, User } from "discord.js";
-import { RolePermission } from "../utils/utils.types";
+import { RolePermission } from "../types/config";
 import { formatTimestamp } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";

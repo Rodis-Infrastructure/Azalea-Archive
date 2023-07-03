@@ -5,9 +5,9 @@ import {
     GuildMember
 } from "discord.js";
 
-import { resolveInfraction, validateModerationAction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
-import { InfractionType } from "../../utils/utils.types";
+import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
+import { InteractionResponseType } from "../../types/interactions";
+import { InfractionPunishment } from "../../types/database";
 import { formatReason } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -64,11 +64,11 @@ export default class NoteCommand extends ChatInputCommand {
 
         try {
             await resolveInfraction({
-                moderator: interaction.user,
-                offender: user,
+                executor: interaction.user,
+                target: user,
                 guildId: interaction.guildId!,
                 reason: note,
-                infractionType: InfractionType.Note
+                punishment: InfractionPunishment.Note
             });
         } catch (err) {
             console.error(err);

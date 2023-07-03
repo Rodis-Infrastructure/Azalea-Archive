@@ -5,9 +5,9 @@ import {
     GuildMember
 } from "discord.js";
 
-import { resolveInfraction, validateModerationAction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
-import { InfractionType } from "../../utils/utils.types";
+import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
+import { InteractionResponseType } from "../../types/interactions";
+import { InfractionPunishment } from "../../types/database";
 import { formatReason } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -73,9 +73,9 @@ export default class KickCommand extends ChatInputCommand {
         try {
             await member.kick(reason);
             await resolveInfraction({
-                infractionType: InfractionType.Kick,
-                moderator: interaction.user,
-                offender: member.user,
+                punishment: InfractionPunishment.Kick,
+                executor: interaction.user,
+                target: member.user,
                 guildId: interaction.guildId!,
                 reason
             });

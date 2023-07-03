@@ -7,9 +7,9 @@ import {
     GuildTextBasedChannel
 } from "discord.js";
 
-import { Command, CommandInteraction } from "../../../interactions/interaction.types";
-import { LoggingEvent } from "../../../utils/utils.types";
-import { sendLog } from "../../../utils/loggingUtils";
+import { Command, CommandInteraction } from "../../../types/interactions";
+import { sendLog } from "../../../utils/logging";
+import { LoggingEvent } from "../../../types/config";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 

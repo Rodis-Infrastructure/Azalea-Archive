@@ -1,4 +1,4 @@
-import { InteractionResponseType } from "../interaction.types";
+import { InteractionResponseType } from "../../types/interactions";
 import { SelectMenuInteraction } from "discord.js";
 
 import SelectMenu from "../../handlers/interactions/select_menus/selectMenu";

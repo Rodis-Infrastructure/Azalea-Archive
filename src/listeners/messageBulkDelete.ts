@@ -1,6 +1,6 @@
 import { AttachmentBuilder, Collection, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { linkToPurgeLog, sendLog } from "../utils/loggingUtils";
-import { LoggingEvent } from "../utils/utils.types";
+import { linkToPurgeLog, sendLog } from "../utils/logging";
+import { LoggingEvent } from "../types/config";
 import { cacheMessage } from "../utils/cache";
 
 import EventListener from "../handlers/listeners/eventListener";

@@ -1,8 +1,8 @@
-import { InfractionAction, InfractionCount, InfractionFlag, MinimalInfraction } from "../db/db.types";
+import { InfractionCount, InfractionFlag, InfractionPunishment, MinimalInfraction } from "../types/database";
 import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
-import { InteractionCustomIdFilter } from "../interactions/interaction.types";
-import { formatLogContent } from "./loggingUtils";
-import { InfractionFilter } from "./utils.types";
+import { InteractionCustomIdFilter } from "../types/interactions";
+import { formatLogContent } from "./logging";
+import { InfractionFilter } from "../types/utils";
 
 import SelectMenu from "../handlers/interactions/select_menus/selectMenu";
 import Button from "../handlers/interactions/buttons/button";
@@ -44,34 +44,34 @@ export function formatCustomId(customId: InteractionCustomIdFilter): string {
         : Object.values(customId)[0];
 }
 
-export function getActionName(action: InfractionAction) {
+export function getActionName(action: InfractionPunishment) {
     switch (action) {
-        case InfractionAction.Note:
+        case InfractionPunishment.Note:
             return "Note";
-        case InfractionAction.Mute:
+        case InfractionPunishment.Mute:
             return "Mute";
-        case InfractionAction.Kick:
+        case InfractionPunishment.Kick:
             return "Kick";
-        case InfractionAction.Ban:
+        case InfractionPunishment.Ban:
             return "Ban";
-        case InfractionAction.Unban:
+        case InfractionPunishment.Unban:
             return "Unban";
         default:
             return "Unknown";
     }
 }
 
-export function getActionColor(action: InfractionAction) {
+export function getActionColor(action: InfractionPunishment) {
     switch (action) {
-        case InfractionAction.Mute:
+        case InfractionPunishment.Mute:
             return Colors.Orange;
-        case InfractionAction.Kick:
+        case InfractionPunishment.Kick:
             return Colors.Red;
-        case InfractionAction.Ban:
+        case InfractionPunishment.Ban:
             return Colors.Blue;
-        case InfractionAction.Note:
+        case InfractionPunishment.Note:
             return Colors.Yellow;
-        case InfractionAction.Unban:
+        case InfractionPunishment.Unban:
             return Colors.Green;
         default:
             return Colors.NotQuiteBlack;

@@ -1,6 +1,6 @@
 import { codeBlock, Collection, GuildTextBasedChannel, Message, userMention } from "discord.js";
 import { elipsify, pluralize } from "./index";
-import { LogData } from "./utils.types";
+import { LogData } from "../types/utils";
 
 import ClientManager from "../client";
 

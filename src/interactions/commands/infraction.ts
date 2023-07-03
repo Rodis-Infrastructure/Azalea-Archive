@@ -26,16 +26,17 @@ import {
     MUTE_DURATION_VALIDATION_REGEX
 } from "../../utils";
 
-import { InfractionSubcommand, InteractionResponseType } from "../interaction.types";
-import { Infraction, InfractionAction, MinimalInfraction } from "../../db/db.types";
-import { InfractionFilter, LoggingEvent } from "../../utils/utils.types";
+import { InfractionSubcommand, InteractionResponseType } from "../../types/interactions";
+import { Infraction, InfractionPunishment, MinimalInfraction } from "../../types/database";
+import { InfractionFilter } from "../../types/utils";
 import { allQuery, getQuery, runQuery } from "../../db";
-import { sendLog } from "../../utils/loggingUtils";
+import { sendLog } from "../../utils/logging";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import ClientManager from "../../client";
 import Config from "../../utils/config";
 import ms from "ms";
+import { LoggingEvent } from "../../types/config";
 
 export default class InfractionCommand extends ChatInputCommand {
     constructor() {
@@ -137,10 +138,10 @@ export default class InfractionCommand extends ChatInputCommand {
         const subcommand = interaction.options.getSubcommand();
         const id = interaction.options.getNumber("id") as number;
         const infraction = await getQuery<Infraction>(`
-			SELECT *
-			FROM infractions
-			WHERE infraction_id = ${id}
-			  AND guild_id = ${interaction.guildId}
+            SELECT *
+            FROM infractions
+            WHERE infraction_id = ${id}
+              AND guild_id = ${interaction.guildId}
         `) as Infraction;
 
         const { error, success } = config.emojis;
@@ -241,19 +242,19 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
 
     if (!cachedInfractions) {
         infractions = await allQuery<MinimalInfraction>(`
-			SELECT infraction_id,
-				   executor_id,
-				   created_at,
-				   reason,
-				   deleted_by,
-				   deleted_at,
-				   flag,
-				   expires_at,
-				   action
-			FROM infractions
-			WHERE target_id = ${user.id}
-			  AND guild_id = ${interaction.guildId}
-			ORDER BY created_at DESC
+            SELECT infraction_id,
+                   executor_id,
+                   created_at,
+                   reason,
+                   deleted_by,
+                   deleted_at,
+                   flag,
+                   expires_at,
+                   action
+            FROM infractions
+            WHERE target_id = ${user.id}
+              AND guild_id = ${interaction.guildId}
+            ORDER BY created_at DESC
         `) || [];
     }
 
@@ -342,12 +343,12 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
 
     try {
         await runQuery(`
-			UPDATE infractions
-			SET reason     = '${newReason}',
-				updated_at = ${currentTimestamp()},
-				updated_by = ${interaction.user.id}
-			WHERE infraction_id = ${infractionId}
-			  AND guild_id = ${interaction.guildId};
+            UPDATE infractions
+            SET reason     = '${newReason}',
+                updated_at = ${currentTimestamp()},
+                updated_by = ${interaction.user.id}
+            WHERE infraction_id = ${infractionId}
+              AND guild_id = ${interaction.guildId};
         `);
     } catch (err) {
         console.error(err);
@@ -392,7 +393,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
     const duration = Math.floor(ms(strDuration) / 1000);
     const now = currentTimestamp();
 
-    if (infraction.action !== InfractionAction.Mute) throw "You can only update the duration of mute infractions";
+    if (infraction.action !== InfractionPunishment.Mute) throw "You can only update the duration of mute infractions";
 
     const offender = await interaction.guild!.members.fetch(infraction.target_id);
     if (!offender.isCommunicationDisabled()) throw "This user does not have an active mute";
@@ -402,12 +403,12 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
     try {
         await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.infraction_id})`);
         await runQuery(`
-			UPDATE infractions
-			SET expires_at = ${expiresAt},
-				updated_at = ${now},
-				updated_by = ${interaction.user.id}
-			WHERE infraction_id = ${infraction.infraction_id}
-			  AND guild_id = ${interaction.guildId};
+            UPDATE infractions
+            SET expires_at = ${expiresAt},
+                updated_at = ${now},
+                updated_by = ${interaction.user.id}
+            WHERE infraction_id = ${infraction.infraction_id}
+              AND guild_id = ${interaction.guildId};
         `);
     } catch (err) {
         console.error(err);
@@ -448,11 +449,11 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
 async function handleInfractionDeletion(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
     try {
         await runQuery(`
-			UPDATE infractions
-			SET deleted_at = ${currentTimestamp()},
-				deleted_by = ${interaction.user.id}
-			WHERE infraction_id = ${infractionId}
-			  AND guild_id = ${interaction.guildId};
+            UPDATE infractions
+            SET deleted_at = ${currentTimestamp()},
+                deleted_by = ${interaction.user.id}
+            WHERE infraction_id = ${infractionId}
+              AND guild_id = ${interaction.guildId};
         `);
     } catch (err) {
         console.error(err);

@@ -1,7 +1,7 @@
 import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "discord.js";
-import { InteractionResponseType } from "../interaction.types";
+import { InteractionResponseType } from "../../types/interactions";
 import { formatReason, formatTimestamp } from "../../utils";
-import { muteMember } from "../../utils/moderationUtils";
+import { muteMember } from "../../utils/moderation";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";

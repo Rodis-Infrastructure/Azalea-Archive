@@ -5,7 +5,7 @@ import {
     PermissionFlagsBits
 } from "discord.js";
 
-import { InteractionResponseType } from "../../../interactions/interaction.types";
+import { InteractionResponseType } from "../../../types/interactions";
 import Config from "../../../utils/config";
 
 type CustomChatInputCommandProperties = ChatInputApplicationCommandData & {

@@ -6,8 +6,8 @@ import {
     GuildTextBasedChannel
 } from "discord.js";
 
-import { purgeMessages, validateModerationAction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
+import { purgeMessages, validateModerationAction } from "../../utils/moderation";
+import { InteractionResponseType } from "../../types/interactions";
 import { pluralize } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";

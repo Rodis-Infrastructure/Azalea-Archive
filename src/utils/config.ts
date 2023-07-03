@@ -8,9 +8,9 @@ import {
     userMention
 } from "discord.js";
 
-import { CommandInteraction, InteractionResponseType } from "../interactions/interaction.types";
-import { ConfigData, LoggingEvent, PermissionData } from "./utils.types";
-import { Infraction } from "../db/db.types";
+import { CommandInteraction, InteractionResponseType } from "../types/interactions";
+import { ConfigData, LoggingEvent, PermissionData } from "../types/config";
+import { Infraction } from "../types/database";
 import { formatReason } from "./index";
 
 import ClientManager from "../client";

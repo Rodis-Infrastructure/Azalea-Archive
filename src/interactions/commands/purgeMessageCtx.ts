@@ -1,6 +1,6 @@
 import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
-import { purgeMessages, validateModerationAction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
+import { purgeMessages, validateModerationAction } from "../../utils/moderation";
+import { InteractionResponseType } from "../../types/interactions";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";

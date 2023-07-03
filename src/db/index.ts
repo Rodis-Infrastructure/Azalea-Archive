@@ -1,4 +1,4 @@
-import { Infraction, InfractionAction, InfractionFlag } from "./db.types";
+import { Infraction, InfractionFlag, InfractionPunishment } from "../types/database";
 import { stringify } from "../utils";
 import { Database } from "sqlite3";
 
@@ -38,7 +38,7 @@ export function allQuery<T>(query: string): Promise<T[]> {
 export async function storeInfraction(data: {
     executorId: string;
     targetId: string;
-    action: InfractionAction;
+    action: InfractionPunishment;
     guildId: string;
     requestAuthorId?: string;
     expiresAt?: number | null;
@@ -75,7 +75,7 @@ export async function storeInfraction(data: {
 
     // @formatter:on
     if (infraction) {
-        if (action === InfractionAction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.infraction_id);
+        if (action === InfractionPunishment.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.infraction_id);
         const { data: infractions } = ClientManager.cache.infractions.get(targetId) || {};
 
         infractions?.push({

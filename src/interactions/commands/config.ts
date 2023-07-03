@@ -7,7 +7,7 @@ import {
     EmbedBuilder
 } from "discord.js";
 
-import { InteractionResponseType } from "../interaction.types";
+import { InteractionResponseType } from "../../types/interactions";
 import { JsonMap, stringify } from "@iarna/toml";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";

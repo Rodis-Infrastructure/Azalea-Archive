@@ -1,5 +1,5 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { Cache, CachedInfractions, CachedMessage } from "./utils/utils.types";
+import { Cache, CachedInfractions, CachedMessage } from "./types/cache";
 import { loadListeners } from "./handlers/listeners/loader";
 
 import SelectMenuHandler from "./handlers/interactions/select_menus/manager";

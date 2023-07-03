@@ -7,10 +7,10 @@ import {
     StringSelectMenuInteraction
 } from "discord.js";
 
-import { InteractionCustomIdFilter } from "../../../interactions/interaction.types";
-import { LoggingEvent, RolePermission } from "../../../utils/utils.types";
+import { InteractionCustomIdFilter } from "../../../types/interactions";
+import { LoggingEvent, RolePermission } from "../../../types/config";
 import { formatCustomId, validateCustomId } from "../../../utils";
-import { sendLog } from "../../../utils/loggingUtils";
+import { sendLog } from "../../../utils/logging";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 

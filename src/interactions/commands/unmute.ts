@@ -5,9 +5,9 @@ import {
     GuildMember
 } from "discord.js";
 
-import { muteExpirationTimestamp, resolveInfraction, validateModerationAction } from "../../utils/moderationUtils";
-import { InteractionResponseType } from "../interaction.types";
-import { InfractionType } from "../../utils/utils.types";
+import { muteExpirationTimestamp, resolveInfraction, validateModerationAction } from "../../utils/moderation";
+import { InteractionResponseType } from "../../types/interactions";
+import { InfractionPunishment } from "../../types/database";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
@@ -72,9 +72,9 @@ export default class UnmuteCommand extends ChatInputCommand {
             await offender.timeout(null);
             await resolveInfraction({
                 guildId: interaction.guildId!,
-                infractionType: InfractionType.Unmute,
-                offender: offender.user,
-                moderator: interaction.user
+                punishment: InfractionPunishment.Unmute,
+                target: offender.user,
+                executor: interaction.user
             });
         } catch (err) {
             console.log(err);
