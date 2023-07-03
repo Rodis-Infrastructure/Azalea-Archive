@@ -14,10 +14,18 @@ import ContextMenuCommand from "../handlers/interactions/commands/ContextMenuCom
 
 export type InteractionCustomIdFilter = string | { startsWith: string } | { endsWith: string } | { includes: string };
 
+export enum InfractionSubcommand {
+    Info = "info",
+    Search = "search",
+    Delete = "delete",
+    Reason = "reason",
+    Duration = "duration",
+}
+
 export enum InteractionResponseType {
     Default = 0,
     Defer = 1,
-    EphemeralDefer = 2,
+    DeferUpdate = 2,
 }
 
 export enum RolePermission {
@@ -38,11 +46,27 @@ export enum InfractionType {
     Unban = "Member Unbanned",
     Kick = "Member Kicked",
     Mute = "Member Muted",
-    Unmute = "Member Unmuted"
+    Unmute = "Member Unmuted",
+    Note = "Note Added",
+}
+
+export enum InfractionAction {
+    Note = 1,
+    Mute = 2,
+    Kick = 3,
+    Ban = 4,
+    Unban = 5
+}
+
+export enum InfractionFlag {
+    Automatic = 1,
+    Quick = 2,
 }
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
     guildStaff?: boolean
+    manageInfractions?: boolean
+    viewModerationActivity?: boolean
 }
 
 type LoggingData =
@@ -63,24 +87,59 @@ interface EmojiData {
     purgeMessages?: string
 }
 
-interface ChannelData {
-    staffCommands?: string
+export interface InfractionCount {
+    note: number;
+    mute: number;
+    kick: number;
+    ban: number;
+}
+
+export interface Infraction {
+    infractionId: number;
+    targetId: string;
+    requestAuthorId?: string;
+    updatedBy?: string;
+    deletedBy?: string;
+    deletedAt?: number;
+    updatedAt?: number;
+    executorId: string;
+    createdAt: number;
+    expiresAt?: number;
+    action: number;
+    flag?: number;
+    reason?: string;
+}
+
+export type MinimalInfraction = Pick<Infraction, "infractionId" | "createdAt" | "reason" | "executorId" | "flag" | "deletedAt" | "deletedBy" | "expiresAt" | "action">;
+
+export enum InfractionFilter {
+    All = "All",
+    Automatic = "Automatic",
+    Deleted = "Deleted",
 }
 
 export interface ConfigData {
     deleteMessageSecondsOnBan?: number
+    confirmationChannel?: string
     ephemeralResponses?: ToggleableProperty
-    roles?: Array<PermissionData & Record<"id", string>>,
-    groups?: Array<PermissionData & Record<"roleIds", string[]>>,
-    logging?: LoggingData,
-    emojis?: EmojiData,
-    channels?: ChannelData
+    roles?: Array<PermissionData & Record<"id", string>>
+    groups?: Array<PermissionData & Record<"roleIds", string[]>>
+    logging?: LoggingData
+    emojis?: EmojiData
+    userFlags?: UserFlag[]
+}
+
+interface UserFlag {
+    name: string;
+    roleIds: string[];
 }
 
 export type InfractionData = {
     moderator: User,
     offender: User,
     guildId: string,
+    requestAuthor?: User,
+    flag?: InfractionFlag,
     reason?: string | null
 } & (
     { infractionType: InfractionType.Mute, duration: number } |
@@ -99,6 +158,7 @@ export interface CustomComponentProperties {
     name: InteractionCustomIdFilter;
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
+    ephemeral?: boolean;
 }
 
 export interface Cache {
@@ -111,6 +171,20 @@ export interface Cache {
             data: string[];
         }
     }
+    activeMutes: Collection<string, number>;
+    infractions: Collection<string, CachedInfractions>;
+}
+
+export interface CachedInfractions {
+    messages: Collection<string, CachedInfractionSearchMessage>;
+    data: MinimalInfraction[];
+    timeout?: NodeJS.Timeout;
+}
+
+interface CachedInfractionSearchMessage {
+    filter: InfractionFilter | null;
+    authorId: string;
+    page: number;
 }
 
 export interface CachedMessage {
@@ -118,12 +192,6 @@ export interface CachedMessage {
     channelId: string;
     guildId: string;
     createdAt: number;
-}
-
-export interface CustomModalProperties {
-    name: InteractionCustomIdFilter;
-    skipInternalUsageCheck: boolean;
-    ephemeral: boolean;
 }
 
 export type Command = ChatInputCommand | ContextMenuCommand;

@@ -11,12 +11,12 @@ export default class PurgeMessageCtxCommand extends ContextMenuCommand {
         super({
             name: "Purge messages",
             type: ApplicationCommandType.Message,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false
         });
     }
 
-    async execute(interaction: MessageContextMenuCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: MessageContextMenuCommandInteraction, _: never, config: Config): Promise<void> {
         const { success, error } = config.emojis;
         const { author, member } = interaction.targetMessage;
 
@@ -28,7 +28,10 @@ export default class PurgeMessageCtxCommand extends ContextMenuCommand {
             });
 
             if (notModerateableReason) {
-                await interaction.editReply(`${error} ${notModerateableReason}`);
+                await interaction.reply({
+                    content: `${error} ${notModerateableReason}`,
+                    ephemeral: true
+                });
                 return;
             }
         }
@@ -42,13 +45,23 @@ export default class PurgeMessageCtxCommand extends ContextMenuCommand {
             });
 
             if (!purgedMessages) {
-                await interaction.editReply(`${error} There are no messages to purge.`);
+                await interaction.reply({
+                    content: `${error} There are no messages to purge.`,
+                    ephemeral: true
+                });
                 return;
             }
 
-            await interaction.editReply(`${success} Successfully purged \`${purgedMessages}\` messages by **${author.tag}**.`);
-        } catch {
-            await interaction.editReply(`${error} Failed to purge messages.`);
+            await interaction.reply({
+                content: `${success} Successfully purged \`${purgedMessages}\` messages by **${author.tag}**.`,
+                ephemeral: true
+            });
+        } catch (err) {
+            console.error(err);
+            await interaction.reply({
+                content: `${error} Failed to purge messages.`,
+                ephemeral: true
+            });
         }
     }
 }

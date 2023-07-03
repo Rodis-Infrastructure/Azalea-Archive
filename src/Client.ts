@@ -1,4 +1,5 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { Cache, CachedInfractions, CachedMessage } from "./utils/Types";
 import { loadListeners } from "./handlers/listeners/Loader";
 
 import ButtonHandler from "./handlers/interactions/buttons/Manager";
@@ -8,7 +9,6 @@ import SelectMenuHandler from "./handlers/interactions/select_menus/Manager";
 import Config from "./utils/Config";
 
 import "dotenv/config";
-import { Cache, CachedMessage } from "./utils/Types";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
@@ -20,6 +20,8 @@ class ClientManager {
     public buttons = new ButtonHandler();
     public modals = new ModalHandler();
     public cache: Cache = {
+        activeMutes: new Collection<string, number>(),
+        infractions: new Collection<string, CachedInfractions>(),
         messages: {
             store: new Collection<string, CachedMessage>(),
             remove: new Set<string>(),

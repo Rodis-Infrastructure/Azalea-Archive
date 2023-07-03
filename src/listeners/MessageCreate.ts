@@ -8,7 +8,7 @@ export default class MessageCreateEventListener extends EventListener {
         super(Events.MessageCreate);
     }
 
-    async execute(message: Message): Promise<void> {
+    execute(message: Message): void {
         if (!message.author.bot) cacheMessage(message);
     }
 }

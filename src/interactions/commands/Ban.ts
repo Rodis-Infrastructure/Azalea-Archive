@@ -4,6 +4,7 @@ import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { formatReason } from "../../utils";
 
 export default class BanCommand extends ChatInputCommand {
     constructor() {
@@ -11,7 +12,7 @@ export default class BanCommand extends ChatInputCommand {
             name: "ban",
             description: "Ban a user from the guild.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -30,7 +31,7 @@ export default class BanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const user = interaction.options.getUser("user", true);
         const [member, isBanned] = await Promise.all([
             interaction.guild!.members.fetch(user.id),
@@ -51,13 +52,19 @@ export default class BanCommand extends ChatInputCommand {
             });
 
             if (notModerateableReason) {
-                await interaction.editReply(`${error} ${notModerateableReason}`);
+                await interaction.reply({
+                    content: `${error} ${notModerateableReason}`,
+                    ephemeral
+                });
                 return;
             }
         }
 
         if (isBanned) {
-            await interaction.editReply(`${error} This user has already been banned.`);
+            await interaction.reply({
+                content: `${error} This user has already been banned.`,
+                ephemeral
+            });
             return;
         }
 
@@ -68,23 +75,38 @@ export default class BanCommand extends ChatInputCommand {
         /* Maximum value */
         if (deleteMessageSeconds > 604800) deleteMessageSeconds = 604800;
 
+        const reason = interaction.options.getString("reason") ?? undefined;
+
         try {
-            const reason = interaction.options.getString("reason") ?? undefined;
-
             await interaction.guild!.members.ban(user, { deleteMessageSeconds, reason });
-            await Promise.all([
-                resolveInfraction({
-                    infractionType: InfractionType.Ban,
-                    moderator: interaction.user,
-                    offender: user,
-                    guildId: interaction.guildId!,
-                    reason
-                }),
-
-                interaction.editReply(`${success} Successfully banned **${user.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
-            ]);
-        } catch {
-            await interaction.editReply(`${error} An error has occurred while trying to ban this user.`);
+        } catch (err) {
+            console.error(err);
+            await interaction.reply({
+                content: `${error} An error has occurred while trying to ban this user.`,
+                ephemeral
+            });
+            return;
         }
+
+        await Promise.all([
+            interaction.reply({
+                content: `${success} Successfully banned **${user.tag}**${formatReason(reason)}`,
+                ephemeral
+            }),
+            config.sendConfirmation({
+                guild: interaction.guild!,
+                authorId: interaction.user.id,
+                message: `banned **${user.tag}**`,
+                channelId: interaction.channelId,
+                reason
+            }),
+            resolveInfraction({
+                infractionType: InfractionType.Ban,
+                moderator: interaction.user,
+                offender: user,
+                guildId: interaction.guildId!,
+                reason
+            })
+        ]);
     }
 }

@@ -4,6 +4,7 @@ import { RolePermission } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
 import ClientManager from "../Client";
+import { formatTimestamp } from "../utils";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {
@@ -19,19 +20,17 @@ export default class MessageReactionAddEventListener extends EventListener {
         const config = ClientManager.config(reaction.message.guildId!)!;
         const member = await message.guild.members.fetch(user.id);
 
-        if (!config.isGuildStaff(member)) return;
-
         const emojiId = emoji.id ?? emoji.name ?? "N/A";
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         /* Quick mutes - 30 minutes and 1 hour */
-        if (config.emojis.quickMute30?.includes(emojiId) || config.emojis.quickMute60?.includes(emojiId)) {
+        if (emojis.quickMute30?.includes(emojiId) || emojis.quickMute60?.includes(emojiId)) {
             if (!message.member) return;
 
             let muteDuration = "30m";
             let emojiName = "quickMute30";
 
-            if (config.emojis.quickMute60?.includes(emojiId)) {
+            if (emojis.quickMute60?.includes(emojiId)) {
                 muteDuration = "60m";
                 emojiName = "quickMute60";
             }
@@ -49,29 +48,35 @@ export default class MessageReactionAddEventListener extends EventListener {
                 reason
             });
 
-            const confirmationChannelId = config.channels.staffCommands;
-            if (!confirmationChannelId) return;
-
-            const confirmationChannel = await message.guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-            if (!confirmationChannel) return;
-
-            await reaction.remove();
-
             /* The result is the mute's expiration timestamp */
             if (typeof res === "number") {
                 await Promise.all([
-                    confirmationChannel.send(`${success} **${user.tag}** has successfully muted **${message.author?.tag}** until <t:${res}:F> | Expires <t:${res}:R> (\`${reason}\`)`),
+                    config.sendConfirmation({
+                        guild: message.guild,
+                        message: `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
+                        authorId: user.id,
+                        reason
+                    }),
                     message.delete().catch(() => null)
                 ]);
+
                 return;
             }
 
             /* The result is an error message */
-            await confirmationChannel.send(`${config.emojis.error} ${user} ${res}`);
+            await Promise.all([
+                reaction.remove(),
+                config.sendConfirmation({
+                    guild: message.guild,
+                    message: `${emojis.error} ${user} ${res}`,
+                    full: true
+                })
+            ]);
+
             return;
         }
 
-        if (config.emojis.purgeMessages?.includes(emojiId)) {
+        if (emojis.purgeMessages?.includes(emojiId)) {
             if (!config.actionAllowed(member, {
                 permission: RolePermission.Reaction,
                 requiredValue: "purgeMessages"
@@ -85,13 +90,12 @@ export default class MessageReactionAddEventListener extends EventListener {
                 });
 
                 if (notModerateableReason) {
-                    const confirmationChannelId = config.channels.staffCommands;
-                    if (!confirmationChannelId) return;
+                    await config.sendConfirmation({
+                        guild: message.guild,
+                        message: `${emojis.error} ${user} ${notModerateableReason}`,
+                        full: true
+                    });
 
-                    const confirmationChannel = await message.guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-                    if (!confirmationChannel) return;
-
-                    confirmationChannel.send(`${error} ${user} ${notModerateableReason}`);
                     return;
                 }
             }

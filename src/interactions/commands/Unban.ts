@@ -4,6 +4,7 @@ import { InfractionType, InteractionResponseType } from "../../utils/Types";
 
 import ChatInputCommand from "../../handlers/interactions/commands/ChatInputCommand";
 import Config from "../../utils/Config";
+import { formatReason } from "../../utils";
 
 export default class UnbanCommand extends ChatInputCommand {
     constructor() {
@@ -11,7 +12,7 @@ export default class UnbanCommand extends ChatInputCommand {
             name: "unban",
             description: "Unbans a banned user.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Defer,
+            defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -30,7 +31,7 @@ export default class UnbanCommand extends ChatInputCommand {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const offender = interaction.options.getUser("user", true);
         const banInfo = await interaction.guild!.bans.fetch(offender.id)
             .catch(() => null);
@@ -38,27 +39,45 @@ export default class UnbanCommand extends ChatInputCommand {
         const { success, error } = config.emojis;
 
         if (!banInfo) {
-            await interaction.editReply(`${error} This user is not banned.`);
+            await interaction.reply({
+                content: `${error} This user is not banned.`,
+                ephemeral
+            });
             return;
         }
 
+        const reason = interaction.options.getString("reason") ?? undefined;
+
         try {
-            const reason = interaction.options.getString("reason") ?? undefined;
-
             await interaction.guild!.members.unban(offender, reason);
-            await Promise.all([
-                resolveInfraction({
-                    infractionType: InfractionType.Unban,
-                    moderator: interaction.user,
-                    offender,
-                    guildId: interaction.guildId!,
-                    reason
-                }),
-
-                interaction.editReply(`${success} Successfully unbanned **${offender.tag}**${reason ? ` (\`${reason}\`)` : ""}`)
-            ]);
-        } catch {
-            await interaction.editReply(`${error} An error has occurred while trying to unban this user.`);
+            await resolveInfraction({
+                infractionType: InfractionType.Unban,
+                moderator: interaction.user,
+                offender,
+                guildId: interaction.guildId!,
+                reason
+            });
+        } catch (err) {
+            console.error(err);
+            await interaction.reply({
+                content: `${error} An error has occurred while trying to execute this interaction`,
+                ephemeral
+            });
+            return;
         }
+
+        await Promise.all([
+            interaction.reply({
+                content: `${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`,
+                ephemeral
+            }),
+            config.sendConfirmation({
+                guild: interaction.guild!,
+                message: `unbanned **${offender.tag}**`,
+                authorId: interaction.user.id,
+                channelId: interaction.channelId,
+                reason
+            })
+        ]);
     }
 }

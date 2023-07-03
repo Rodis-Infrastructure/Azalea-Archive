@@ -1,7 +1,8 @@
-import { codeBlock, Collection, GuildTextBasedChannel, Message } from "discord.js";
+import { codeBlock, Collection, GuildTextBasedChannel, Message, userMention } from "discord.js";
 import { LogData } from "./Types";
 
 import ClientManager from "../Client";
+import { elipsify, pluralize } from "./index";
 
 export async function sendLog(data: LogData): Promise<string | void> {
     const { event, channel, guildId, options } = data;
@@ -23,7 +24,7 @@ export async function sendLog(data: LogData): Promise<string | void> {
     return message.url;
 }
 
-export async function linkToLog(data: {
+export async function linkToPurgeLog(data: {
     channel: GuildTextBasedChannel,
     content: string | Collection<string, Message>,
     url: string | void
@@ -36,14 +37,14 @@ export async function linkToLog(data: {
     if (typeof content !== "string" && !content.some(({ id }) => cache.data.includes(id))) return;
 
     const config = ClientManager.config(channel.guildId)!;
-    const confirmationChannelId = config.channels.staffCommands;
-    if (!confirmationChannelId) return;
-
-    const confirmationChannel = await channel.guild?.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-    if (!confirmationChannel) return;
 
     if (!url) {
-        confirmationChannel.send(`${config.emojis.error} <@${cache.moderatorId}> Failed to retrieve the log's URL`);
+        await config.sendConfirmation({
+            message: `${config.emojis.error} ${userMention(cache.moderatorId)} failed to retrieve the log's URL`,
+            guild: channel.guild,
+            full: true
+        });
+
         ClientManager.cache.messages.purged = undefined;
         return;
     }
@@ -53,20 +54,20 @@ export async function linkToLog(data: {
         : "";
 
     const amount = typeof content === "string" ? 1 : content.size;
-    const plural = amount > 1 ? "s" : "";
+    await config.sendConfirmation({
+        message: `purged \`${amount}\` ${pluralize("message", amount)}${author}: ${url}`,
+        guild: channel.guild,
+        authorId: cache.moderatorId
+    });
 
-    confirmationChannel.send(`${config.emojis.success} <@${cache.moderatorId}> Successfully purged \`${amount}\` message${plural}${author}: ${url}`);
     ClientManager.cache.messages.purged = undefined;
 }
 
 export function formatLogContent(content: string): string {
     if (!content) return "No message content.";
 
-    const MAX_CONTENT_LENGTH = 900;
     let formatted = content.replaceAll("```", "\\`\\`\\`");
-
-    const lengthDiff = formatted.length - MAX_CONTENT_LENGTH;
-    if (lengthDiff > 0) formatted = `${formatted.slice(0, MAX_CONTENT_LENGTH)}...(${lengthDiff} more characters)`;
+    formatted = elipsify(formatted, 1000);
 
     return codeBlock(formatted);
 }

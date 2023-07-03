@@ -1,6 +1,13 @@
-import { ApplicationCommandType, Collection, Colors, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
+import {
+    ApplicationCommandOptionType,
+    ApplicationCommandType,
+    Collection,
+    Colors,
+    EmbedBuilder,
+    GuildTextBasedChannel
+} from "discord.js";
 
-import { Command, CommandInteraction, InteractionResponseType, LoggingEvent } from "../../../utils/Types";
+import { Command, CommandInteraction, LoggingEvent } from "../../../utils/Types";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { sendLog } from "../../../utils/LoggingUtils";
@@ -60,25 +67,25 @@ export default class CommandHandler {
         }
 
         const usageChannel = interaction.channel as GuildTextBasedChannel;
-        const replyDeferralType = config.ephemeralResponseIn(usageChannel)
-            ? InteractionResponseType.EphemeralDefer
-            : command.data.defer;
+        const ephemeral = await config.applyDeferralState({
+            interaction,
+            state: command.data.defer,
+            skipInternalUsageCheck: command.data.skipInternalUsageCheck,
+            ephemeral: command.data.ephemeral
+        });
 
-        switch (replyDeferralType) {
-            case InteractionResponseType.Defer: {
-                await interaction.deferReply();
-                break;
-            }
-
-            case InteractionResponseType.EphemeralDefer: {
-                await interaction.deferReply({ ephemeral: true });
-            }
+        let subcommand = "";
+        if (
+            interaction.isChatInputCommand() &&
+            interaction.options.data.some(option => option.type === ApplicationCommandOptionType.Subcommand)
+        ) {
+            subcommand = ` ${interaction.options.getSubcommand()}`;
         }
 
         try {
-            await command.execute(interaction, config);
+            await command.execute(interaction, ephemeral, config);
         } catch (err) {
-            console.log(`Failed to execute command: ${command.data.name}`);
+            console.log(`Failed to execute command: ${command.data.name}${subcommand}`);
             console.error(err);
             return;
         }
@@ -86,7 +93,7 @@ export default class CommandHandler {
         const log = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: "Interaction Used", iconURL: "attachment://interaction.png" })
-            .setDescription(`Command \`${command.data.name}\` used by ${interaction.user}`)
+            .setDescription(`Command \`${command.data.name}${subcommand}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Channel",
                 value: `${usageChannel} (\`#${usageChannel.name}\`)`

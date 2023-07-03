@@ -1,10 +1,9 @@
 import { AttachmentBuilder, Collection, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { linkToLog, sendLog } from "../utils/LoggingUtils";
+import { linkToPurgeLog, sendLog } from "../utils/LoggingUtils";
 import { cacheMessage } from "../utils/Cache";
 import { LoggingEvent } from "../utils/Types";
 
 import EventListener from "../handlers/listeners/EventListener";
-import ClientManager from "../Client";
 
 export default class MessageBulkDeleteEventListener extends EventListener {
     constructor() {
@@ -17,13 +16,6 @@ export default class MessageBulkDeleteEventListener extends EventListener {
         messages.forEach(message => {
             cacheMessage(message.id, { deleted: true });
         });
-
-        const config = ClientManager.config(channel.guildId)!;
-        const loggingChannelId = config.loggingChannel(LoggingEvent.Message);
-        if (!loggingChannelId) return;
-
-        const loggingChannel = await channel.guild.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
-        if (!loggingChannel) return;
 
         let content = `${messages.size} Messages purged in #${channel.name} (${channel.id})\n\n`;
         content += messages
@@ -42,7 +34,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             }
         });
 
-        await linkToLog({
+        await linkToPurgeLog({
             channel,
             content: messages,
             url

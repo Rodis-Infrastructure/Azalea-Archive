@@ -1,7 +1,23 @@
-import { GuildMember, GuildTextBasedChannel } from "discord.js";
-import { ConfigData, LoggingEvent, PermissionData } from "./Types";
+import {
+    ButtonInteraction,
+    Guild,
+    GuildMember,
+    GuildTextBasedChannel,
+    ModalSubmitInteraction,
+    SelectMenuInteraction,
+    userMention
+} from "discord.js";
+import {
+    CommandInteraction,
+    ConfigData,
+    Infraction,
+    InteractionResponseType,
+    LoggingEvent,
+    PermissionData
+} from "./Types";
 
 import ClientManager from "../Client";
+import { formatReason } from "./index";
 
 export default class Config {
     // @formatter:off
@@ -10,10 +26,6 @@ export default class Config {
 
     get deleteMessageSecondsOnBan() {
         return this.data.deleteMessageSecondsOnBan ?? 0;
-    }
-
-    get channels() {
-        return this.data.channels ?? {};
     }
 
     get emojis() {
@@ -37,6 +49,10 @@ export default class Config {
 
     private get groups() {
         return this.data.groups ?? [];
+    }
+
+    private get confirmationChannel() {
+        return this.data.confirmationChannel;
     }
 
     bind(guildId: string) {
@@ -134,5 +150,79 @@ export default class Config {
 
     isGuildStaff(member: GuildMember): boolean {
         return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
+    }
+
+    async sendConfirmation(data: {
+        guild: Guild,
+        authorId?: string,
+        message: string,
+        reason?: string | null,
+        full?: boolean,
+        channelId?: string
+    }) {
+        const { guild, authorId, message, reason, full, channelId } = data;
+
+        if (!this.confirmationChannel) return;
+        if (channelId && channelId === this.confirmationChannel) return;
+
+        const confirmationChannelId = this.confirmationChannel;
+        if (!confirmationChannelId) return;
+
+        const confirmationChannel = await guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+        if (!confirmationChannel) return;
+
+        confirmationChannel.send({
+            content: full ? message : `${this.emojis.success} ${userMention(authorId!)} has successfully ${message}${formatReason(reason)}`,
+            allowedMentions: { parse: [] }
+        });
+    }
+
+    canManageInfraction(infraction: Infraction, member: GuildMember): void {
+        const canManage = this.actionAllowed(member, {
+            permission: "manageInfractions",
+            requiredValue: true
+        });
+
+        if (!infraction) throw "Infraction not found";
+        if (!canManage && infraction.executorId !== member.id) throw "You do not have permission to manage this infraction";
+        if (infraction.deletedAt && infraction.deletedBy) throw "This infraction has been deleted and cannot be changed";
+    }
+
+    async applyDeferralState(data: {
+        interaction: ModalSubmitInteraction | ButtonInteraction | SelectMenuInteraction | CommandInteraction,
+        state: InteractionResponseType,
+        skipInternalUsageCheck: boolean
+        ephemeral?: boolean
+    }) {
+        const { interaction, state, skipInternalUsageCheck } = data;
+        const ephemeral = (!skipInternalUsageCheck && this.ephemeralResponseIn(interaction.channel as GuildTextBasedChannel))
+            || data.ephemeral
+            || false;
+
+        switch (state) {
+            case InteractionResponseType.Defer: {
+                await interaction.deferReply({ ephemeral });
+                break;
+            }
+
+            case InteractionResponseType.DeferUpdate: {
+                if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) throw "Cannot defer update on a slash/context menu command";
+                await interaction.deferUpdate();
+            }
+        }
+
+        return ephemeral;
+    }
+
+    userFlags(member: GuildMember): string[] {
+        const flags = [];
+
+        for (const flag of this.data.userFlags || []) {
+            if (member.roles.cache.some(role => flag.roleIds.includes(role.id))) {
+                flags.push(flag.name);
+            }
+        }
+
+        return flags;
     }
 }

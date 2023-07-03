@@ -1,12 +1,19 @@
 deleteMessageSecondsOnBan = 0
+confirmationChannel = "channel-id"
 
 [ephemeralResponses]
 enabled = true
 excludedCategories = ["category-id"]
 excludedChannels = ["channel-id"]
 
+[[userFlags]]
+name = "flag-name"
+roleIds = ["role-id"]
+
 [[groups]]
 guildStaff = false
+manageInfractions = false
+viewModerationActivity = false
 roleIds = ["role-id"]
 selections = ["interaction-name"]
 buttons = ["interaction-name"]
@@ -16,13 +23,12 @@ reactions = ["emoji-name"]
 [[roles]]
 id = "role-id"
 guildStaff = false
+manageInfractions = false
+viewModerationActivity = false
 selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
 reactions = ["emoji-type"]
-
-[channels]
-staffCommands = "channel-id"
 
 [emojis]
 success = "👌"

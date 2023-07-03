@@ -1,9 +1,9 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData, InfractionType, LoggingEvent } from "./Types";
+import { InfractionAction, InfractionData, InfractionFlag, InfractionType, LoggingEvent } from "./Types";
 import { cacheMessage, getCachedMessageIds } from "./Cache";
 import { sendLog } from "./LoggingUtils";
-import { msToString } from "./index";
-import { conn } from "../db";
+import { DURATION_FORMAT_REGEX, formatTimestamp, msToString } from "./index";
+import { allQuery, storeInfraction } from "../db";
 
 import ClientManager from "../Client";
 import Config from "./Config";
@@ -16,17 +16,51 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
         reason,
         guildId,
         infractionType,
-        duration
+        duration,
+        requestAuthor,
+        flag
     } = data;
 
     let color: ColorResolvable = Colors.Red;
     let icon = "memberDelete.png";
+    let dbInfractionType: InfractionAction | null = null;
 
     switch (infractionType) {
-        case InfractionType.Unban:
+        case InfractionType.Ban: {
+            dbInfractionType = InfractionAction.Ban;
+            color = Colors.Blue;
+            break;
+        }
+
+        case InfractionType.Kick: {
+            dbInfractionType = InfractionAction.Kick;
+            break;
+        }
+
+        case InfractionType.Mute: {
+            dbInfractionType = InfractionAction.Mute;
+            color = Colors.Orange;
+            break;
+        }
+
+        case InfractionType.Note: {
+            dbInfractionType = InfractionAction.Note;
+            color = Colors.Yellow;
+            icon = "note.png";
+            break;
+        }
+
+        case InfractionType.Unban: {
+            dbInfractionType = InfractionAction.Unban;
+            icon = "memberCreate.png";
+            color = Colors.Green;
+            break;
+        }
+
         case InfractionType.Unmute:
             icon = "memberCreate.png";
             color = Colors.Green;
+            break;
     }
 
     const log = new EmbedBuilder()
@@ -40,6 +74,21 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
 
     if (duration) log.addFields([{ name: "Duration", value: msToString(duration) }]);
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
+
+    const expiresAt = duration ? Math.floor((Date.now() + duration) / 1000) : null;
+
+    if (dbInfractionType) {
+        await storeInfraction({
+            guildId,
+            infractionType: dbInfractionType,
+            executorId: moderator.id,
+            targetId: offender.id,
+            expiresAt,
+            requestAuthorId: requestAuthor?.id,
+            reason,
+            flag
+        });
+    }
 
     await sendLog({
         event: LoggingEvent.Infraction,
@@ -58,9 +107,10 @@ export async function muteMember(offender: GuildMember, data: {
     config: Config,
     moderator: User,
     duration: string,
-    reason?: string | null
+    reason?: string | null,
+    quick?: boolean
 }): Promise<string | number> {
-    const { config, moderator, duration, reason } = data;
+    const { config, moderator, duration, reason, quick } = data;
 
     const notModerateableReason = validateModerationAction({
         config,
@@ -75,12 +125,12 @@ export async function muteMember(offender: GuildMember, data: {
     if (notModerateableReason) return notModerateableReason;
 
     const expiresAt = await muteExpirationTimestamp(offender);
-    if (expiresAt) return `This member has already been muted until <t:${expiresAt}:F> (expires <t:${expiresAt}:R>).`;
+    if (expiresAt) return `This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`;
 
     let msMuteDuration = ms(duration);
 
     /* Only allow the duration to be given in days, hours, and minutes */
-    if (!duration.match(/^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi) || msMuteDuration <= 0) return "The duration provided is not valid.";
+    if (!duration.match(DURATION_FORMAT_REGEX) || msMuteDuration <= 0) return "The duration provided is not valid.";
     if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {
@@ -90,19 +140,20 @@ export async function muteMember(offender: GuildMember, data: {
             infractionType: InfractionType.Mute,
             offender: offender.user,
             duration: msMuteDuration,
+            flag: quick ? InfractionFlag.Quick : undefined,
             moderator,
             reason
         });
 
         return Math.floor((msMuteDuration + Date.now()) / 1000);
     } catch {
-        return "An error has occurred while trying to mute this member.";
+        return "An error has occurred while trying to execute this interaction";
     }
 }
 
 export function muteExpirationTimestamp(member: GuildMember): number | void {
-    const mutedExpirationTimestamp = member.communicationDisabledUntilTimestamp;
-    if (mutedExpirationTimestamp && mutedExpirationTimestamp >= Date.now()) return Math.floor(mutedExpirationTimestamp / 1000);
+    const msExpiresAt = member.communicationDisabledUntilTimestamp;
+    if (msExpiresAt && msExpiresAt >= Date.now()) return Math.floor(msExpiresAt / 1000);
 }
 
 export function validateModerationAction(data: {
@@ -146,26 +197,22 @@ export async function purgeMessages(data: {
 
         try {
             const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
-            const storedMessages = await new Promise((resolve, reject) => {
-                // @formatter:off
-                conn.all(`
-					DELETE FROM messages
-					WHERE id IN (
-					    SELECT id FROM messages
-                        WHERE channelId = ${channel.id} ${authorCondition} 
-                            AND guildId = ${channel.guildId}
-                            AND id NOT IN (${excludedIds})
-                        ORDER BY createdAt DESC
-                        LIMIT ${messagesToFetch}
-                    )
-					RETURNING CAST(id AS TEXT) AS id;
-                `, (err, rows: { id: string }[]) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            }) as { id: string }[];
 
-            removableMessageIds.push(...storedMessages.map(({ id }) => id));
+            // @formatter:off
+            const storedMessages = await allQuery<{ messageId: string }>(`
+                DELETE FROM messages
+                WHERE messageId IN (
+                    SELECT messageId FROM messages
+                    WHERE channelId = ${channel.id} ${authorCondition} 
+                        AND guildId = ${channel.guildId}
+                        AND messageId NOT IN (${excludedIds})
+                    ORDER BY createdAt DESC
+                    LIMIT ${messagesToFetch}
+                )
+                RETURNING messageId;
+            `);
+
+            removableMessageIds.push(...storedMessages.map(({ messageId }) => messageId));
         } catch (err) {
             console.error(err);
         }

@@ -1,9 +1,17 @@
-import { InteractionCustomIdFilter } from "./Types";
-import { Collection } from "discord.js";
+import {
+    InfractionAction,
+    InfractionCount,
+    InfractionFilter,
+    InfractionFlag,
+    InteractionCustomIdFilter,
+    MinimalInfraction
+} from "./Types";
+import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
 
 import Button from "../handlers/interactions/buttons/Button";
 import Modal from "../handlers/interactions/modals/Modal";
 import SelectMenu from "../handlers/interactions/select_menus/SelectMenu";
+import { formatLogContent } from "./LoggingUtils";
 
 export function msToString(timestamp: number): string {
     const units = [
@@ -16,10 +24,10 @@ export function msToString(timestamp: number): string {
         .map(({ unit, value }) => {
             const count = Math.floor(timestamp / value);
             timestamp %= value;
-            return count && `${count} ${unit}${count > 1 ? "s" : ""}`;
+            return count && `${count} ${pluralize(unit, count)}`;
         })
         .filter(Boolean)
-        .join(" ");
+        .join(" ") || "< 1 minute";
 }
 
 export function validateCustomId<T extends Button | Modal | SelectMenu>(items: Collection<InteractionCustomIdFilter, T>, customId: string): T | undefined {
@@ -40,3 +48,176 @@ export function formatCustomId(customId: InteractionCustomIdFilter): string {
         ? customId
         : Object.values(customId)[0];
 }
+
+export function getActionName(action: InfractionAction) {
+    switch (action) {
+        case InfractionAction.Note:
+            return "Note";
+        case InfractionAction.Mute:
+            return "Mute";
+        case InfractionAction.Kick:
+            return "Kick";
+        case InfractionAction.Ban:
+            return "Ban";
+        case InfractionAction.Unban:
+            return "Unban";
+        default:
+            return "Unknown";
+    }
+}
+
+export function getActionColor(action: InfractionAction) {
+    switch (action) {
+        case InfractionAction.Mute:
+            return Colors.Orange;
+        case InfractionAction.Kick:
+            return Colors.Red;
+        case InfractionAction.Ban:
+            return Colors.Blue;
+        case InfractionAction.Note:
+            return Colors.Yellow;
+        case InfractionAction.Unban:
+            return Colors.Green;
+        default:
+            return Colors.NotQuiteBlack;
+    }
+}
+
+export function getInfractionFlagName(flag: InfractionFlag | number | undefined) {
+    switch (flag) {
+        case InfractionFlag.Automatic:
+            return "Automatic";
+        case InfractionFlag.Quick:
+            return "Quick";
+        default:
+            return "";
+    }
+}
+
+export function elipsify(str: string, length: number) {
+    const maxLength = length - 25;
+    const newStr = str.slice(0, maxLength);
+    return str.length > length
+        ? `${newStr}...(${str.length - newStr.length} more characters)`
+        : str;
+}
+
+export function stringify(str: string | undefined | null): string | null {
+    return str ? `'${str}'` : null;
+}
+
+export function formatReason(reason: string | null | undefined): string {
+    return reason ? ` (\`${reason}\`)` : "";
+}
+
+export function formatTimestamp(timestamp: number | string, type: "d" | "D" | "f" | "F" | "R" | "t" | "T"): string {
+    return `<t:${timestamp}:${type}>`;
+}
+
+export async function referenceLog(message: Message) {
+    const reference = await message.fetchReference();
+    const referenceData = new EmbedBuilder()
+        .setColor(Colors.NotQuiteBlack)
+        .setAuthor({
+            name: "Reference",
+            iconURL: "attachment://reply.png",
+            url: reference.url
+        })
+        .setFields([
+            {
+                name: "Author",
+                value: `${reference.author} (\`${reference.author.id}\`)`
+            },
+            {
+                name: "Content",
+                value: formatLogContent(reference.content)
+            }
+        ]);
+
+    return {
+        embed: referenceData,
+        icon: {
+            attachment: "./icons/reply.png",
+            name: "reply.png"
+        }
+    };
+}
+
+export function currentTimestamp(): number {
+    return Math.floor(Date.now() / 1000);
+}
+
+export function mapInfractionsToFields(data: {
+    infractions: MinimalInfraction[],
+    filter: InfractionFilter | null,
+    page: number
+}): [number, { name: string, value: string }[]] {
+    const { infractions, filter, page } = data;
+    const filteredInfractions = infractions.filter(infraction => {
+        switch (filter) {
+            case InfractionFilter.All:
+                return !infraction.deletedAt && !infraction.deletedBy;
+            case InfractionFilter.Automatic:
+                return infraction.flag === InfractionFlag.Automatic;
+            case InfractionFilter.Deleted:
+                return infraction.deletedAt && infraction.deletedBy;
+            default:
+                return infraction.flag !== InfractionFlag.Automatic
+                    && !infraction.deletedAt
+                    && !infraction.deletedBy;
+        }
+    });
+
+    const fields = filteredInfractions.slice((page * 5) - 5, page * 5).map(infraction => {
+        let flag = getInfractionFlagName(infraction.flag);
+        flag &&= `${flag} `;
+
+        const data = [
+            {
+                key: "Created",
+                val: formatTimestamp(infraction.createdAt, "R")
+            },
+            {
+                key: "Moderator",
+                val: userMention(infraction.executorId)
+            },
+            {
+                key: "Reason",
+                val: elipsify(infraction.reason || "No reason provided", 200)
+            }
+        ];
+
+        if (infraction.expiresAt) {
+            if (infraction.expiresAt > currentTimestamp()) {
+                data.splice(1, 0, {
+                    key: "Expires",
+                    val: formatTimestamp(infraction.expiresAt, "R")
+                });
+            } else {
+                data.splice(1, 0, {
+                    key: "Duration",
+                    val: msToString(infraction.expiresAt - infraction.createdAt)
+                });
+            }
+        }
+
+        return {
+            name: `${flag}${getActionName(infraction.action)} #${infraction.infractionId}`,
+            value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
+        };
+    });
+
+    return [Math.ceil(filteredInfractions.length / 5), fields];
+}
+
+export function pluralize(str: string, count: number) {
+    return count === 1 ? str : `${str}s`;
+}
+
+export function mapInfractionCount(infractions: InfractionCount) {
+    return Object.entries(infractions)
+        .map(([type, count]) => `\`${count}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
+        .join("\n");
+}
+
+export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;

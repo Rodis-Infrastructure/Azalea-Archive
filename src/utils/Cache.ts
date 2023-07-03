@@ -1,5 +1,5 @@
 import { Message } from "discord.js";
-import { conn } from "../db";
+import { runQuery } from "../db";
 
 import ClientManager from "../Client";
 
@@ -44,26 +44,33 @@ export function cacheMessage(message: Message | string, params?: { deleted: bool
 
 export async function processCachedMessages(): Promise<void> {
     const cache = ClientManager.cache.messages;
-    const remove = conn.prepare("DELETE FROM messages WHERE id = ?");
-    const store = conn.prepare(`
-		INSERT INTO messages (id, authorId, channelId, guildId, createdAt)
-		VALUES (?, ?, ?, ?, ?)
-    `);
+    const messagesToRemove = Array.from(cache.remove).join(",");
+    const messagesToInsert = cache.store
+        .map((data, messageId) => `(
+            ${messageId}, 
+            ${data.authorId}, 
+            ${data.channelId}, 
+            ${data.guildId}, 
+            ${data.createdAt}
+        )`)
+        .join(",");
 
-    cache.remove.forEach(message => remove.run(message));
-    cache.store.forEach((data, messageId) => {
-        store.run(
-            messageId,
-            data.authorId,
-            data.channelId,
-            data.guildId,
-            data.createdAt
-        );
-    });
+    if (messagesToRemove) {
+        await runQuery(`
+			DELETE
+			FROM messages
+			WHERE messageId IN (${messagesToRemove});
+        `);
 
-    await store.finalize();
-    await remove.finalize();
+        cache.remove.clear();
+    }
 
-    cache.store.clear();
-    cache.remove.clear();
+    if (messagesToInsert) {
+        await runQuery(`
+			INSERT INTO messages (messageId, authorId, channelId, guildId, createdAt)
+			VALUES ${messagesToInsert};
+        `);
+
+        cache.store.clear();
+    }
 }
