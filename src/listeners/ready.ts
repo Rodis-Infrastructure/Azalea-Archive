@@ -38,17 +38,17 @@ export default class ReadyEventListener extends EventListener {
 
         await ClientManager.commands.publish();
 
-        setInterval(async () => {
+        setInterval(async() => {
             await processCachedMessages();
-        }, ms("15m"));
+        }, ms("30m"));
 
         // Removes old data from the database
-        setInterval(async () => {
+        setInterval(async() => {
             await runQuery(`
 				DELETE
 				FROM messages
 				WHERE ${Date.now()} - created_at > ${ms("24h")}
             `);
-        }, ms("6h"));
+        }, ms("3h"));
     }
 }
