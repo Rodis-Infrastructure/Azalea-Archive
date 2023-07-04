@@ -31,13 +31,14 @@ export default class InfoCommand extends ChatInputCommand {
             options: [{
                 name: "user",
                 description: "The user to get information about.",
-                type: ApplicationCommandOptionType.User
+                type: ApplicationCommandOptionType.User,
+                required: true
             }]
         });
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const user = interaction.options.getUser("user") || interaction.user;
+        const user = interaction.options.getUser("user", true);
         const components = [];
         const flags = [];
 
