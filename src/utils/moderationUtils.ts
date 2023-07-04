@@ -1,6 +1,6 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
 import { InfractionData, InfractionType, LoggingEvent } from "./utils.types";
-import { DURATION_FORMAT_REGEX, formatTimestamp, msToString } from "./index";
+import { formatTimestamp, msToString, MUTE_DURATION_VALIDATION_REGEX } from "./index";
 import { InfractionAction, InfractionFlag } from "../db/db.types";
 import { cacheMessage, getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
@@ -131,7 +131,7 @@ export async function muteMember(offender: GuildMember, data: {
     let msMuteDuration = ms(duration);
 
     /* Only allow the duration to be given in days, hours, and minutes */
-    if (!duration.match(DURATION_FORMAT_REGEX) || msMuteDuration <= 0) return "The duration provided is not valid.";
+    if (!duration.match(MUTE_DURATION_VALIDATION_REGEX) || msMuteDuration <= 0) return "The duration provided is not valid.";
     if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {

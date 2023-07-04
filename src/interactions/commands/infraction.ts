@@ -15,7 +15,6 @@ import {
 
 import {
     currentTimestamp,
-    DURATION_FORMAT_REGEX,
     elipsify,
     formatReason,
     formatTimestamp,
@@ -23,7 +22,8 @@ import {
     getActionName,
     getInfractionFlagName,
     mapInfractionsToFields,
-    msToString
+    msToString,
+    MUTE_DURATION_VALIDATION_REGEX
 } from "../../utils";
 
 import { InfractionSubcommand, InteractionResponseType } from "../interaction.types";
@@ -387,7 +387,7 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
 
 async function handleDurationChange(infraction: Infraction, interaction: ChatInputCommandInteraction): Promise<string> {
     const strDuration = interaction.options.getString("new_duration", true);
-    if (!strDuration.match(DURATION_FORMAT_REGEX)) throw "The duration provided is invalid.";
+    if (!strDuration.match(MUTE_DURATION_VALIDATION_REGEX)) throw "The duration provided is invalid.";
 
     const duration = Math.floor(ms(strDuration) / 1000);
     const now = currentTimestamp();

@@ -215,4 +215,4 @@ export function mapInfractionCount(infractions: InfractionCount) {
         .join("\n");
 }
 
-export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
+export const MUTE_DURATION_VALIDATION_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
