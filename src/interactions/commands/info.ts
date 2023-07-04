@@ -53,11 +53,6 @@ export default class InfoCommand extends ChatInputCommand {
                 iconURL: user.displayAvatarURL(),
                 url: user.displayAvatarURL()
             })
-            .setFields([{
-                name: "Created",
-                value: formatTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
-                inline: true
-            }])
             .setFooter({ text: `ID: ${user.id}` });
 
         if (member) {
@@ -68,18 +63,29 @@ export default class InfoCommand extends ChatInputCommand {
 
             embed.addFields([
                 {
-                    name: "Joined",
-                    value: formatTimestamp(Math.floor(member.joinedTimestamp as number / 1000), "R"),
+                    name: "Nickname",
+                    value: member.displayName,
                     inline: true
                 },
                 {
-                    name: "Nickname",
-                    value: member.displayName,
+                    name: "Created",
+                    value: formatTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
+                    inline: true
+                },
+                {
+                    name: "Joined",
+                    value: formatTimestamp(Math.floor(member.joinedTimestamp as number / 1000), "R"),
                     inline: true
                 }
             ]);
         } else {
             embed.setColor(Colors.Red);
+            embed.setFields({
+                name: "Created",
+                value: formatTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
+                inline: true
+            });
+
             const ban = await interaction.guild!.bans.fetch(user.id)
                 .then(() => true)
                 .catch(() => false);
