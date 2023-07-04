@@ -16,11 +16,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         const { target, reason, changes } = log;
         let { executor } = log;
 
-        if (!executor || !target) {
-            console.error(`Failed to resolve audit log entry [${log.action}]: Missing executor or target.`);
-            return;
-        }
-
+        if (!executor || !target) return;
         if (executor.id === ClientManager.client.user?.id) return;
         if (executor.partial) executor = await executor.fetch();
 
