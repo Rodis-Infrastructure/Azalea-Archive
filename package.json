@@ -2,11 +2,11 @@
   "name": "moderation-bot",
   "version": "1.0.0",
   "description": "The Roblox Discord's Moderation Bot",
-  "main": "src/Client.ts",
+  "main": "src/client.ts",
   "scripts": {
     "build": "tsc",
     "start": "node dist/Client.js",
-    "test": "ts-node src/Client.ts"
+    "test": "ts-node src/client.ts"
   },
   "repository": {
     "type": "git",

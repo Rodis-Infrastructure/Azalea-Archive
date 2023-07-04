@@ -1,17 +1,12 @@
-import {
-    InfractionAction,
-    InfractionCount,
-    InfractionFilter,
-    InfractionFlag,
-    InteractionCustomIdFilter,
-    MinimalInfraction
-} from "./Types";
+import { InfractionAction, InfractionCount, InfractionFlag, MinimalInfraction } from "../db/db.types";
 import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
+import { InteractionCustomIdFilter } from "../interactions/interaction.types";
+import { formatLogContent } from "./loggingUtils";
+import { InfractionFilter } from "./utils.types";
 
-import Button from "../handlers/interactions/buttons/Button";
-import Modal from "../handlers/interactions/modals/Modal";
-import SelectMenu from "../handlers/interactions/select_menus/SelectMenu";
-import { formatLogContent } from "./LoggingUtils";
+import SelectMenu from "../handlers/interactions/select_menus/selectMenu";
+import Button from "../handlers/interactions/buttons/button";
+import Modal from "../handlers/interactions/modals/modal";
 
 export function msToString(timestamp: number): string {
     const units = [
@@ -156,15 +151,15 @@ export function mapInfractionsToFields(data: {
     const filteredInfractions = infractions.filter(infraction => {
         switch (filter) {
             case InfractionFilter.All:
-                return !infraction.deletedAt && !infraction.deletedBy;
+                return !infraction.deleted_at && !infraction.deleted_by;
             case InfractionFilter.Automatic:
                 return infraction.flag === InfractionFlag.Automatic;
             case InfractionFilter.Deleted:
-                return infraction.deletedAt && infraction.deletedBy;
+                return infraction.deleted_at && infraction.deleted_by;
             default:
                 return infraction.flag !== InfractionFlag.Automatic
-                    && !infraction.deletedAt
-                    && !infraction.deletedBy;
+                    && !infraction.deleted_at
+                    && !infraction.deleted_by;
         }
     });
 
@@ -175,11 +170,11 @@ export function mapInfractionsToFields(data: {
         const data = [
             {
                 key: "Created",
-                val: formatTimestamp(infraction.createdAt, "R")
+                val: formatTimestamp(infraction.created_at, "R")
             },
             {
                 key: "Moderator",
-                val: userMention(infraction.executorId)
+                val: userMention(infraction.executor_id)
             },
             {
                 key: "Reason",
@@ -187,22 +182,22 @@ export function mapInfractionsToFields(data: {
             }
         ];
 
-        if (infraction.expiresAt) {
-            if (infraction.expiresAt > currentTimestamp()) {
+        if (infraction.expires_at) {
+            if (infraction.expires_at > currentTimestamp()) {
                 data.splice(1, 0, {
                     key: "Expires",
-                    val: formatTimestamp(infraction.expiresAt, "R")
+                    val: formatTimestamp(infraction.expires_at, "R")
                 });
             } else {
                 data.splice(1, 0, {
                     key: "Duration",
-                    val: msToString(infraction.expiresAt - infraction.createdAt)
+                    val: msToString(infraction.expires_at - infraction.created_at)
                 });
             }
         }
 
         return {
-            name: `${flag}${getActionName(infraction.action)} #${infraction.infractionId}`,
+            name: `${flag}${getActionName(infraction.action)} #${infraction.infraction_id}`,
             value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
         };
     });
