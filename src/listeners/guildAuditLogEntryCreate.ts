@@ -1,6 +1,6 @@
 import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
 import { resolveInfraction } from "../utils/moderation";
-import { InfractionFlag, InfractionPunishment } from "../types/database";
+import { InfractionFlag, InfractionPunishment } from "../types/db";
 import { formatTimestamp } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";

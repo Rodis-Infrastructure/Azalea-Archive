@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
 import { resolveInfraction } from "../../utils/moderation";
-import { InfractionPunishment } from "../../types/database";
+import { InfractionPunishment } from "../../types/db";
 import { formatReason } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";

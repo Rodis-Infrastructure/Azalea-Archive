@@ -1,4 +1,4 @@
-import { MinimalInfraction } from "./database";
+import { MinimalInfraction } from "./db";
 import { InfractionFilter } from "./utils";
 import { Collection } from "discord.js";
 

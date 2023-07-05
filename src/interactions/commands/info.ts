@@ -11,7 +11,7 @@ import {
     inlineCode
 } from "discord.js";
 
-import { InfractionCount, InfractionPunishment } from "../../types/database";
+import { InfractionCount, InfractionPunishment } from "../../types/db";
 import { formatTimestamp, mapInfractionCount } from "../../utils";
 import { InteractionResponseType } from "../../types/interactions";
 import { getQuery } from "../../db";

@@ -1,4 +1,4 @@
-import { InfractionCount, InfractionFlag, InfractionPunishment, MinimalInfraction } from "../types/database";
+import { InfractionCount, InfractionFlag, InfractionPunishment, MinimalInfraction } from "../types/db";
 import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
 import { InteractionCustomIdFilter } from "../types/interactions";
 import { formatLogContent } from "./logging";

@@ -1,5 +1,5 @@
 import { GuildTextBasedChannel, MessageCreateOptions, MessagePayload, User } from "discord.js";
-import { InfractionFlag, InfractionPunishment } from "./database";
+import { InfractionFlag, InfractionPunishment } from "./db";
 import { LoggingEvent } from "./config";
 
 export enum InfractionFilter {

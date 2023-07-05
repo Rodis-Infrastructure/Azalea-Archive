@@ -1,4 +1,4 @@
-import { Infraction, InfractionFlag, InfractionPunishment } from "../types/database";
+import { Infraction, InfractionFlag, InfractionPunishment } from "../types/db";
 import { stringify } from "../utils";
 import { Database } from "sqlite3";
 

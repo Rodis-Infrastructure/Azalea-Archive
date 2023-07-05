@@ -27,7 +27,7 @@ import {
 } from "../../utils";
 
 import { InfractionSubcommand, InteractionResponseType } from "../../types/interactions";
-import { Infraction, InfractionPunishment, MinimalInfraction } from "../../types/database";
+import { Infraction, InfractionPunishment, MinimalInfraction } from "../../types/db";
 import { InfractionFilter } from "../../types/utils";
 import { allQuery, getQuery, runQuery } from "../../db";
 import { sendLog } from "../../utils/logging";

@@ -10,7 +10,7 @@ import {
 
 import { CommandInteraction, InteractionResponseType } from "../types/interactions";
 import { ConfigData, LoggingEvent, PermissionData } from "../types/config";
-import { Infraction } from "../types/database";
+import { Infraction } from "../types/db";
 import { formatReason } from "./index";
 
 import ClientManager from "../client";

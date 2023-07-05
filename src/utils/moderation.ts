@@ -1,7 +1,7 @@
 import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
 import { InfractionData } from "../types/utils";
 import { formatTimestamp, msToString, MUTE_DURATION_VALIDATION_REGEX } from "./index";
-import { InfractionFlag, InfractionPunishment } from "../types/database";
+import { InfractionFlag, InfractionPunishment } from "../types/db";
 import { cacheMessage, getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
 import { sendLog } from "./logging";
