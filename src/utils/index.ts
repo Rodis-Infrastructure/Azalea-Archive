@@ -170,6 +170,8 @@ export function mapInfractionsToFields(data: {
         let flag = getInfractionFlagName(infraction.flag);
         flag &&= `${flag} `;
 
+        /* Remove all URLs */
+        const cleanReason = infraction.reason?.replace(/https?:\/\/.+( |$)/gi, "").trim();
         const data = [
             {
                 key: "Created",
@@ -181,7 +183,7 @@ export function mapInfractionsToFields(data: {
             },
             {
                 key: "Reason",
-                val: elipsify(infraction.reason || "No reason provided", 200)
+                val: elipsify(cleanReason || "No reason provided", 200)
             }
         ];
 
