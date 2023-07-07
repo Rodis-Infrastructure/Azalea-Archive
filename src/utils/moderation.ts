@@ -79,9 +79,8 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
 
     const expiresAt = duration ? Math.floor((Date.now() + duration) / 1000) : null;
-
-    if (punishment !== InfractionPunishment.Unmute) {
-        await storeInfraction({
+    await Promise.all([
+        storeInfraction({
             guildId: guildId,
             action: punishment,
             executorId: executor.id,
@@ -90,20 +89,19 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
             requestAuthorId: requestAuthor?.id,
             reason,
             flag
-        });
-    }
-
-    await sendLog({
-        event: LoggingEvent.Infraction,
-        guildId,
-        options: {
-            embeds: [log],
-            files: [{
-                attachment: `./icons/${icon}`,
-                name: icon
-            }]
-        }
-    });
+        }),
+        sendLog({
+            event: LoggingEvent.Infraction,
+            guildId,
+            options: {
+                embeds: [log],
+                files: [{
+                    attachment: `./icons/${icon}`,
+                    name: icon
+                }]
+            }
+        })
+    ]);
 }
 
 export async function muteMember(offender: GuildMember, data: {

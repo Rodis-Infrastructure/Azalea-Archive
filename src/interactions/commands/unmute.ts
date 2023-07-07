@@ -11,6 +11,7 @@ import { InfractionPunishment } from "../../types/db";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
+import { formatReason } from "../../utils";
 
 export default class UnmuteCommand extends ChatInputCommand {
     constructor() {
@@ -20,12 +21,19 @@ export default class UnmuteCommand extends ChatInputCommand {
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false,
-            options: [{
-                name: "member",
-                description: "The member to unmute",
-                type: ApplicationCommandOptionType.User,
-                required: true
-            }]
+            options: [
+                {
+                    name: "member",
+                    description: "The member to unmute",
+                    type: ApplicationCommandOptionType.User,
+                    required: true
+                },
+                {
+                    name: "reason",
+                    description: "The reason for unmuting this member",
+                    type: ApplicationCommandOptionType.String
+                }
+            ]
         });
     }
 
@@ -67,6 +75,8 @@ export default class UnmuteCommand extends ChatInputCommand {
             return;
         }
 
+        const reason = interaction.options.getString("reason");
+
         try {
             /* Clears the timeout */
             await offender.timeout(null);
@@ -74,7 +84,8 @@ export default class UnmuteCommand extends ChatInputCommand {
                 guildId: interaction.guildId!,
                 punishment: InfractionPunishment.Unmute,
                 target: offender.user,
-                executor: interaction.user
+                executor: interaction.user,
+                reason
             });
         } catch (err) {
             console.log(err);
@@ -87,14 +98,15 @@ export default class UnmuteCommand extends ChatInputCommand {
 
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully unmuted **${offender.user.tag}**`,
+                content: `${success} Successfully unmuted **${offender.user.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
             config.sendConfirmation({
                 guild: interaction.guild!,
                 message: `unmuted **${offender.user.tag}**`,
                 channelId: interaction.channelId,
-                authorId: interaction.user.id
+                authorId: interaction.user.id,
+                reason
             })
         ]);
     }
