@@ -44,7 +44,7 @@ export function formatCustomId(customId: InteractionCustomIdFilter): string {
         : Object.values(customId)[0];
 }
 
-export function getActionName(action: InfractionPunishment) {
+export function getPunishmentType(action: InfractionPunishment) {
     switch (action) {
         case InfractionPunishment.Note:
             return "Note";
@@ -56,12 +56,14 @@ export function getActionName(action: InfractionPunishment) {
             return "Ban";
         case InfractionPunishment.Unban:
             return "Unban";
+        case InfractionPunishment.Unmute:
+            return "Unmute";
         default:
             return "Unknown";
     }
 }
 
-export function getActionColor(action: InfractionPunishment) {
+export function getPunishmentEmbedColor(action: InfractionPunishment) {
     switch (action) {
         case InfractionPunishment.Mute:
             return Colors.Orange;
@@ -72,6 +74,7 @@ export function getActionColor(action: InfractionPunishment) {
         case InfractionPunishment.Note:
             return Colors.Yellow;
         case InfractionPunishment.Unban:
+        case InfractionPunishment.Unmute:
             return Colors.Green;
         default:
             return Colors.NotQuiteBlack;
@@ -197,7 +200,7 @@ export function mapInfractionsToFields(data: {
         }
 
         return {
-            name: `${flag}${getActionName(infraction.action)} #${infraction.infraction_id}`,
+            name: `${flag}${getPunishmentType(infraction.action)} #${infraction.infraction_id}`,
             value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
         };
     });

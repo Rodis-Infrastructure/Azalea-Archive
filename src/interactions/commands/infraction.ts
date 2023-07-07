@@ -18,9 +18,9 @@ import {
     elipsify,
     formatReason,
     formatTimestamp,
-    getActionColor,
-    getActionName,
     getInfractionFlagName,
+    getPunishmentEmbedColor,
+    getPunishmentType,
     mapInfractionsToFields,
     msToString,
     MUTE_DURATION_VALIDATION_REGEX
@@ -569,8 +569,8 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
 
     const flagName = flag ? `${getInfractionFlagName(flag)} ` : "";
     return new EmbedBuilder()
-        .setColor(getActionColor(action))
-        .setTitle(`${flagName}${getActionName(action)} #${infraction_id}`)
+        .setColor(getPunishmentEmbedColor(action))
+        .setTitle(`${flagName}${getPunishmentType(action)} #${infraction_id}`)
         .setFields(fields)
         .setTimestamp(msCreatedAt);
 }
