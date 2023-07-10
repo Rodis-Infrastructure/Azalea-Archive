@@ -19,7 +19,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
 
         let content = `${messages.size} Messages purged in #${channel.name} (${channel.id})\n\n`;
         content += messages
-            .map(message => `[${message.createdAt.toLocaleString("en-GB")}] ${message.author.tag} (${message.author.id})\n${message.content}`)
+            .map(message => `[${message.createdAt.toLocaleString("en-GB")}] ${message.author?.tag} (${message.author?.id})\n${message.content}`)
             .join("\n\n");
 
         const file = new AttachmentBuilder(Buffer.from(content))

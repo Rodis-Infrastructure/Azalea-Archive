@@ -15,7 +15,7 @@ export default class MessageReactionAddEventListener extends EventListener {
         const { emoji, message } = reaction;
 
         if (user.bot || !message.guild) return;
-        if (reaction.partial) await reaction.fetch();
+        if (reaction.partial) await reaction.fetch().catch(() => null);
 
         const config = ClientManager.config(reaction.message.guildId!)!;
         const member = await message.guild.members.fetch(user.id);

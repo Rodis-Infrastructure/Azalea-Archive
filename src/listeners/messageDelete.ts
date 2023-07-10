@@ -43,9 +43,10 @@ export default class MessageDeleteEventListener extends EventListener {
         }];
 
         if (message.reference) {
-            const res = await referenceLog(message);
-            embeds.unshift(res.embed);
-            files.push(res.icon);
+            referenceLog(message).then(res => {
+                embeds.unshift(res.embed);
+                files.push(res.icon);
+            });
         }
 
         const url = await sendLog({
