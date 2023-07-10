@@ -216,7 +216,7 @@ export function pluralize(str: string, count: number) {
 
 export function mapInfractionCount(infractions: InfractionCount) {
     return Object.entries(infractions)
-        .map(([type, count]) => `\`${count}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
+        .map(([type, count]) => `\`${count ?? 0}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
         .join("\n");
 }
 
