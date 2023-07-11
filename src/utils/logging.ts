@@ -57,7 +57,8 @@ export async function linkToPurgeLog(data: {
     await config.sendConfirmation({
         message: `purged \`${amount}\` ${pluralize("message", amount)}${author}: ${url}`,
         guild: channel.guild,
-        authorId: cache.moderatorId
+        authorId: cache.moderatorId,
+        allowMentions: true
     });
 
     ClientManager.cache.messages.purged = undefined;

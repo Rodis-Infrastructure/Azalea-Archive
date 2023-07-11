@@ -3,6 +3,7 @@ import {
     Guild,
     GuildMember,
     GuildTextBasedChannel,
+    MessageMentionTypes,
     ModalSubmitInteraction,
     SelectMenuInteraction,
     userMention
@@ -154,9 +155,10 @@ export default class Config {
         message: string,
         reason?: string | null,
         full?: boolean,
-        channelId?: string
+        channelId?: string,
+        allowMentions?: boolean
     }) {
-        const { guild, authorId, message, reason, full, channelId } = data;
+        const { guild, authorId, message, reason, full, channelId, allowMentions } = data;
 
         if (!this.confirmationChannel) return;
         if (channelId && channelId === this.confirmationChannel) return;
@@ -167,9 +169,10 @@ export default class Config {
         const confirmationChannel = await guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
         if (!confirmationChannel) return;
 
+        const parsedMentions: MessageMentionTypes[] = allowMentions ? ["users"] : [];
         confirmationChannel.send({
             content: full ? message : `${this.emojis.success} ${userMention(authorId!)} has successfully ${message}${formatReason(reason)}`,
-            allowedMentions: { parse: [] }
+            allowedMentions: { parse: parsedMentions }
         });
     }
 
