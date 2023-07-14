@@ -49,16 +49,16 @@ export default class MessageDeleteEventListener extends EventListener {
             });
         }
 
-        const url = await sendLog({
+        const loggedMessage = await sendLog({
             event: LoggingEvent.Message,
             options: { embeds, files },
             channel
-        });
+        }) as Message;
 
         await linkToPurgeLog({
             channel,
             content: message.id,
-            url
+            url: loggedMessage.url
         });
     }
 }

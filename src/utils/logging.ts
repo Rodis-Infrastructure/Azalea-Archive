@@ -4,24 +4,19 @@ import { LogData } from "../types/utils";
 
 import ClientManager from "../client";
 
-export async function sendLog(data: LogData): Promise<string | void> {
+export async function sendLog(data: LogData): Promise<Message | void> {
     const { event, channel, guildId, options } = data;
 
     const config = ClientManager.config(channel?.guildId || guildId!);
     if (channel && !config?.loggingAllowed(event, channel)) return;
 
     const loggingChannelId = config?.loggingChannel(event);
-    if (!loggingChannelId) return;
+    if (!loggingChannelId) throw `Channel ID for event ${event} not configured.`;
 
     const loggingChannel = await ClientManager.client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
 
-    if (!loggingChannel) {
-        console.error(`Logging channel for event ${event} not found.`);
-        return;
-    }
-
-    const message = await loggingChannel.send(options);
-    return message.url;
+    if (!loggingChannel) throw `Logging channel for event ${event} not found.`;
+    return loggingChannel.send(options);
 }
 
 export async function linkToPurgeLog(data: {
