@@ -43,7 +43,7 @@ export default class MessageDeleteEventListener extends EventListener {
         }];
 
         if (message.reference) {
-            referenceLog(message).then(res => {
+            await referenceLog(message).then(res => {
                 embeds.unshift(res.embed);
                 files.push(res.icon);
             });

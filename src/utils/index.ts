@@ -1,5 +1,5 @@
 import { InfractionCount, InfractionFlag, InfractionPunishment, MinimalInfraction } from "../types/db";
-import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
+import { Collection, Colors, EmbedBuilder, hyperlink, Message, userMention } from "discord.js";
 import { InteractionCustomIdFilter } from "../types/interactions";
 import { formatLogContent } from "./logging";
 import { InfractionFilter } from "../types/utils";
@@ -116,10 +116,10 @@ export async function referenceLog(message: Message) {
     const reference = await message.fetchReference();
     const referenceData = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
+        .setDescription(hyperlink("Jump to message", message.url))
         .setAuthor({
             name: "Reference",
-            iconURL: "attachment://reply.png",
-            url: reference.url
+            iconURL: "attachment://reply.png"
         })
         .setFields([
             {

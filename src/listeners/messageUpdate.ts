@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "discord.js";
+import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, hyperlink, Message } from "discord.js";
 import { formatLogContent, sendLog } from "../utils/logging";
 import { LoggingEvent } from "../types/config";
 import { referenceLog } from "../utils";
@@ -25,10 +25,10 @@ export default class MessageDeleteEventListener extends EventListener {
         const channel = newMessage.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
             .setColor(Colors.Orange)
+            .setDescription(hyperlink("Jump to message", newMessage.url))
             .setAuthor({
                 name: "Message Updated",
-                iconURL: "attachment://messageUpdate.png",
-                url: newMessage.url
+                iconURL: "attachment://messageUpdate.png"
             })
             .setFields([
                 {
