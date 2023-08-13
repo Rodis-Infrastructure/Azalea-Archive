@@ -194,7 +194,7 @@ export async function purgeMessages(data: {
 
     if (removableMessageIds.length < amount) {
         const messagesToFetch = amount - removableMessageIds.length;
-        const authorCondition = authorId ? `AND authorId = ${authorId}` : "";
+        const authorCondition = authorId ? `AND author_id = ${authorId}` : "";
 
         try {
             const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
