@@ -140,7 +140,7 @@ export async function muteMember(offender: GuildMember, data: {
 
     if (notModerateableReason) return notModerateableReason;
 
-    const expiresAt = await muteExpirationTimestamp(offender);
+    const expiresAt = muteExpirationTimestamp(offender);
     if (expiresAt) return `This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`;
 
     let msMuteDuration = ms(duration);
