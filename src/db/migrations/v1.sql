@@ -2,41 +2,41 @@ BEGIN EXCLUSIVE;
 
 CREATE TABLE IF NOT EXISTS messages
 (
-    messageId TEXT      NOT NULL PRIMARY KEY,
-    authorId  TEXT      NOT NULL,
-    channelId TEXT      NOT NULL,
-    guildId   TEXT      NOT NULL,
-    createdAt TIMESTAMP NOT NULL
+    message_id TEXT      NOT NULL PRIMARY KEY,
+    author_id  TEXT      NOT NULL,
+    channel_id TEXT      NOT NULL,
+    guild_id   TEXT      NOT NULL,
+    created_at TIMESTAMP NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_created_at ON messages (createdAt);
-CREATE INDEX IF NOT EXISTS idx_channel_messages ON messages (messageId, channelId, guildId, createdAt DESC);
+CREATE INDEX IF NOT EXISTS idx_created_at ON messages (created_at);
+CREATE INDEX IF NOT EXISTS idx_channel_messages ON messages (message_id, channel_id, guild_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS infractions
 (
-    infractionId    INTEGER   NOT NULL PRIMARY KEY AUTOINCREMENT,
-    guildId         TEXT      NOT NULL,
-    executorId      TEXT      NOT NULL,
-    targetId        TEXT      NOT NULL,
-    createdAt       TIMESTAMP NOT NULL DEFAULT (STRFTIME('%s', 'now')),
-    action          TINYINT   NOT NULL,
-    requestAuthorId TEXT,
-    updatedBy       TEXT,
-    deletedBy       TEXT,
-    expiresAt       TIMESTAMP,
-    deletedAt       TIMESTAMP,
-    updatedAt       TIMESTAMP,
-    flag            TINYINT,
-    reason          TEXT CHECK (length(reason) <= 1024)
+    infraction_id     INTEGER   NOT NULL PRIMARY KEY AUTOINCREMENT,
+    guild_id          TEXT      NOT NULL,
+    executor_id       TEXT      NOT NULL,
+    target_id         TEXT      NOT NULL,
+    created_at        TIMESTAMP NOT NULL DEFAULT (STRFTIME('%s', 'now')),
+    action            TINYINT   NOT NULL,
+    request_author_id TEXT,
+    updated_by        TEXT,
+    deleted_by        TEXT,
+    expires_at        TIMESTAMP,
+    deleted_at        TIMESTAMP,
+    updated_at        TIMESTAMP,
+    flag              TINYINT,
+    reason            TEXT CHECK (length(reason) <= 1024)
 );
 
 CREATE INDEX IF NOT EXISTS idx_latest_user_infraction_by_type
-    ON infractions (targetId, guildId, action, infractionId DESC);
+    ON infractions (target_id, guild_id, action, infraction_id DESC);
 
 CREATE INDEX IF NOT EXISTS idx_user_infractions_descending
-    ON infractions (targetId, guildId, createdAt DESC);
+    ON infractions (target_id, guild_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_infraction
-    ON infractions (infractionId, guildId);
+    ON infractions (infraction_id, guild_id);
 
 COMMIT;

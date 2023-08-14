@@ -1,8 +1,8 @@
-import { Database } from "sqlite3";
-import { Infraction, InfractionAction, InfractionFlag } from "../utils/Types";
+import { Infraction, InfractionFlag, InfractionPunishment } from "../types/db";
 import { stringify } from "../utils";
+import { Database } from "sqlite3";
 
-import ClientManager from "../Client";
+import ClientManager from "../client";
 import * as process from "process";
 
 if (!process.env.DB_PATH) throw new Error("No database path provided");
@@ -38,25 +38,25 @@ export function allQuery<T>(query: string): Promise<T[]> {
 export async function storeInfraction(data: {
     executorId: string;
     targetId: string;
-    infractionType: InfractionAction;
+    action: InfractionPunishment;
     guildId: string;
     requestAuthorId?: string;
     expiresAt?: number | null;
     flag?: InfractionFlag;
     reason?: string | null;
 }) {
-    const { guildId, executorId, targetId, infractionType, requestAuthorId, expiresAt, flag, reason } = data;
+    const { guildId, executorId, targetId, action, requestAuthorId, expiresAt, flag, reason } = data;
 
     // @formatter:off
     // Stringified parameters are optional
-    const infraction = await getQuery<Pick<Infraction, "infractionId" | "createdAt">>(`
+    const infraction = await getQuery<Pick<Infraction, "infraction_id" | "created_at">>(`
         INSERT INTO infractions (
-            guildId,
-            executorId,
-            targetId,
+            guild_id,
+            executor_id,
+            target_id,
             action,
-            requestAuthorId,
-            expiresAt,
+            request_author_id,
+            expires_at,
             flag,
             reason
         )
@@ -64,28 +64,28 @@ export async function storeInfraction(data: {
             '${guildId}', 
             '${executorId}', 
             '${targetId}', 
-            ${infractionType}, 
+            ${action}, 
             ${stringify(requestAuthorId)},
             ${expiresAt || null}, 
             ${flag || null},
             ${stringify(reason)}
         )
-        RETURNING infractionId, createdAt;
+        RETURNING infraction_id, created_at;
     `);
 
     // @formatter:on
     if (infraction) {
-        if (infractionType === InfractionAction.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.infractionId);
+        if (action === InfractionPunishment.Mute) ClientManager.cache.activeMutes.set(targetId, infraction.infraction_id);
         const { data: infractions } = ClientManager.cache.infractions.get(targetId) || {};
 
         infractions?.push({
-            infractionId: infraction.infractionId,
-            executorId,
-            action: infractionType,
-            expiresAt: expiresAt || undefined,
-            createdAt: infraction.createdAt,
-            deletedAt: undefined,
-            deletedBy: undefined,
+            infraction_id: infraction.infraction_id,
+            executor_id: executorId,
+            action: action,
+            expires_at: expiresAt || undefined,
+            created_at: infraction.created_at,
+            deleted_at: undefined,
+            deleted_by: undefined,
             reason: reason || undefined,
             flag
         });

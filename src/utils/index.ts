@@ -1,17 +1,12 @@
-import {
-    InfractionAction,
-    InfractionCount,
-    InfractionFilter,
-    InfractionFlag,
-    InteractionCustomIdFilter,
-    MinimalInfraction
-} from "./Types";
-import { Collection, Colors, EmbedBuilder, Message, userMention } from "discord.js";
+import { InfractionCount, InfractionFlag, InfractionPunishment, MinimalInfraction } from "../types/db";
+import { Collection, Colors, EmbedBuilder, hyperlink, Message, userMention } from "discord.js";
+import { InteractionCustomIdFilter } from "../types/interactions";
+import { formatLogContent } from "./logging";
+import { InfractionFilter } from "../types/utils";
 
-import Button from "../handlers/interactions/buttons/Button";
-import Modal from "../handlers/interactions/modals/Modal";
-import SelectMenu from "../handlers/interactions/select_menus/SelectMenu";
-import { formatLogContent } from "./LoggingUtils";
+import SelectMenu from "../handlers/interactions/select_menus/selectMenu";
+import Button from "../handlers/interactions/buttons/button";
+import Modal from "../handlers/interactions/modals/modal";
 
 export function msToString(timestamp: number): string {
     const units = [
@@ -49,34 +44,37 @@ export function formatCustomId(customId: InteractionCustomIdFilter): string {
         : Object.values(customId)[0];
 }
 
-export function getActionName(action: InfractionAction) {
+export function getPunishmentType(action: InfractionPunishment) {
     switch (action) {
-        case InfractionAction.Note:
+        case InfractionPunishment.Note:
             return "Note";
-        case InfractionAction.Mute:
+        case InfractionPunishment.Mute:
             return "Mute";
-        case InfractionAction.Kick:
+        case InfractionPunishment.Kick:
             return "Kick";
-        case InfractionAction.Ban:
+        case InfractionPunishment.Ban:
             return "Ban";
-        case InfractionAction.Unban:
+        case InfractionPunishment.Unban:
             return "Unban";
+        case InfractionPunishment.Unmute:
+            return "Unmute";
         default:
             return "Unknown";
     }
 }
 
-export function getActionColor(action: InfractionAction) {
+export function getPunishmentEmbedColor(action: InfractionPunishment) {
     switch (action) {
-        case InfractionAction.Mute:
+        case InfractionPunishment.Mute:
             return Colors.Orange;
-        case InfractionAction.Kick:
+        case InfractionPunishment.Kick:
             return Colors.Red;
-        case InfractionAction.Ban:
+        case InfractionPunishment.Ban:
             return Colors.Blue;
-        case InfractionAction.Note:
+        case InfractionPunishment.Note:
             return Colors.Yellow;
-        case InfractionAction.Unban:
+        case InfractionPunishment.Unban:
+        case InfractionPunishment.Unmute:
             return Colors.Green;
         default:
             return Colors.NotQuiteBlack;
@@ -118,10 +116,10 @@ export async function referenceLog(message: Message) {
     const reference = await message.fetchReference();
     const referenceData = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
+        .setDescription(hyperlink("Jump to message", message.url))
         .setAuthor({
             name: "Reference",
-            iconURL: "attachment://reply.png",
-            url: reference.url
+            iconURL: "attachment://reply.png"
         })
         .setFields([
             {
@@ -156,15 +154,15 @@ export function mapInfractionsToFields(data: {
     const filteredInfractions = infractions.filter(infraction => {
         switch (filter) {
             case InfractionFilter.All:
-                return !infraction.deletedAt && !infraction.deletedBy;
+                return !infraction.deleted_at && !infraction.deleted_by;
             case InfractionFilter.Automatic:
                 return infraction.flag === InfractionFlag.Automatic;
             case InfractionFilter.Deleted:
-                return infraction.deletedAt && infraction.deletedBy;
+                return infraction.deleted_at && infraction.deleted_by;
             default:
                 return infraction.flag !== InfractionFlag.Automatic
-                    && !infraction.deletedAt
-                    && !infraction.deletedBy;
+                    && !infraction.deleted_at
+                    && !infraction.deleted_by;
         }
     });
 
@@ -172,37 +170,39 @@ export function mapInfractionsToFields(data: {
         let flag = getInfractionFlagName(infraction.flag);
         flag &&= `${flag} `;
 
+        /* Remove all URLs */
+        const cleanReason = infraction.reason?.replace(/https?:\/\/.+( |$)/gi, "").trim();
         const data = [
             {
                 key: "Created",
-                val: formatTimestamp(infraction.createdAt, "R")
+                val: formatTimestamp(infraction.created_at, "R")
             },
             {
                 key: "Moderator",
-                val: userMention(infraction.executorId)
+                val: userMention(infraction.executor_id)
             },
             {
                 key: "Reason",
-                val: elipsify(infraction.reason || "No reason provided", 200)
+                val: elipsify(cleanReason || "No reason provided", 200)
             }
         ];
 
-        if (infraction.expiresAt) {
-            if (infraction.expiresAt > currentTimestamp()) {
+        if (infraction.expires_at) {
+            if (infraction.expires_at > currentTimestamp()) {
                 data.splice(1, 0, {
                     key: "Expires",
-                    val: formatTimestamp(infraction.expiresAt, "R")
+                    val: formatTimestamp(infraction.expires_at, "R")
                 });
             } else {
                 data.splice(1, 0, {
                     key: "Duration",
-                    val: msToString(infraction.expiresAt - infraction.createdAt)
+                    val: msToString(infraction.expires_at - infraction.created_at)
                 });
             }
         }
 
         return {
-            name: `${flag}${getActionName(infraction.action)} #${infraction.infractionId}`,
+            name: `${flag}${getPunishmentType(infraction.action)} #${infraction.infraction_id}`,
             value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
         };
     });
@@ -216,8 +216,8 @@ export function pluralize(str: string, count: number) {
 
 export function mapInfractionCount(infractions: InfractionCount) {
     return Object.entries(infractions)
-        .map(([type, count]) => `\`${count}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
+        .map(([type, count]) => `\`${count ?? 0}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
         .join("\n");
 }
 
-export const DURATION_FORMAT_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
+export const MUTE_DURATION_VALIDATION_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
