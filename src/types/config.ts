@@ -20,6 +20,8 @@ export interface PermissionData extends Partial<Record<RolePermission, string[]>
     guildStaff?: boolean
     manageInfractions?: boolean
     viewModerationActivity?: boolean
+    manageBanRequests?: boolean
+    manageMuteRequests?: boolean
 }
 
 interface ToggleableProperty {
@@ -34,6 +36,13 @@ interface EmojiData {
     quickMute30?: string
     quickMute60?: string
     purgeMessages?: string
+    approveRequest?: string
+    denyRequest?: string
+}
+
+interface ChannelData {
+    banRequestQueue?: string
+    muteRequestQueue?: string
 }
 
 type LoggingData =
@@ -49,4 +58,5 @@ export interface ConfigData {
     logging?: LoggingData
     emojis?: EmojiData
     userFlags?: UserFlag[]
+    channels?: ChannelData
 }

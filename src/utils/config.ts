@@ -32,6 +32,10 @@ export default class Config {
         };
     }
 
+    get channels() {
+        return this.data.channels ?? {};
+    }
+
     private get logging() {
         return this.data.logging;
     }
