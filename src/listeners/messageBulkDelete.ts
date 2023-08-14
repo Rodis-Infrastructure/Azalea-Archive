@@ -41,7 +41,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             event: LoggingEvent.Message,
             channel,
             options: {
-                content: `Purged \`${messages.size}\` messages${author} (in ${channel})`,
+                content: `Purged \`${messages.size}\` messages${author} in ${channel} (\`#${channel.name}\`)`,
                 allowedMentions: { parse: [] },
                 files: [file]
             }
@@ -49,7 +49,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
 
         const attachmentId = message.attachments.first()!.id;
         const jumpUrl = hyperlink("Open in browser", `https://txt.discord.website?txt=${message.channelId}/${attachmentId}/messages&raw=true`);
-        
+
         await Promise.all([
             message.edit(`${message.content}\n\n${jumpUrl}`),
             linkToPurgeLog({
