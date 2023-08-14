@@ -1,5 +1,6 @@
 deleteMessageSecondsOnBan = 0
 confirmationChannel = "channel-id"
+allowedProofChannelIds = ["channel-id"]
 
 [ephemeralResponses]
 enabled = true
@@ -25,10 +26,16 @@ id = "role-id"
 guildStaff = false
 manageInfractions = false
 viewModerationActivity = false
+manageBanRequests = false
+manageMuteRequests = false
 selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]
 reactions = ["emoji-type"]
+
+[channels]
+banRequestQueue = "channel-id"
+muteRequestQueue = "channel-id"
 
 [emojis]
 success = "👌"
@@ -36,6 +43,8 @@ error = "<:emoji-name:emoji-id>"
 quickMute30 = "<:emoji-name:emoji-id>"
 quickMute60 = "<:emoji-name:emoji-id>"
 purgeMessages = "<:emoji-name:emoji-id>"
+approveRequest = "<:emoji-name:emoji-id>"
+denyRequest = "<:emoji-name:emoji-id>"
 
 [logging]
 enabled = true

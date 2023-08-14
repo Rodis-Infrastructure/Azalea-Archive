@@ -16,6 +16,25 @@ will be deleted. If set to `0`, the bot will not delete any messages.
 deleteMessageSecondsOnBan = 0
 ```
 
+### Allowed Proof Channels
+
+Require all message links in infraction evidence to be from specific channels. If set to an empty array, all channels
+will be allowed.
+
+```toml
+allowedProofChannelIds = ["channel-id"]
+```
+
+### Channel Configuration
+
+The `channels` section allows you to configure which channels the bot will perform certain actions in.
+
+```toml
+[channels]
+banRequestQueue = "channel-id"
+muteRequestQueue = "channel-id"
+```
+
 ### Custom Emojis
 
 The `emojis` section enables you to customize the emojis used for the bot's responses. The fields listed below are the
@@ -28,6 +47,8 @@ error = "<:emoji-name:emoji-id>"
 quickMute30 = "<:emoji-name:emoji-id>"
 quickMute60 = "<:emoji-name:emoji-id>"
 purgeMessages = "<:emoji-name:emoji-id>"
+approveRequest = "<:emoji-name:emoji-id>"
+denyRequest = "<:emoji-name:emoji-id>"
 ```
 
 ### Ephemeral Responses
@@ -71,6 +92,8 @@ modals.
 - `guildStaff` - Prevents the user from being given an infraction.
 - `manageInfractions` - Allows the user to modify or delete any infraction.
 - `viewModerationActivity` - Allows the user to view the number of infractions a staff member has given out.
+- `manageBanRequests` - Allows the user to approve or deny ban requests.
+- `manageMuteRequests` - Allows the user to approve or deny mute requests.
 
 #### Role Configuration
 
@@ -80,6 +103,8 @@ id = "role-id"
 guildStaff = false
 manageInfractions = false
 viewModerationActivity = false
+manageBanRequests = false
+manageMuteRequests = false
 selections = []
 buttons = []
 modals = []
