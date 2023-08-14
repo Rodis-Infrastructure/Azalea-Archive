@@ -269,9 +269,11 @@ export async function validateRequest(data: {
     }
 
     // Check if all URLs lead to whitelisted channels
-    const channelIdMatches = Array.from(reason.matchAll(CHANNEL_ID_FROM_URL_REGEX));
-    if (channelIdMatches.some(m => !config.allowedProofChannelIds.includes(m[1]))) {
-        throw "Your request contains links to non-whitelisted channels.";
+    if (config.allowedProofChannelIds.length) {
+        const channelIdMatches = Array.from(reason.matchAll(CHANNEL_ID_FROM_URL_REGEX));
+        if (channelIdMatches.some(m => !config.allowedProofChannelIds.includes(m[1]))) {
+            throw "Your request contains links to non-whitelisted channels.";
+        }
     }
 
     const cache = ClientManager.cache.requests;
