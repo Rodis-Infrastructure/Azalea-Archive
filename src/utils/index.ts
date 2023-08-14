@@ -221,3 +221,5 @@ export function mapInfractionCount(infractions: InfractionCount) {
 }
 
 export const MUTE_DURATION_VALIDATION_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
+export const REQUEST_VALIDATION_REGEX = /^(?:<@!?)?(?<targetId>\d{17,19})>? (?<reason>(?:.|[\n\r])+)/gmi;
+export const CHANNEL_ID_FROM_URL_REGEX = /channels\/\d{17,19}\/(\d{17,19})\/\d{17,19}/gmi;

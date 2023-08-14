@@ -1,5 +1,5 @@
 import { MinimalInfraction } from "./db";
-import { InfractionFilter } from "./utils";
+import { InfractionFilter, RequestType } from "./utils";
 import { Collection } from "discord.js";
 
 export interface Cache {
@@ -14,6 +14,12 @@ export interface Cache {
     }
     activeMutes: Collection<string, number>;
     infractions: Collection<string, CachedInfractions>;
+    requests: Collection<string, CachedRequest>
+}
+
+export interface CachedRequest {
+    targetId: string;
+    requestType: RequestType;
 }
 
 export interface CachedInfractions {

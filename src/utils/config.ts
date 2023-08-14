@@ -21,6 +21,10 @@ export default class Config {
     // eslint-disable-next-line no-empty-function
     constructor(public readonly data: ConfigData) {}
 
+    get allowedProofChannelIds() {
+        return this.data.allowedProofChannelIds ?? [];
+    }
+
     get deleteMessageSecondsOnBan() {
         return this.data.deleteMessageSecondsOnBan ?? 0;
     }

@@ -2,6 +2,11 @@ import { GuildTextBasedChannel, MessageCreateOptions, MessagePayload, User } fro
 import { InfractionFlag, InfractionPunishment } from "./db";
 import { LoggingEvent } from "./config";
 
+export enum RequestType {
+    Ban = "ban",
+    Mute = "mute"
+}
+
 export enum InfractionFilter {
     All = "All",
     Automatic = "Automatic",

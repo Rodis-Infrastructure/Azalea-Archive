@@ -13,7 +13,8 @@ interface UserFlag {
 export enum LoggingEvent {
     Interaction = "interactions",
     Infraction = "infractions",
-    Message = "messages"
+    Message = "messages",
+    Media = "media",
 }
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
@@ -51,6 +52,7 @@ type LoggingData =
 
 export interface ConfigData {
     deleteMessageSecondsOnBan?: number
+    allowedProofChannelIds?: string[]
     confirmationChannel?: string
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>

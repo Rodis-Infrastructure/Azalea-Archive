@@ -1,6 +1,21 @@
-import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData } from "../types/utils";
-import { formatTimestamp, msToString, MUTE_DURATION_VALIDATION_REGEX } from "./index";
+import {
+    ColorResolvable,
+    Colors,
+    EmbedBuilder,
+    GuildMember,
+    GuildTextBasedChannel,
+    Message,
+    User,
+    userMention
+} from "discord.js";
+import { InfractionData, RequestType } from "../types/utils";
+import {
+    CHANNEL_ID_FROM_URL_REGEX,
+    formatTimestamp,
+    msToString,
+    MUTE_DURATION_VALIDATION_REGEX,
+    REQUEST_VALIDATION_REGEX
+} from "./index";
 import { InfractionFlag, InfractionPunishment } from "../types/db";
 import { cacheMessage, getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
@@ -227,4 +242,69 @@ export async function purgeMessages(data: {
 
     const res = await channel.bulkDelete(removableMessageIds);
     return res.size;
+}
+
+export async function validateRequest(data: {
+    requestType: RequestType,
+    message: Message<true>,
+    config: Config
+}) {
+    const { requestType, message, config } = data;
+    const isMuteRequest = requestType === RequestType.Mute;
+
+    if (message.attachments.size && !config.loggingChannel(LoggingEvent.Media)) throw "You cannot add attachments to the request, please link them instead.";
+
+    const { targetId, reason } = REQUEST_VALIDATION_REGEX.exec(message.content)?.groups ?? {};
+    REQUEST_VALIDATION_REGEX.lastIndex = 0;
+
+    if (!targetId || !reason) {
+        throw [
+            "## Invalid request format",
+            `Format: \`{user_id / @user}${isMuteRequest ? "(duration)" : ""} {reason}\``,
+            "Examples:",
+            "- `123456789012345678 Mass spam`",
+            "- `<@123456789012345678> Mass spam`",
+            isMuteRequest ? "- `123456789012345678 2h Mass spam`" : ""
+        ].join("\n");
+    }
+
+    // Check if all URLs lead to whitelisted channels
+    const channelIdMatches = Array.from(reason.matchAll(CHANNEL_ID_FROM_URL_REGEX));
+    if (channelIdMatches.some(m => !config.allowedProofChannelIds.includes(m[1]))) {
+        throw "Your request contains links to non-whitelisted channels.";
+    }
+
+    const cache = ClientManager.cache.requests;
+    const requestMessageId = cache.findKey(v => v.targetId === targetId
+            && v.requestType === requestType);
+
+    if (requestMessageId && requestMessageId !== message.id) {
+        const jumpUrl = `https://discord.com/channels/${message.guildId}/${message.channelId}/${requestMessageId}`;
+        throw `A ${requestType} request for ${userMention(targetId)} has already been submitted: ${jumpUrl}`;
+    }
+
+    if (reason.length > 1024) throw "The reason length cannot exceed 1,024 characters.";
+
+    const target = await message.guild.members.fetch(targetId).catch(() => null);
+    const user = target?.user || await ClientManager.client.users.fetch(targetId).catch(() => null);
+
+    if (!user) throw "The user specified is invalid.";
+    if (user.bot) throw "This action cannot be carried out on bots.";
+    if (target && config.isGuildStaff(target)) throw "This action cannot be carried out on server staff.";
+
+    if (requestType === RequestType.Mute) {
+        if (!target) throw "The member specified is not in the server.";
+        if (target.isCommunicationDisabled()) throw "This member is already muted.";
+    } else {
+        const isBanned = await message.guild.bans.fetch(targetId).catch(() => null);
+        if (isBanned) throw "This user is already banned.";
+    }
+
+    const reaction = message.reactions.cache.filter(r => r.me).first();
+    if (reaction) await reaction.users.remove(ClientManager.client.user?.id);
+
+    cache.set(message.id, {
+        targetId,
+        requestType
+    });
 }

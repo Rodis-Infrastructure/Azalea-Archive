@@ -5,6 +5,7 @@ import { cacheMessage } from "../utils/cache";
 import { referenceLog } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
+import ClientManager from "../client";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -13,7 +14,10 @@ export default class MessageDeleteEventListener extends EventListener {
 
     async execute(message: Message): Promise<void> {
         if (!message.guildId) return;
+
         cacheMessage(message.id, { deleted: true });
+        ClientManager.cache.requests.delete(message.id);
+
         if (!message.content) return;
 
         const channel = message.channel as GuildTextBasedChannel;
