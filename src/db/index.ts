@@ -90,4 +90,6 @@ export async function storeInfraction(data: {
             flag
         });
     }
+
+    return infraction?.infraction_id || null;
 }

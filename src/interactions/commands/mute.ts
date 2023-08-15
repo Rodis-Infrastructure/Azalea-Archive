@@ -56,7 +56,7 @@ export default class MuteCommand extends ChatInputCommand {
 
         const reason = interaction.options.getString("reason");
         const duration = interaction.options.getString("duration") ?? "28d";
-        const res = await muteMember(member, {
+        const [res] = await muteMember(member, {
             config,
             moderator: interaction.user,
             duration,

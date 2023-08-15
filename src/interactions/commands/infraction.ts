@@ -167,7 +167,12 @@ export default class InfractionCommand extends ChatInputCommand {
 
             switch (subcommand) {
                 case InfractionSubcommand.Reason:
-                    response = await handleReasonChange(id, interaction);
+                    response = await handleReasonChange({
+                        infractionId: id,
+                        newReason: interaction.options.getString("new_reason", true),
+                        guildId: interaction.guildId!,
+                        updatedBy: interaction.user
+                    });
                     break;
                 case InfractionSubcommand.Duration:
                     response = await handleDurationChange(infraction, interaction);
@@ -338,17 +343,22 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     }
 }
 
-async function handleReasonChange(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
-    const newReason = interaction.options.getString("new_reason", true);
+export async function handleReasonChange(data: {
+    infractionId: number,
+    updatedBy: User,
+    guildId: string,
+    newReason: string
+}): Promise<string> {
+    const { infractionId, updatedBy, guildId, newReason } = data;
 
     try {
         await runQuery(`
             UPDATE infractions
             SET reason     = '${newReason}',
                 updated_at = ${currentTimestamp()},
-                updated_by = ${interaction.user.id}
+                updated_by = ${updatedBy.id}
             WHERE infraction_id = ${infractionId}
-              AND guild_id = ${interaction.guildId};
+              AND guild_id = ${guildId};
         `);
     } catch (err) {
         console.error(err);
@@ -361,7 +371,7 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
         .setFields([
             {
                 name: "Moderator",
-                value: `${interaction.user}`
+                value: `${updatedBy}`
             },
             {
                 name: "New Reason",
@@ -373,7 +383,7 @@ async function handleReasonChange(infractionId: number, interaction: ChatInputCo
 
     await sendLog({
         event: LoggingEvent.Infraction,
-        guildId: interaction.guildId!,
+        guildId,
         options: {
             embeds: [log],
             files: [{

@@ -20,6 +20,7 @@ export interface Cache {
 export interface CachedRequest {
     targetId: string;
     requestType: RequestType;
+    infractionId?: number;
 }
 
 export interface CachedInfractions {

@@ -1,24 +1,16 @@
-import {
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    Colors,
-    EmbedBuilder,
-    Events,
-    GuildTextBasedChannel,
-    hyperlink,
-    Message
-} from "discord.js";
+import { Colors, EmbedBuilder, Events, GuildMember, GuildTextBasedChannel, hyperlink, Message } from "discord.js";
+
+import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
+import { handleReasonChange } from "../interactions/commands/infraction";
 import { formatLogContent, sendLog } from "../utils/logging";
 import { LoggingEvent } from "../types/config";
+import { RequestType } from "../types/utils";
 import { referenceLog } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
-import { RequestType } from "../types/utils";
-import { validateRequest } from "../utils/moderation";
 import ClientManager from "../client";
 
-export default class MessageDeleteEventListener extends EventListener {
+export default class MessageUpdateEventListener extends EventListener {
     constructor() {
         super(Events.MessageUpdate);
     }
@@ -36,22 +28,40 @@ export default class MessageDeleteEventListener extends EventListener {
                 !r.users.cache.has(newMessage.client.user.id)
             )) return;
 
-            const deleteButton = new ButtonBuilder()
-                .setCustomId("delete")
-                .setLabel("🗑")
-                .setStyle(ButtonStyle.Secondary);
-
-            const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(deleteButton);
             const requestType = newMessage.channelId === config.channels?.muteRequestQueue
                 ? RequestType.Mute
                 : RequestType.Ban;
 
+            const isAutoMuteEnabled = requestType === RequestType.Ban
+                && config.actionAllowed(newMessage.member as GuildMember, {
+                    permission: "autoMuteBanRequests",
+                    requiredValue: true
+                });
+
             try {
-                await validateRequest({
+                const { targetMember, reason } = await validateRequest({
+                    isAutoMuteEnabled,
                     requestType,
                     message: newMessage,
                     config
                 });
+
+                const request = ClientManager.cache.requests.get(newMessage.id);
+                if (request && request.infractionId) {
+                    await handleReasonChange({
+                        infractionId: request.infractionId,
+                        newReason: reason,
+                        updatedBy: newMessage.author,
+                        guildId: newMessage.guildId
+                    });
+                } else if (targetMember && isAutoMuteEnabled) {
+                    await handleBanRequestAutoMute({
+                        targetMember,
+                        reason,
+                        config,
+                        message: newMessage
+                    });
+                }
             } catch (err) {
                 const reason = err as string;
                 const reaction = reason.includes("already been submitted") ? "🔄" : "⚠️";
@@ -61,14 +71,18 @@ export default class MessageDeleteEventListener extends EventListener {
 
                 if (existingReaction) await existingReaction.users.remove(ClientManager.client.user?.id);
 
-                await Promise.all([
-                    newMessage.react(reaction),
+                const [reply] = await Promise.all([
                     newMessage.reply({
                         content: reason,
-                        components: [actionRow],
-                        allowedMentions: { parse: [] }
-                    })
+                        allowedMentions: { parse: [], repliedUser: true }
+                    }),
+                    newMessage.react(reaction)
                 ]);
+
+                // Remove after 5 seconds
+                setTimeout(async() => {
+                    await reply.delete().catch(() => null);
+                }, 5000);
             }
         }
 

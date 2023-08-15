@@ -1,10 +1,10 @@
+import { Events, GuildMember, Message } from "discord.js";
+import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
 import { cacheMessage } from "../utils/cache";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, Message } from "discord.js";
+import { RequestType } from "../types/utils";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
-import { validateRequest } from "../utils/moderation";
-import { RequestType } from "../types/utils";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {
@@ -21,34 +21,48 @@ export default class MessageCreateEventListener extends EventListener {
             (message.channelId === config.channels?.muteRequestQueue || message.channelId === config.channels?.banRequestQueue) &&
             !message.reactions.cache.size
         ) {
-            const deleteButton = new ButtonBuilder()
-                .setCustomId("delete")
-                .setLabel("🗑")
-                .setStyle(ButtonStyle.Secondary);
-
-            const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(deleteButton);
             const requestType = message.channelId === config.channels?.muteRequestQueue
                 ? RequestType.Mute
                 : RequestType.Ban;
 
             try {
-                await validateRequest({
+                const isAutoMuteEnabled = requestType === RequestType.Ban
+                    && config.actionAllowed(message.member as GuildMember, {
+                        permission: "autoMuteBanRequests",
+                        requiredValue: true
+                    });
+
+                const { targetMember, reason } = await validateRequest({
+                    isAutoMuteEnabled,
                     requestType,
                     message,
                     config
                 });
+
+                if (targetMember && isAutoMuteEnabled) {
+                    await handleBanRequestAutoMute({
+                        targetMember,
+                        reason,
+                        config,
+                        message
+                    });
+                }
             } catch (err) {
                 const reason = err as string;
                 const reaction = reason.includes("already been submitted") ? "🔄" : "⚠️";
 
-                await Promise.all([
-                    message.react(reaction),
+                const [reply] = await Promise.all([
                     message.reply({
                         content: reason,
-                        components: [actionRow],
-                        allowedMentions: { parse: [] }
-                    })
+                        allowedMentions: { parse: [], repliedUser: true }
+                    }),
+                    message.react(reaction)
                 ]);
+
+                // Remove after 5 seconds
+                setTimeout(async() => {
+                    await reply.delete().catch(() => null);
+                }, 5000);
             }
         }
     }

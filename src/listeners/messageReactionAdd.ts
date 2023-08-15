@@ -41,7 +41,7 @@ export default class MessageReactionAddEventListener extends EventListener {
             })) return;
 
             const reason = message.content;
-            const res = await muteMember(message.member, {
+            const [res] = await muteMember(message.member, {
                 moderator: user,
                 duration: muteDuration,
                 config,

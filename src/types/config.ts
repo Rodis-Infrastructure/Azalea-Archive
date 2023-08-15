@@ -23,6 +23,7 @@ export interface PermissionData extends Partial<Record<RolePermission, string[]>
     viewModerationActivity?: boolean
     manageBanRequests?: boolean
     manageMuteRequests?: boolean
+    autoMuteBanRequests?: boolean
 }
 
 interface ToggleableProperty {
