@@ -51,13 +51,18 @@ export default class MessageReactionAddEventListener extends EventListener {
             /* The result is the mute's expiration timestamp */
             if (typeof res === "number") {
                 await Promise.all([
+                    purgeMessages({
+                        channel: message.channel as GuildTextBasedChannel,
+                        amount: 100,
+                        moderatorId: user.id,
+                        authorId: message.member.id
+                    }),
                     config.sendConfirmation({
                         guild: message.guild,
                         message: `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
                         authorId: user.id,
                         reason
-                    }),
-                    message.delete().catch(() => null)
+                    })
                 ]);
 
                 return;
