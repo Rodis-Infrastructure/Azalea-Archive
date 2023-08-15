@@ -28,6 +28,7 @@ manageInfractions = false
 viewModerationActivity = false
 manageBanRequests = false
 manageMuteRequests = false
+autoMuteBanRequests = false
 selectMenus = ["interaction-name"]
 buttons = ["interaction-name"]
 modals = ["interaction-name"]

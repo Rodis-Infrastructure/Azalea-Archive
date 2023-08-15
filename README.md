@@ -94,6 +94,7 @@ modals.
 - `viewModerationActivity` - Allows the user to view the number of infractions a staff member has given out.
 - `manageBanRequests` - Allows the user to approve or deny ban requests.
 - `manageMuteRequests` - Allows the user to approve or deny mute requests.
+- `autoMuteBanRequests` - Automatically mutes the user a ban requested was submitted for
 
 #### Role Configuration
 
@@ -105,6 +106,7 @@ manageInfractions = false
 viewModerationActivity = false
 manageBanRequests = false
 manageMuteRequests = false
+autoMuteBanRequests = false
 selections = []
 buttons = []
 modals = []
@@ -118,6 +120,9 @@ reactions = []
 guildStaff = false
 manageInfractions = false
 viewModerationActivity = false
+manageBanRequests = false
+manageMuteRequests = false
+autoMuteBanRequests = false
 roleIds = []
 selectMenus = []
 buttons = []
