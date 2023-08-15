@@ -47,10 +47,12 @@ export default class MessageDeleteEventListener extends EventListener {
         }];
 
         if (message.reference) {
-            await referenceLog(message).then(res => {
-                embeds.unshift(res.embed);
-                files.push(res.icon);
-            });
+            await referenceLog(message)
+                .then(res => {
+                    embeds.unshift(res.embed);
+                    files.push(res.icon);
+                })
+                .catch(() => null);
         }
 
         const loggedMessage = await sendLog({

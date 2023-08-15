@@ -340,7 +340,8 @@ export async function handleBanRequestAutoMute(data: {
         config
     }) as [string | number, number];
 
-    if (typeof res === "string" && !targetMember.isCommunicationDisabled()) {
+    if (typeof res === "string") {
+        if (targetMember.isCommunicationDisabled()) return;
         const reply = await message.reply(`${config.emojis.error} Failed to mute the member automatically.`);
 
         // Remove after 3 seconds
