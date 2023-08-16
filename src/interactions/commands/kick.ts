@@ -75,7 +75,7 @@ export default class KickCommand extends ChatInputCommand {
             await resolveInfraction({
                 punishment: InfractionPunishment.Kick,
                 executor: interaction.user,
-                target: member.user,
+                targetId: member.id,
                 guildId: interaction.guildId!,
                 reason
             });

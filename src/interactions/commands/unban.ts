@@ -54,7 +54,7 @@ export default class UnbanCommand extends ChatInputCommand {
             await resolveInfraction({
                 punishment: InfractionPunishment.Unban,
                 executor: interaction.user,
-                target: offender,
+                targetId: offender.id,
                 guildId: interaction.guildId!,
                 reason
             });

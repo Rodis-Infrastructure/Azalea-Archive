@@ -83,7 +83,7 @@ export default class UnmuteCommand extends ChatInputCommand {
             await resolveInfraction({
                 guildId: interaction.guildId!,
                 punishment: InfractionPunishment.Unmute,
-                target: offender.user,
+                targetId: offender.id,
                 executor: interaction.user,
                 reason
             });

@@ -8,6 +8,10 @@ import SelectMenu from "../handlers/interactions/select_menus/selectMenu";
 import Button from "../handlers/interactions/buttons/button";
 import Modal from "../handlers/interactions/modals/modal";
 
+export function capitalize(str: string): string {
+    return str[0].toUpperCase() + str.slice(1);
+}
+
 export function msToString(timestamp: number): string {
     const units = [
         { unit: "day", value: 24 * 60 * 60 * 1000 },
@@ -149,7 +153,10 @@ export function mapInfractionsToFields(data: {
     infractions: MinimalInfraction[],
     filter: InfractionFilter | null,
     page: number
-}): [number, { name: string, value: string }[]] {
+}): [number, {
+        name: string,
+        value: string
+    }[]] {
     const { infractions, filter, page } = data;
     const filteredInfractions = infractions.filter(infraction => {
         switch (filter) {
@@ -221,5 +228,5 @@ export function mapInfractionCount(infractions: InfractionCount) {
 }
 
 export const MUTE_DURATION_VALIDATION_REGEX = /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi;
-export const REQUEST_VALIDATION_REGEX = /^(?:<@!?)?(?<targetId>\d{17,19})>? (?<reason>(?:.|[\n\r])+)/gmi;
+export const REQUEST_VALIDATION_REGEX = /^(?:<@!?)?(?<targetId>\d{17,19})>? ?(?<duration>\d{1,3}[mhd])? (?<reason>(?:.|[\n\r])+)/gmi;
 export const CHANNEL_ID_FROM_URL_REGEX = /channels\/\d{17,19}\/(\d{17,19})\/\d{17,19}/gmi;

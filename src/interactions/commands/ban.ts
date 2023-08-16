@@ -100,7 +100,7 @@ export default class BanCommand extends ChatInputCommand {
             resolveInfraction({
                 punishment: InfractionPunishment.Ban,
                 executor: interaction.user,
-                target: user,
+                targetId: user.id,
                 guildId: interaction.guildId!,
                 reason
             })

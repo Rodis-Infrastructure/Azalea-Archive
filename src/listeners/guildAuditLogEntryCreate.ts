@@ -58,7 +58,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                         try {
                             await resolveInfraction({
                                 executor: executor,
-                                target: target as User,
+                                targetId: (target as User).id,
                                 guildId: guild.id,
                                 punishment: punishment,
                                 flag: infractionFlag,
@@ -87,7 +87,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             if (punishment !== InfractionPunishment.Mute) {
                 await resolveInfraction({
                     executor: executor,
-                    target: target as User,
+                    targetId: (target as User).id,
                     guildId: guild.id,
                     punishment: punishment,
                     flag: infractionFlag,

@@ -31,7 +31,7 @@ import ms from "ms";
 export async function resolveInfraction(data: InfractionData): Promise<number | null> {
     const {
         executor,
-        target,
+        targetId,
         reason,
         guildId,
         punishment,
@@ -87,7 +87,7 @@ export async function resolveInfraction(data: InfractionData): Promise<number | 
         .setColor(color)
         .setAuthor({ name: authorText, iconURL: `attachment://${icon}` })
         .setFields([
-            { name: "Member", value: `${target} (\`${target.id}\`)` },
+            { name: "Member", value: `${userMention(targetId)} (\`${targetId}\`)` },
             { name: "Moderator", value: `${executor} (\`${executor.id}\`)` }
         ])
         .setTimestamp();
@@ -101,9 +101,9 @@ export async function resolveInfraction(data: InfractionData): Promise<number | 
             guildId: guildId,
             action: punishment,
             executorId: executor.id,
-            targetId: target.id,
             expiresAt: expiresAt,
             requestAuthorId: requestAuthor?.id,
+            targetId,
             reason,
             flag
         }),
@@ -129,7 +129,7 @@ export async function muteMember(offender: GuildMember, data: {
     duration: string,
     reason?: string | null,
     quick?: boolean
-}): Promise<string | [number, number | null]> {
+}): Promise<[number | string, number | null]> {
     const { config, moderator, duration, reason, quick } = data;
 
     const notModerateableReason = validateModerationAction({
@@ -142,15 +142,15 @@ export async function muteMember(offender: GuildMember, data: {
         }]
     });
 
-    if (notModerateableReason) return notModerateableReason;
+    if (notModerateableReason) return [notModerateableReason, null];
 
     const expiresAt = muteExpirationTimestamp(offender);
-    if (expiresAt) return `This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`;
+    if (expiresAt) return [`This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`, null];
 
     let msMuteDuration = ms(duration);
 
     /* Only allow the duration to be given in days, hours, and minutes */
-    if (!duration.match(MUTE_DURATION_VALIDATION_REGEX) || msMuteDuration <= 0) return "The duration provided is not valid.";
+    if (!duration.match(MUTE_DURATION_VALIDATION_REGEX) || msMuteDuration <= 0) return ["The duration provided is not valid.", null];
     if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {
@@ -158,7 +158,7 @@ export async function muteMember(offender: GuildMember, data: {
         const infractionId = await resolveInfraction({
             guildId: offender.guild.id,
             punishment: InfractionPunishment.Mute,
-            target: offender.user,
+            targetId: offender.user.id,
             duration: msMuteDuration,
             flag: quick ? InfractionFlag.Quick : undefined,
             executor: moderator,
@@ -167,7 +167,7 @@ export async function muteMember(offender: GuildMember, data: {
 
         return [Math.floor((msMuteDuration + Date.now()) / 1000), infractionId];
     } catch {
-        return "An error has occurred while trying to execute this interaction";
+        return ["An error has occurred while trying to execute this interaction", null];
     }
 }
 
