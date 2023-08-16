@@ -69,17 +69,13 @@ export default class BanCommand extends ChatInputCommand {
             return;
         }
 
-        let deleteMessageSeconds = config.deleteMessageSecondsOnBan;
-
-        /* Minimum value */
-        if (deleteMessageSeconds < 0) deleteMessageSeconds = 0;
-        /* Maximum value */
-        if (deleteMessageSeconds > 604800) deleteMessageSeconds = 604800;
-
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            await interaction.guild!.members.ban(user, { deleteMessageSeconds, reason });
+            await interaction.guild!.members.ban(user, {
+                deleteMessageSeconds: config.deleteMessageSecondsOnBan,
+                reason
+            });
         } catch (err) {
             console.error(err);
             await interaction.reply({

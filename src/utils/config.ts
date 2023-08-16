@@ -26,7 +26,12 @@ export default class Config {
     }
 
     get deleteMessageSecondsOnBan() {
-        return this.data.deleteMessageSecondsOnBan ?? 0;
+        const val = this.data.deleteMessageSecondsOnBan ?? 0;
+
+        if (val < 0) return 0;
+        if (val > 604800) return 604800;
+
+        return val;
     }
 
     get emojis() {
