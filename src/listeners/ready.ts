@@ -67,7 +67,6 @@ async function setBanRequestNoticeInterval(config: ConfigData, guildId: string) 
         if (cachedBanRequests.size < config.banRequestNotices!.threshold) return;
 
         const channel = await ClientManager.client.channels.fetch(config.banRequestNotices!.channelId) as GuildTextBasedChannel;
-        const rolesToMention = config.banRequestNotices!.mentionedRoles?.map(role => `<@&${role}>`);
         const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedBanRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()
@@ -77,7 +76,7 @@ async function setBanRequestNoticeInterval(config: ConfigData, guildId: string) 
             .setTimestamp();
 
         channel.send({
-            content: rolesToMention?.join(" "),
+            content: "@here",
             embeds: [embed]
         });
     }, config.banRequestNotices.interval);
@@ -91,7 +90,6 @@ async function setMuteRequestNoticeInterval(config: ConfigData, guildId: string)
         if (cachedMuteRequests.size < config.muteRequestNotices!.threshold) return;
 
         const channel = await ClientManager.client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
-        const rolesToMention = config.muteRequestNotices!.mentionedRoles?.map(role => `<@&${role}>`);
         const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedMuteRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()
@@ -101,7 +99,7 @@ async function setMuteRequestNoticeInterval(config: ConfigData, guildId: string)
             .setTimestamp();
 
         channel.send({
-            content: rolesToMention?.join(" "),
+            content: "@here",
             embeds: [embed]
         });
     }, config.muteRequestNotices.interval);

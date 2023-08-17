@@ -47,7 +47,6 @@ enabled = true
 channelId = "channel-id"
 threshold = 25
 interval = 3_600_000 # 1 hour
-mentionedRoles = ["role-id"]
 ```
 
 ### Custom Emojis
