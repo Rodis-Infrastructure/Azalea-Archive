@@ -37,6 +37,7 @@ reactions = ["emoji-type"]
 [channels]
 banRequestQueue = "channel-id"
 muteRequestQueue = "channel-id"
+mediaConversion = "channel-id"
 
 [emojis]
 success = "👌"

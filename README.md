@@ -33,6 +33,7 @@ The `channels` section allows you to configure which channels the bot will perfo
 [channels]
 banRequestQueue = "channel-id"
 muteRequestQueue = "channel-id"
+mediaConversion = "channel-id"
 ```
 
 ### Custom Emojis
@@ -138,6 +139,7 @@ category/channel configuration does not apply to moderation infraction logging):
 * `interactionUsage` - Triggered when an interaction is used, whether it is a command, button, modal, or select menu.
 * `infractions` - Triggered when a user is given an infraction.
 * `messages` - Triggered when a message is updated, deleted, or deleted in bulk.
+* `media` - The bot's storage for attachments.
 
 ```toml
 [logging]
