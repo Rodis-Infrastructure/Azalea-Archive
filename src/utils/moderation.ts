@@ -292,7 +292,7 @@ export async function validateRequest(data: {
         throw `A ${requestType} request for ${userMention(targetId)} has already been submitted: ${jumpUrl}`;
     }
 
-    if (reason.length > 1024) throw "The reason length cannot exceed 1,024 characters.";
+    if (reason.length + (message.attachments.size * 90) > 1024) throw "The reason length cannot exceed 1,024 characters, this includes potential media URLs.";
 
     const targetMember = await message.guild.members.fetch(targetId).catch(() => null);
     const targetUser = targetMember?.user || await ClientManager.client.users.fetch(targetId).catch(() => null);

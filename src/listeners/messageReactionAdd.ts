@@ -1,12 +1,13 @@
 import { capitalize, formatTimestamp, REQUEST_VALIDATION_REGEX } from "../utils";
 import { muteMember, purgeMessages, resolveInfraction, validateModerationAction } from "../utils/moderation";
-import { Events, GuildTextBasedChannel, hyperlink, MessageReaction, User, userMention } from "discord.js";
+import { Events, GuildTextBasedChannel, hyperlink, Message, MessageReaction, User, userMention } from "discord.js";
 import { InfractionPunishment } from "../types/db";
-import { RolePermission } from "../types/config";
+import { LoggingEvent, RolePermission } from "../types/config";
 import { RequestType } from "../types/utils";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
+import { sendLog } from "../utils/logging";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {
@@ -145,8 +146,24 @@ export default class MessageReactionAddEventListener extends EventListener {
 
             if (emojis.approveRequest?.includes(emojiId)) {
                 const { targetId, reason, duration } = REQUEST_VALIDATION_REGEX.exec(message.content)?.groups ?? {};
-                const formattedReason = reason.trim().replaceAll(/ +/g, " ");
+                let formattedReason = reason.trim().replaceAll(/ +/g, " ");
                 REQUEST_VALIDATION_REGEX.lastIndex = 0;
+
+                if (message.attachments.size) {
+                    const storedMediaLog = await sendLog({
+                        event: LoggingEvent.Media,
+                        guildId: message.guildId,
+                        options: {
+                            content: `Media stored for ${userMention(targetId)}'s ${requestType} request`,
+                            files: Array.from(message.attachments.values()),
+                            allowedMentions: { parse: [] }
+                        }
+                    }) as Message<true>;
+
+                    for (const attachment of storedMediaLog.attachments.values()) {
+                        formattedReason += ` ${attachment.url}`;
+                    }
+                }
 
                 try {
                     if (requestType === RequestType.Ban) {
@@ -168,7 +185,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                                 guild: message.guild,
                                 authorId: user.id,
                                 message: `banned ${userMention(targetId)}`,
-                                reason
+                                reason: formattedReason
                             })
                         ]);
 
@@ -207,23 +224,12 @@ export default class MessageReactionAddEventListener extends EventListener {
                         return;
                     }
 
-                    await Promise.all([
-                        resolveInfraction({
-                            punishment: InfractionPunishment.Mute,
-                            requestAuthor: message.author,
-                            executor: user,
-                            guildId: message.guildId,
-                            reason: formattedReason,
-                            duration: res,
-                            targetId
-                        }),
-                        config.sendConfirmation({
-                            guild: message.guild,
-                            authorId: user.id,
-                            message: `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
-                            reason
-                        })
-                    ]);
+                    await config.sendConfirmation({
+                        guild: message.guild,
+                        authorId: user.id,
+                        message: `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
+                        reason: formattedReason
+                    });
 
                     ClientManager.cache.requests.delete(message.id);
                 } catch {

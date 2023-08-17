@@ -5,6 +5,8 @@ import { RequestType } from "../types/utils";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
+import { sendLog } from "../utils/logging";
+import { LoggingEvent } from "../types/config";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {
@@ -16,6 +18,28 @@ export default class MessageCreateEventListener extends EventListener {
 
         cacheMessage(message);
         const config = ClientManager.config(message.guildId)!;
+
+        if (message.channelId === config.channels?.mediaConversion && message.attachments.size) {
+            const mediaUrls = [];
+            const mediaStorageLog = await sendLog({
+                event: LoggingEvent.Media,
+                guildId: message.guildId,
+                options: {
+                    content: `Media stored by ${message.author}`,
+                    files: Array.from(message.attachments.values()),
+                    allowedMentions: { parse: [] }
+                }
+            }) as Message<true>;
+
+            for (const attachment of mediaStorageLog.attachments.values()) {
+                mediaUrls.push(`<${attachment.url}>`);
+            }
+
+            await Promise.all([
+                message.delete().catch(() => null),
+                message.channel.send(`${message.author} Your media links:\n\n>>> ${mediaUrls.join("\n")}`)
+            ]);
+        }
 
         if (
             (message.channelId === config.channels?.muteRequestQueue || message.channelId === config.channels?.banRequestQueue) &&

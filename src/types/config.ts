@@ -45,6 +45,7 @@ interface EmojiData {
 interface ChannelData {
     banRequestQueue?: string
     muteRequestQueue?: string
+    mediaConversion?: string
 }
 
 type LoggingData =
