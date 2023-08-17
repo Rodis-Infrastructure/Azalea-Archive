@@ -45,6 +45,14 @@ export default class Config {
         return this.data.channels ?? {};
     }
 
+    get banRequestNotices() {
+        return this.data.banRequestNotices ?? {};
+    }
+
+    get muteRequestNotices() {
+        return this.data.muteRequestNotices ?? {};
+    }
+
     private get logging() {
         return this.data.logging;
     }

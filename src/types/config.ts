@@ -42,6 +42,14 @@ interface EmojiData {
     denyRequest?: string
 }
 
+interface RequestNoticeData {
+    enabled: boolean
+    channelId: string
+    threshold: number
+    interval: number
+    mentionedRoles?: string[]
+}
+
 interface ChannelData {
     banRequestQueue?: string
     muteRequestQueue?: string
@@ -56,6 +64,8 @@ export interface ConfigData {
     deleteMessageSecondsOnBan?: number
     allowedProofChannelIds?: string[]
     confirmationChannel?: string
+    banRequestNotices?: RequestNoticeData
+    muteRequestNotices?: RequestNoticeData
     ephemeralResponses?: ToggleableProperty
     roles?: Array<PermissionData & Record<"id", string>>
     groups?: Array<PermissionData & Record<"roleIds", string[]>>
