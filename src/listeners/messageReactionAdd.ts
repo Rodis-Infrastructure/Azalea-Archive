@@ -210,7 +210,8 @@ export default class MessageReactionAddEventListener extends EventListener {
                         config,
                         moderator: user,
                         duration: duration || "28d",
-                        reason: formattedReason
+                        reason: formattedReason,
+                        requestAuthor: message.author
                     });
 
                     if (typeof res === "string") {

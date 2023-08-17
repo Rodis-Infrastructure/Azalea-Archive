@@ -127,10 +127,11 @@ export async function muteMember(offender: GuildMember, data: {
     config: Config,
     moderator: User,
     duration: string,
+    requestAuthor?: User,
     reason?: string | null,
     quick?: boolean
 }): Promise<[number | string, number | null]> {
-    const { config, moderator, duration, reason, quick } = data;
+    const { config, moderator, duration, reason, quick, requestAuthor } = data;
 
     const notModerateableReason = validateModerationAction({
         config,
@@ -162,6 +163,7 @@ export async function muteMember(offender: GuildMember, data: {
             duration: msMuteDuration,
             flag: quick ? InfractionFlag.Quick : undefined,
             executor: moderator,
+            requestAuthor,
             reason
         });
 
