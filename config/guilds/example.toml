@@ -39,6 +39,20 @@ banRequestQueue = "channel-id"
 muteRequestQueue = "channel-id"
 mediaConversion = "channel-id"
 
+[banRequestNotices]
+enabled = true
+channelId = "channel-id"
+threshold = 25
+interval = 3_600_000 # 1 hour
+mentionedRoles = ["role-id"]
+
+[muteRequestNotices]
+enabled = true
+channelId = "channel-id"
+threshold = 25
+interval = 3_600_000 # 1 hour
+mentionedRoles = ["role-id"]
+
 [emojis]
 success = "👌"
 error = "<:emoji-name:emoji-id>"

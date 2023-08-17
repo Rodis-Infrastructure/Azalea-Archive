@@ -36,6 +36,20 @@ muteRequestQueue = "channel-id"
 mediaConversion = "channel-id"
 ```
 
+### Request Notices
+
+A reminder/notice will be sent in the specified channel whenever there is a certain number of unhandled requests over
+specified period of time.
+
+```toml
+[banRequestNotices] # or [muteRequestNotices]
+enabled = true
+channelId = "channel-id"
+threshold = 25
+interval = 3_600_000 # 1 hour
+mentionedRoles = ["role-id"]
+```
+
 ### Custom Emojis
 
 The `emojis` section enables you to customize the emojis used for the bot's responses. The fields listed below are the
