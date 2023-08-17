@@ -37,7 +37,6 @@ class ClientManager {
             GatewayIntentBits.MessageContent,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.GuildBans,
             GatewayIntentBits.Guilds
         ],
         partials: [
