@@ -13,8 +13,8 @@ export default class MessageCreateEventListener extends EventListener {
         super(Events.MessageCreate);
     }
 
-    async execute(message: Message<true>): Promise<void> {
-        if (!message.guildId || message.author.bot) return;
+    async execute(message: Message): Promise<void> {
+        if (!message.inGuild() || message.author.bot) return;
 
         cacheMessage(message);
         const config = ClientManager.config(message.guildId)!;

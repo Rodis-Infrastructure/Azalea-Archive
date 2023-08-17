@@ -13,7 +13,7 @@ export default class MessageDeleteEventListener extends EventListener {
     }
 
     async execute(message: Message): Promise<void> {
-        if (!message.guildId) return;
+        if (!message.inGuild()) return;
 
         cacheMessage(message.id, { deleted: true });
         ClientManager.cache.requests.delete(message.id);
