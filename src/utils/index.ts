@@ -116,7 +116,7 @@ export async function referenceLog(message: Message) {
     const reference = await message.fetchReference();
     const referenceData = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
-        .setDescription(hyperlink("Jump to message", message.url))
+        .setDescription(hyperlink("Jump to message", reference.url))
         .setAuthor({
             name: "Reference",
             iconURL: "attachment://reply.png"
