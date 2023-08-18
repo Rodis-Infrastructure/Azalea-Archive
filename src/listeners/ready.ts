@@ -29,10 +29,8 @@ export default class ReadyEventListener extends EventListener {
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
             new Config(config).bind(guildId);
 
-            await Promise.all([
-                setBanRequestNoticeInterval(config, guildId),
-                setMuteRequestNoticeInterval(config, guildId)
-            ]);
+            setBanRequestNoticeInterval(config, guildId);
+            setMuteRequestNoticeInterval(config, guildId);
         }
 
         await Promise.all([
@@ -59,7 +57,7 @@ export default class ReadyEventListener extends EventListener {
     }
 }
 
-async function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
+function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
     if (!config.channels?.banRequestQueue || !config.banRequestNotices?.enabled) return;
 
     setInterval(async() => {
@@ -75,14 +73,14 @@ async function setBanRequestNoticeInterval(config: ConfigData, guildId: string) 
             .setDescription(`There are currently ${cachedBanRequests.size} unhandled ban requests starting from [here](${jumpUrl})`)
             .setTimestamp();
 
-        channel.send({
+        await channel.send({
             content: "@here",
             embeds: [embed]
         });
     }, config.banRequestNotices.interval);
 }
 
-async function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
+function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
     if (!config.channels?.muteRequestQueue || !config.muteRequestNotices?.enabled) return;
 
     setInterval(async() => {
@@ -98,7 +96,7 @@ async function setMuteRequestNoticeInterval(config: ConfigData, guildId: string)
             .setDescription(`There are currently ${cachedMuteRequests.size} unhandled mute requests starting from [here](${jumpUrl})`)
             .setTimestamp();
 
-        channel.send({
+        await channel.send({
             content: "@here",
             embeds: [embed]
         });
