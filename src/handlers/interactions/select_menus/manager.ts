@@ -1,10 +1,10 @@
 import {
+    AnySelectMenuInteraction,
     Collection,
     Colors,
     EmbedBuilder,
     GuildMember,
-    GuildTextBasedChannel,
-    StringSelectMenuInteraction
+    GuildTextBasedChannel
 } from "discord.js";
 
 import { InteractionCustomIdFilter } from "../../../types/interactions";
@@ -37,7 +37,7 @@ export default class SelectMenuHandler {
         this.list.set(selectMenu.data.name, selectMenu);
     }
 
-    public async handle(interaction: StringSelectMenuInteraction) {
+    public async handle(interaction: AnySelectMenuInteraction) {
         const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {

@@ -1,11 +1,11 @@
 import {
+    AnySelectMenuInteraction,
     ButtonInteraction,
     Guild,
     GuildMember,
     GuildTextBasedChannel,
     MessageMentionTypes,
     ModalSubmitInteraction,
-    SelectMenuInteraction,
     userMention
 } from "discord.js";
 
@@ -209,7 +209,7 @@ export default class Config {
     }
 
     async applyDeferralState(data: {
-        interaction: ModalSubmitInteraction | ButtonInteraction | SelectMenuInteraction | CommandInteraction,
+        interaction: ModalSubmitInteraction | ButtonInteraction | AnySelectMenuInteraction | CommandInteraction,
         state: InteractionResponseType,
         skipInternalUsageCheck: boolean
         ephemeral?: boolean

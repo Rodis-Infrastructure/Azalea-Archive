@@ -1,5 +1,5 @@
 import { InteractionResponseType } from "../../types/interactions";
-import { SelectMenuInteraction } from "discord.js";
+import { AnySelectMenuInteraction } from "discord.js";
 
 import SelectMenu from "../../handlers/interactions/select_menus/selectMenu";
 
@@ -12,7 +12,7 @@ export default class SampleSelectMenu extends SelectMenu {
         });
     }
 
-    async execute(interaction: SelectMenuInteraction): Promise<void> {
+    async execute(interaction: AnySelectMenuInteraction): Promise<void> {
         await interaction.editReply("This is a sample **SELECT MENU** interaction.");
     }
 }
