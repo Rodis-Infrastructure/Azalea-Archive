@@ -15,6 +15,7 @@ export enum LoggingEvent {
     Infraction = "infractions",
     Message = "messages",
     Media = "media",
+    Voice = "voice"
 }
 
 export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
