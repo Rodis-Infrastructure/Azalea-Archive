@@ -1,13 +1,22 @@
 import { capitalize, formatTimestamp, REQUEST_VALIDATION_REGEX } from "../utils";
 import { muteMember, purgeMessages, resolveInfraction, validateModerationAction } from "../utils/moderation";
-import { Events, GuildTextBasedChannel, hyperlink, Message, MessageReaction, User, userMention } from "discord.js";
+import {
+    EmbedBuilder,
+    Events,
+    GuildTextBasedChannel,
+    hyperlink,
+    Message,
+    MessageReaction,
+    User,
+    userMention
+} from "discord.js";
 import { InfractionPunishment } from "../types/db";
 import { LoggingEvent, RolePermission } from "../types/config";
 import { RequestType } from "../types/utils";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
-import { sendLog } from "../utils/logging";
+import { formatLogContent, sendLog } from "../utils/logging";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {
@@ -25,6 +34,57 @@ export default class MessageReactionAddEventListener extends EventListener {
 
         const emojiId = emoji.id ?? emoji.name ?? "N/A";
         const { emojis } = config;
+
+        if (message.channelId === config.loggingChannel(LoggingEvent.Message)) {
+            const fetchedReaction = await reaction.fetch();
+
+            if (fetchedReaction.count === 1) {
+                const embed = new EmbedBuilder()
+                    .setColor(0x9C84EF)
+                    .setAuthor({ name: "Reaction Added", iconURL: "attachment://addReaction.png" })
+                    .setDescription(hyperlink("Jump to message", message.url))
+                    .setTimestamp();
+
+                if (emoji.id && emoji.url) {
+                    embed.setFields({
+                        name: "Emoji",
+                        value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emoji.url)})`
+                    });
+                } else {
+                    embed.setFields({
+                        name: "Emoji",
+                        value: `\n\n${emoji}`
+                    });
+                }
+
+                embed.addFields([
+                    {
+                        name: "Reactee",
+                        value: `${user} (\`${user.id}\`)`
+                    },
+                    {
+                        name: "Channel",
+                        value: `${message.channel} (\`#${message.channel.name}\`)`
+                    },
+                    {
+                        name: "Content",
+                        value: formatLogContent(message.content)
+                    }
+                ]);
+
+                await sendLog({
+                    event: LoggingEvent.Message,
+                    channel: message.channel as GuildTextBasedChannel,
+                    options: {
+                        embeds: [embed],
+                        files: [{
+                            attachment: "./icons/addReaction.png",
+                            name: "addReaction.png"
+                        }]
+                    }
+                });
+            }
+        }
 
         /* Quick mutes - 30 minutes and 1 hour */
         if (emojis.quickMute30?.includes(emojiId) || emojis.quickMute60?.includes(emojiId)) {
