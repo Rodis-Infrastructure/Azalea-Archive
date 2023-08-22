@@ -25,7 +25,7 @@ export default class ThreadUpdateEventListener extends EventListener {
         const parent = newThread.parent as GuildTextBasedChannel;
         const embed = new EmbedBuilder()
             .setColor(Colors.Yellow)
-            .setAuthor({ name: "Thread Updated" })
+            .setAuthor({ name: "Thread Updated", iconURL: "attachment://messageUpdate.png" })
             .setFields([
                 {
                     name: "Owner",
@@ -50,7 +50,11 @@ export default class ThreadUpdateEventListener extends EventListener {
             event: LoggingEvent.Thread,
             channel: parent,
             options: {
-                embeds: [embed]
+                embeds: [embed],
+                files: [{
+                    name: "messageUpdate.png",
+                    attachment: "./icons/messageUpdate.png"
+                }]
             }
         });
     }

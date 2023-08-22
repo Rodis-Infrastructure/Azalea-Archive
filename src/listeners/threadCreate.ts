@@ -15,7 +15,7 @@ export default class ThreadCreateEventListener extends EventListener {
 
         const log = new EmbedBuilder()
             .setColor(Colors.Green)
-            .setAuthor({ name: "Thread Created" })
+            .setAuthor({ name: "Thread Created", iconURL: "attachment://messageCreate.png" })
             .setFields([
                 {
                     name: "Owner",
@@ -30,14 +30,17 @@ export default class ThreadCreateEventListener extends EventListener {
                     value: `${thread.parent} (\`#${thread.parent!.name}\`)`
                 }
             ])
-            .setFooter({ text: `Thread ID: ${thread.id}` })
             .setTimestamp();
 
         await sendLog({
             event: LoggingEvent.Thread,
             channel: thread.parent as GuildTextBasedChannel,
             options: {
-                embeds: [log]
+                embeds: [log],
+                files: [{
+                    name: "messageCreate.png",
+                    attachment: "./icons/messageCreate.png"
+                }]
             }
         });
     }

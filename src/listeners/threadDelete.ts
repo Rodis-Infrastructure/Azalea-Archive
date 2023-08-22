@@ -14,7 +14,7 @@ export default class ThreadDeleteEventListener extends EventListener {
 
         const log = new EmbedBuilder()
             .setColor(Colors.Red)
-            .setAuthor({ name: "Thread Deleted" })
+            .setAuthor({ name: "Thread Deleted", iconURL: "attachment://messageDelete.png" })
             .setFields([
                 {
                     name: "Owner",
@@ -36,7 +36,11 @@ export default class ThreadDeleteEventListener extends EventListener {
             event: LoggingEvent.Thread,
             channel: thread.parent as GuildTextBasedChannel,
             options: {
-                embeds: [log]
+                embeds: [log],
+                files: [{
+                    name: "messageDelete.png",
+                    attachment: "./icons/messageDelete.png"
+                }]
             }
         });
     }
