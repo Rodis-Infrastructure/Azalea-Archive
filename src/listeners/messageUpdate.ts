@@ -86,7 +86,7 @@ export default class MessageUpdateEventListener extends EventListener {
         // Log the updated message
 
         if (
-            newMessage.author.bot ||
+            newMessage.author?.bot ||
             !newMessage.content ||
             !oldMessage.author ||
             newMessage.content === oldMessage.content

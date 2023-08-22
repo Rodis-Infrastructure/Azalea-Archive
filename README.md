@@ -154,6 +154,7 @@ category/channel configuration does not apply to moderation infraction logging):
 * `messages` - Triggered when a message is updated, deleted, or deleted in bulk.
 * `media` - The bot's storage for attachments.
 * `voice` - Triggered when a user joins, leaves, or moves voice channels.
+* `threads` - Triggered when a thread is created, updated, or deleted.
 
 ```toml
 [logging]
