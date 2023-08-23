@@ -24,17 +24,18 @@ export default class MessageReactionAddEventListener extends EventListener {
     }
 
     async execute(reaction: MessageReaction, user: User): Promise<void> {
-        if (!reaction.message.inGuild()) return;
+        if (!reaction.message.inGuild() || user.bot) return;
+
         const { emoji, message } = reaction;
+        const config = ClientManager.config(message.guildId);
 
-        if (user.bot || !message.guild) return;
+        if (!config) return;
 
-        const config = ClientManager.config(reaction.message.guildId!)!;
         const member = await message.guild.members.fetch(user.id);
-
         const emojiId = emoji.id ?? emoji.name ?? "N/A";
         const { emojis } = config;
 
+        // First to react logs
         if (message.channelId === config.loggingChannel(LoggingEvent.Message)) {
             const fetchedReaction = await reaction.fetch();
 

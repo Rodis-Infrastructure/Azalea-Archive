@@ -17,7 +17,8 @@ export default class MessageCreateEventListener extends EventListener {
         if (!message.inGuild() || message.author.bot) return;
 
         cacheMessage(message);
-        const config = ClientManager.config(message.guildId)!;
+        const config = ClientManager.config(message.guildId);
+        if (!config) return;
 
         if (message.channelId === config.channels?.mediaConversion && message.attachments.size) {
             const mediaUrls = [];

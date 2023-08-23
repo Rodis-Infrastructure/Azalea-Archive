@@ -18,8 +18,6 @@ export default class MessageDeleteEventListener extends EventListener {
         cacheMessage(message.id, { deleted: true });
         ClientManager.cache.requests.delete(message.id);
 
-        if (!message.content) return;
-
         const channel = message.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
             .setColor(Colors.Red)
@@ -59,7 +57,9 @@ export default class MessageDeleteEventListener extends EventListener {
             event: LoggingEvent.Message,
             options: { embeds, files },
             channel
-        }) as Message;
+        });
+
+        if (!loggedMessage) return;
 
         await linkToPurgeLog({
             channel,

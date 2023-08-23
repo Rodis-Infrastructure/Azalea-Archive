@@ -15,9 +15,10 @@ export default class MessageUpdateEventListener extends EventListener {
         super(Events.MessageUpdate);
     }
 
-    async execute(oldMessage: Message<true>, newMessage: Message<true>): Promise<void> {
-        if (!newMessage.inGuild()) return;
-        const config = ClientManager.config(newMessage.guildId)!;
+    async execute(oldMessage: Message, newMessage: Message): Promise<void> {
+        if (!oldMessage.inGuild() || !newMessage.inGuild()) return;
+        const config = ClientManager.config(newMessage.guildId);
+        if (!config) return;
 
         if (newMessage.channelId === config.channels?.muteRequestQueue || newMessage.channelId === config.channels?.banRequestQueue) {
             if (newMessage.reactions.cache.some(r =>

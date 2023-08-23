@@ -48,6 +48,7 @@ export default class VoiceStateUpdateEventListener extends EventListener {
         }
 
         log.data.author!.icon_url = `attachment://${icon}`;
+
         await sendLog({
             event: LoggingEvent.Voice,
             channel: (newState.channel || oldState.channel) as GuildTextBasedChannel,

@@ -116,7 +116,7 @@ export function formatTimestamp(timestamp: number | string, type: "d" | "D" | "f
     return `<t:${timestamp}:${type}>`;
 }
 
-export async function referenceLog(message: Message) {
+export async function referenceLog(message: Message<true>) {
     const reference = await message.fetchReference();
     const referenceData = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
