@@ -10,8 +10,6 @@ export default class ThreadDeleteEventListener extends EventListener {
     }
 
     async execute(thread: ThreadChannel): Promise<void> {
-        if (thread.partial) thread = await thread.fetch();
-
         const log = new EmbedBuilder()
             .setColor(Colors.Red)
             .setAuthor({ name: "Thread Deleted", iconURL: "attachment://messageDelete.png" })

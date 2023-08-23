@@ -11,7 +11,6 @@ export default class ThreadCreateEventListener extends EventListener {
 
     async execute(thread: ThreadChannel, newlyCreated: boolean): Promise<void> {
         if (!newlyCreated) return;
-        if (thread.partial) thread = await thread.fetch();
 
         const log = new EmbedBuilder()
             .setColor(Colors.Green)

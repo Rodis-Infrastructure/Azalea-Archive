@@ -1,4 +1,4 @@
-import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { Cache, CachedInfractions, CachedMessage, CachedRequest } from "./types/cache";
 import { loadListeners } from "./handlers/listeners/loader";
 
@@ -38,14 +38,6 @@ class ClientManager {
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMembers,
             GatewayIntentBits.Guilds
-        ],
-        partials: [
-            Partials.ThreadMember,
-            Partials.GuildMember,
-            Partials.Reaction,
-            Partials.Channel,
-            Partials.Message,
-            Partials.User
         ]
     });
 
