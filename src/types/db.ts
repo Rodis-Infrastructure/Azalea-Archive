@@ -35,4 +35,12 @@ export enum InfractionFlag {
     Quick = 2,
 }
 
+export interface MessageModel {
+    message_id: string;
+    author_id: string;
+    channel_id: string;
+    guild_id: string;
+    created_at: number;
+}
+
 export type MinimalInfraction = Omit<Infraction, "updated_by" | "updated_at" | "request_author_id" | "target_id">

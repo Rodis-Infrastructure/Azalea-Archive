@@ -17,7 +17,7 @@ import {
     REQUEST_VALIDATION_REGEX
 } from "./index";
 
-import { InfractionFlag, InfractionPunishment } from "../types/db";
+import { InfractionFlag, InfractionPunishment, MessageModel } from "../types/db";
 import { InfractionData, RequestType } from "../types/utils";
 import { cacheMessage, getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
@@ -224,7 +224,7 @@ export async function purgeMessages(data: {
             const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
 
             // @formatter:off
-            const storedMessages = await allQuery<{ messageId: string }>(`
+            const storedMessages = await allQuery<Pick<MessageModel, "message_id">>(`
                 DELETE FROM messages
                 WHERE message_id IN (
                     SELECT message_id FROM messages
@@ -237,7 +237,7 @@ export async function purgeMessages(data: {
                 RETURNING message_id;
             `);
 
-            removableMessageIds.push(...storedMessages.map(({ messageId }) => messageId));
+            removableMessageIds.push(...storedMessages.map(({ message_id }) => message_id));
         } catch (err) {
             console.error(err);
         }
