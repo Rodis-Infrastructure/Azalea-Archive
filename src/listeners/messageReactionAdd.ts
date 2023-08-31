@@ -138,6 +138,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                 config.sendConfirmation({
                     guild: message.guild,
                     message: `${emojis.error} ${user} ${res}`,
+                    allowMentions: true,
                     full: true
                 })
             ]);
@@ -162,6 +163,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                     await config.sendConfirmation({
                         guild: message.guild,
                         message: `${emojis.error} ${user} ${notModerateableReason}`,
+                        allowMentions: true,
                         full: true
                     });
 
