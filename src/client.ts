@@ -34,6 +34,7 @@ class ClientManager {
         intents: [
             GatewayIntentBits.GuildMessageReactions,
             GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.GuildModeration,
             GatewayIntentBits.MessageContent,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMembers,
