@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 
 import { InteractionResponseType } from "../../types/interactions";
-import { JsonMap, stringify } from "@iarna/toml";
+import { stringify } from "yaml";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import ClientManager from "../../client";
@@ -31,12 +31,12 @@ export default class ConfigCommand extends ChatInputCommand {
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId!;
-        const config = { ...(ClientManager.config(guildId)?.data) } as unknown as JsonMap;
+        const config = ClientManager.config(guildId)?.data;
 
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
             .setTitle("Guild Configuration")
-            .setDescription(codeBlock("toml", stringify(config)))
+            .setDescription(codeBlock("yaml", stringify(config)))
             .setFooter({ text: `Guild ID: ${guildId}` })
             .setAuthor({
                 name: interaction.guild!.name,

@@ -4,7 +4,7 @@ This file serves as documentation for the Roblox Discord's moderation bot.
 
 ## Configuration
 
-For a full example of the configuration, you can view the [`example.toml`](config/guilds/example.toml) file in the
+For a full example of the configuration, you can view the [`example.yaml`](config/guilds/example.yaml) file in the
 repository
 
 ### Message Deletion on Ban
@@ -12,8 +12,8 @@ repository
 The `deleteMessageSecondsOnBan` field determines the period of time (in second) over which the banned user's messages
 will be deleted. If set to `0`, the bot will not delete any messages.
 
-```toml
-deleteMessageSecondsOnBan = 0
+```yaml
+deleteMessageSecondsOnBan: 0
 ```
 
 ### Allowed Proof Channels
@@ -21,19 +21,20 @@ deleteMessageSecondsOnBan = 0
 Require all message links in infraction evidence to be from specific channels. If set to an empty array, all channels
 will be allowed.
 
-```toml
-allowedProofChannelIds = ["channel-id"]
+```yaml
+allowedProofChannelIds:
+  - "channel-id"
 ```
 
 ### Channel Configuration
 
 The `channels` section allows you to configure which channels the bot will perform certain actions in.
 
-```toml
-[channels]
-banRequestQueue = "channel-id"
-muteRequestQueue = "channel-id"
-mediaConversion = "channel-id"
+```yaml
+channels:
+  banRequestQueue: "channel-id"
+  muteRequestQueue: "channel-id"
+  mediaConversion: "channel-id"
 ```
 
 ### Request Notices
@@ -41,12 +42,12 @@ mediaConversion = "channel-id"
 A reminder/notice will be sent in the specified channel whenever there is a certain number of unhandled requests over
 specified period of time.
 
-```toml
-[banRequestNotices] # or [muteRequestNotices]
-enabled = true
-channelId = "channel-id"
-threshold = 25
-interval = 3_600_000 # 1 hour
+```yaml
+banRequestNotices: # or muteRequestNotices
+  enabled: true
+  channelId: "channel-id"
+  threshold: 25
+  interval: 3_600_000 # 1 hour
 ```
 
 ### Custom Emojis
@@ -54,15 +55,15 @@ interval = 3_600_000 # 1 hour
 The `emojis` section enables you to customize the emojis used for the bot's responses. The fields listed below are the
 emojis that can currently be configured for different types of responses.
 
-```toml
-[emojis]
-success = "👌"
-error = "<:emoji-name:emoji-id>"
-quickMute30 = "<:emoji-name:emoji-id>"
-quickMute60 = "<:emoji-name:emoji-id>"
-purgeMessages = "<:emoji-name:emoji-id>"
-approveRequest = "<:emoji-name:emoji-id>"
-denyRequest = "<:emoji-name:emoji-id>"
+```yaml
+emojis:
+  success: "👌"
+  error: "<:emoji-name:emoji-id>"
+  quickMute30: "<:emoji-name:emoji-id>"
+  quickMute60: "<:emoji-name:emoji-id>"
+  purgeMessages: "<:emoji-name:emoji-id>"
+  approveRequest: "<:emoji-name:emoji-id>"
+  denyRequest: "<:emoji-name:emoji-id>"
 ```
 
 ### Ephemeral Responses
@@ -71,11 +72,11 @@ The `ephemeralResponses` section controls the behavior of the bot's interaction 
 responses used outside excluded categories/channels will have an ephemeral response, even if
 an `InteractionResponseType` is specified.
 
-```toml
-[ephemeralResponses]
-enabled = true
-excludedCategories = []
-excludedChannels = []
+```yaml
+ephemeralResponses:
+  enabled: true
+  excludedCategories: []
+  excludedChannels: []
 ```
 
 ### Confirmation Messages
@@ -83,8 +84,8 @@ excludedChannels = []
 When specified, confirmation messages will be sent in the specified channel whenever a moderation action is carried out
 outside said channel.
 
-```toml
-confirmationChannel = "channel-id"
+```yaml
+confirmationChannel: "channel-id"
 ```
 
 ### User Flags
@@ -92,10 +93,11 @@ confirmationChannel = "channel-id"
 When the configuration is set, the `/info` command now includes the names of the flags associated with the user in its
 response.
 
-```toml
-[[userFlags]]
-name = "flag-name"
-roleIds = ["role-id"]
+```yaml
+userFlags:
+  - name: "flag-name"
+    roleIds:
+      - "role-id"
 ```
 
 ### Role and Group Configuration
@@ -112,36 +114,36 @@ modals.
 
 #### Role Configuration
 
-```toml
-[[roles]]
-id = "role-id"
-guildStaff = false
-manageInfractions = false
-viewModerationActivity = false
-manageBanRequests = false
-manageMuteRequests = false
-autoMuteBanRequests = false
-selections = []
-buttons = []
-modals = []
-reactions = []
+```yaml
+roles:
+  - id: "role-id"
+    guildStaff: false
+    manageInfractions: false
+    viewModerationActivity: false
+    manageBanRequests: false
+    manageMuteRequests: false
+    autoMuteBanRequests: false
+    selections: []
+    buttons: []
+    modals: []
+    reactions: []
 ```
 
 #### Role Group Configuration
 
-```toml
-[[groups]]
-guildStaff = false
-manageInfractions = false
-viewModerationActivity = false
-manageBanRequests = false
-manageMuteRequests = false
-autoMuteBanRequests = false
-roleIds = []
-selectMenus = []
-buttons = []
-modals = []
-reactions = []
+```yaml
+groups:
+  - guildStaff: false
+    manageInfractions: false
+    viewModerationActivity: false
+    manageBanRequests: false
+    manageMuteRequests: false
+    autoMuteBanRequests: false
+    roleIds: []
+    selectMenus: []
+    buttons: []
+    modals: []
+    reactions: []
 ```
 
 ### Logging Configuration
@@ -156,15 +158,15 @@ category/channel configuration does not apply to moderation infraction logging):
 * `voice` - Triggered when a user joins, leaves, or moves voice channels.
 * `threads` - Triggered when a thread is created, updated, or deleted.
 
-```toml
-[logging]
-enabled = true
-excludedCategories = []
-excludedChannels = []
+```yaml
+logging:
+  enabled: true
+  excludedCategories: []
+  excludedChannels: []
 
-[logging.loggingEvent]
-enabled = true
-channelId = "channel-id"
-excludedCategories = []
-excludedChannels = []
+  loggingEvent:
+      enabled: true
+      channelId: "channel-id"
+      excludedCategories: []
+      excludedChannels: []
 ```

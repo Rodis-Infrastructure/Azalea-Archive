@@ -1,7 +1,7 @@
 import { processCachedMessages } from "../utils/cache";
 import { readdir, readFile } from "node:fs/promises";
 import { ConfigData } from "../types/config";
-import { parse } from "@iarna/toml";
+import { parse } from "yaml";
 import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js";
 import { runQuery } from "../db";
 
