@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS messages
     author_id  TEXT      NOT NULL,
     channel_id TEXT      NOT NULL,
     guild_id   TEXT      NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL,
+    content    TEXT CHECK (length(content) <= 1024)
 );
 
 CREATE INDEX IF NOT EXISTS idx_created_at ON messages (created_at);
