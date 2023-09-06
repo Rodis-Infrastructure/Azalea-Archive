@@ -13,10 +13,30 @@ userFlags:
     roleIds:
       - "role-id"
 
+banRequestNotices:
+  enabled: true
+  channelId: "channel-id"
+  threshold: 25
+  interval: 3_600_000 # 1 hour
+  mentionedRoles:
+    - "role-id"
+
+muteRequestNotices:
+  enabled: true
+  channelId: "channel-id"
+  threshold: 25
+  interval: 3_600_000 # 1 hour
+  mentionedRoles:
+    - "role-id"
+
 groups:
   - guildStaff: false
     manageInfractions: false
     viewModerationActivity: false
+    manageBanRequests: false
+    manageMuteRequests: false
+    autoMuteBanRequests: false
+
     roleIds:
       - "role-id"
     selections:
@@ -33,6 +53,10 @@ roles:
     guildStaff: false
     manageInfractions: false
     viewModerationActivity: false
+    manageBanRequests: false
+    manageMuteRequests: false
+    autoMuteBanRequests: false
+
     selectMenus:
       - "interaction-name"
     buttons:
@@ -48,6 +72,8 @@ emojis:
   quickMute30: "<:emoji-name:emoji-id>"
   quickMute60: "<:emoji-name:emoji-id>"
   purgeMessages: "<:emoji-name:emoji-id>"
+  approveRequest: "<:emoji-name:emoji-id>"
+  denyRequest: "<:emoji-name:emoji-id>"
 
 logging:
   enabled: true
@@ -56,7 +82,47 @@ logging:
   excludedChannels:
     - "channel-id"
 
-  loggingEvent:
+  messages:
+    enabled: true
+    channelId: "channel-id"
+    excludedCategories:
+      - "category-id"
+    excludedChannels:
+      - "channel-id"
+
+  interactions:
+    enabled: true
+    channelId: "channel-id"
+    excludedCategories:
+      - "category-id"
+    excludedChannels:
+      - "channel-id"
+
+  infractions:
+    enabled: true
+    channelId: "channel-id"
+    excludedCategories:
+      - "category-id"
+    excludedChannels:
+      - "channel-id"
+
+  media:
+    enabled: true
+    channelId: "channel-id"
+    excludedCategories:
+      - "category-id"
+    excludedChannels:
+      - "channel-id"
+
+  voice:
+    enabled: true
+    channelId: "channel-id"
+    excludedCategories:
+      - "category-id"
+    excludedChannels:
+      - "channel-id"
+
+  threads:
     enabled: true
     channelId: "channel-id"
     excludedCategories:

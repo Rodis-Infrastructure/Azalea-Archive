@@ -1,7 +1,7 @@
-import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "discord.js";
+import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
-import { formatReason, formatTimestamp } from "../../utils";
-import { muteMember } from "../../utils/moderation";
+import { formatTimestamp } from "../../utils";
+import { muteMember, purgeMessages } from "../../utils/moderation";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";
@@ -29,7 +29,7 @@ export default class QuickMute60Command extends ContextMenuCommand {
         }
 
         const reason = message.content;
-        const res = await muteMember(message.member, {
+        const [res] = await muteMember(message.member, {
             quick: true,
             moderator: interaction.user,
             duration: "60m",
@@ -39,9 +39,15 @@ export default class QuickMute60Command extends ContextMenuCommand {
 
         /* The result is the mute's expiration timestamp */
         if (typeof res === "number") {
-            const reply = `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}${formatReason(reason)}`;
+            const reply = `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
 
             await Promise.all([
+                purgeMessages({
+                    channel: message.channel as GuildTextBasedChannel,
+                    amount: 100,
+                    moderatorId: interaction.user.id,
+                    authorId: message.author.id
+                }),
                 interaction.reply({
                     content: `${success} Successfully ${reply}`,
                     ephemeral: true
@@ -52,8 +58,7 @@ export default class QuickMute60Command extends ContextMenuCommand {
                     authorId: message.author.id,
                     channelId: message.channel.id,
                     reason
-                }),
-                message.delete()
+                })
             ]);
             return;
         }

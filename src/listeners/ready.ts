@@ -2,13 +2,14 @@ import { processCachedMessages } from "../utils/cache";
 import { readdir, readFile } from "node:fs/promises";
 import { ConfigData } from "../types/config";
 import { parse } from "yaml";
-import { Events } from "discord.js";
+import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js";
 import { runQuery } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
 import Config from "../utils/config";
 import ms from "ms";
+import { RequestType } from "../types/utils";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -27,6 +28,9 @@ export default class ReadyEventListener extends EventListener {
 
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
             new Config(config).bind(guildId);
+
+            setBanRequestNoticeInterval(config, guildId);
+            setMuteRequestNoticeInterval(config, guildId);
         }
 
         await Promise.all([
@@ -51,4 +55,50 @@ export default class ReadyEventListener extends EventListener {
             `);
         }, ms("3h"));
     }
+}
+
+function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
+    if (!config.channels?.banRequestQueue || !config.banRequestNotices?.enabled) return;
+
+    setInterval(async() => {
+        const cachedBanRequests = ClientManager.cache.requests.filter(r => r.requestType === RequestType.Ban);
+        if (cachedBanRequests.size < config.banRequestNotices!.threshold) return;
+
+        const channel = await ClientManager.client.channels.fetch(config.banRequestNotices!.channelId) as GuildTextBasedChannel;
+        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedBanRequests.lastKey()}`;
+
+        const embed = new EmbedBuilder()
+            .setColor(Colors.Red)
+            .setTitle(`${cachedBanRequests.size} Unhandled Ban Requests`)
+            .setDescription(`There are currently ${cachedBanRequests.size} unhandled ban requests starting from [here](${jumpUrl})`)
+            .setTimestamp();
+
+        await channel.send({
+            content: "@here",
+            embeds: [embed]
+        });
+    }, config.banRequestNotices.interval);
+}
+
+function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
+    if (!config.channels?.muteRequestQueue || !config.muteRequestNotices?.enabled) return;
+
+    setInterval(async() => {
+        const cachedMuteRequests = ClientManager.cache.requests.filter(r => r.requestType === RequestType.Mute);
+        if (cachedMuteRequests.size < config.muteRequestNotices!.threshold) return;
+
+        const channel = await ClientManager.client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
+        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedMuteRequests.lastKey()}`;
+
+        const embed = new EmbedBuilder()
+            .setColor(Colors.Red)
+            .setTitle(`${cachedMuteRequests.size} Unhandled Mute Requests`)
+            .setDescription(`There are currently ${cachedMuteRequests.size} unhandled mute requests starting from [here](${jumpUrl})`)
+            .setTimestamp();
+
+        await channel.send({
+            content: "@here",
+            embeds: [embed]
+        });
+    }, config.muteRequestNotices.interval);
 }

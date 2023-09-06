@@ -13,11 +13,10 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
     async execute(log: GuildAuditLogsEntry, guild: Guild): Promise<void> {
         const { target, reason, changes } = log;
-        let { executor } = log;
+        const { executor } = log;
 
         if (!executor || !target) return;
         if (executor.id === ClientManager.client.user?.id) return;
-        if (executor.partial) executor = await executor.fetch();
 
         let punishment: InfractionPunishment | undefined;
         let muteReply!: Partial<string>;
@@ -58,7 +57,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                         try {
                             await resolveInfraction({
                                 executor: executor,
-                                target: target as User,
+                                targetId: (target as User).id,
                                 guildId: guild.id,
                                 punishment: punishment,
                                 flag: infractionFlag,
@@ -87,7 +86,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             if (punishment !== InfractionPunishment.Mute) {
                 await resolveInfraction({
                     executor: executor,
-                    target: target as User,
+                    targetId: (target as User).id,
                     guildId: guild.id,
                     punishment: punishment,
                     flag: infractionFlag,

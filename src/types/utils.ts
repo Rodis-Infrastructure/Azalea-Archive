@@ -2,6 +2,11 @@ import { GuildTextBasedChannel, MessageCreateOptions, MessagePayload, User } fro
 import { InfractionFlag, InfractionPunishment } from "./db";
 import { LoggingEvent } from "./config";
 
+export enum RequestType {
+    Ban = "ban",
+    Mute = "mute"
+}
+
 export enum InfractionFilter {
     All = "All",
     Automatic = "Automatic",
@@ -10,20 +15,32 @@ export enum InfractionFilter {
 
 export type InfractionData = {
     executor: User,
-    target: User,
+    targetId: string,
     guildId: string,
     requestAuthor?: User,
     flag?: InfractionFlag,
     reason?: string | null
 } & (
-    { punishment: InfractionPunishment.Mute, duration: number } |
-    { punishment: Exclude<InfractionPunishment, InfractionPunishment.Mute>, duration?: never }
+    {
+        punishment: InfractionPunishment.Mute,
+        duration: number
+    } |
+    {
+        punishment: Exclude<InfractionPunishment, InfractionPunishment.Mute>,
+        duration?: never
+    }
 );
 
 export type LogData = {
     event: LoggingEvent,
     options: string | MessagePayload | MessageCreateOptions
 } & (
-    { channel: GuildTextBasedChannel, guildId?: never } |
-    { channel?: never, guildId: string }
+    {
+        channel: GuildTextBasedChannel,
+        guildId?: never
+    } |
+    {
+        channel?: never,
+        guildId: string
+    }
 );

@@ -16,6 +16,40 @@ will be deleted. If set to `0`, the bot will not delete any messages.
 deleteMessageSecondsOnBan: 0
 ```
 
+### Allowed Proof Channels
+
+Require all message links in infraction evidence to be from specific channels. If set to an empty array, all channels
+will be allowed.
+
+```yaml
+allowedProofChannelIds:
+  - "channel-id"
+```
+
+### Channel Configuration
+
+The `channels` section allows you to configure which channels the bot will perform certain actions in.
+
+```yaml
+channels:
+  banRequestQueue: "channel-id"
+  muteRequestQueue: "channel-id"
+  mediaConversion: "channel-id"
+```
+
+### Request Notices
+
+A reminder/notice will be sent in the specified channel whenever there is a certain number of unhandled requests over
+specified period of time.
+
+```yaml
+banRequestNotices: # or muteRequestNotices
+  enabled: true
+  channelId: "channel-id"
+  threshold: 25
+  interval: 3_600_000 # 1 hour
+```
+
 ### Custom Emojis
 
 The `emojis` section enables you to customize the emojis used for the bot's responses. The fields listed below are the
@@ -23,11 +57,13 @@ emojis that can currently be configured for different types of responses.
 
 ```yaml
 emojis:
-    success: "👌"
-    error: "<:emoji-name:emoji-id>"
-    quickMute30: "<:emoji-name:emoji-id>"
-    quickMute60: "<:emoji-name:emoji-id>"
-    purgeMessages: "<:emoji-name:emoji-id>"
+  success: "👌"
+  error: "<:emoji-name:emoji-id>"
+  quickMute30: "<:emoji-name:emoji-id>"
+  quickMute60: "<:emoji-name:emoji-id>"
+  purgeMessages: "<:emoji-name:emoji-id>"
+  approveRequest: "<:emoji-name:emoji-id>"
+  denyRequest: "<:emoji-name:emoji-id>"
 ```
 
 ### Ephemeral Responses
@@ -72,6 +108,9 @@ modals.
 - `guildStaff` - Prevents the user from being given an infraction.
 - `manageInfractions` - Allows the user to modify or delete any infraction.
 - `viewModerationActivity` - Allows the user to view the number of infractions a staff member has given out.
+- `manageBanRequests` - Allows the user to approve or deny ban requests.
+- `manageMuteRequests` - Allows the user to approve or deny mute requests.
+- `autoMuteBanRequests` - Automatically mutes the user a ban requested was submitted for
 
 #### Role Configuration
 
@@ -81,6 +120,9 @@ roles:
     guildStaff: false
     manageInfractions: false
     viewModerationActivity: false
+    manageBanRequests: false
+    manageMuteRequests: false
+    autoMuteBanRequests: false
     selections: []
     buttons: []
     modals: []
@@ -94,6 +136,9 @@ groups:
   - guildStaff: false
     manageInfractions: false
     viewModerationActivity: false
+    manageBanRequests: false
+    manageMuteRequests: false
+    autoMuteBanRequests: false
     roleIds: []
     selectMenus: []
     buttons: []
@@ -109,6 +154,9 @@ category/channel configuration does not apply to moderation infraction logging):
 * `interactionUsage` - Triggered when an interaction is used, whether it is a command, button, modal, or select menu.
 * `infractions` - Triggered when a user is given an infraction.
 * `messages` - Triggered when a message is updated, deleted, or deleted in bulk.
+* `media` - The bot's storage for attachments.
+* `voice` - Triggered when a user joins, leaves, or moves voice channels.
+* `threads` - Triggered when a thread is created, updated, or deleted.
 
 ```yaml
 logging:

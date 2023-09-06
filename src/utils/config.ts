@@ -1,11 +1,11 @@
 import {
+    AnySelectMenuInteraction,
     ButtonInteraction,
     Guild,
     GuildMember,
     GuildTextBasedChannel,
     MessageMentionTypes,
     ModalSubmitInteraction,
-    SelectMenuInteraction,
     userMention
 } from "discord.js";
 
@@ -21,8 +21,17 @@ export default class Config {
     // eslint-disable-next-line no-empty-function
     constructor(public readonly data: ConfigData) {}
 
+    get allowedProofChannelIds() {
+        return this.data.allowedProofChannelIds ?? [];
+    }
+
     get deleteMessageSecondsOnBan() {
-        return this.data.deleteMessageSecondsOnBan ?? 0;
+        const val = this.data.deleteMessageSecondsOnBan ?? 0;
+
+        if (val < 0) return 0;
+        if (val > 604800) return 604800;
+
+        return val;
     }
 
     get emojis() {
@@ -30,6 +39,18 @@ export default class Config {
             success: "✅",
             error: "❌"
         };
+    }
+
+    get channels() {
+        return this.data.channels ?? {};
+    }
+
+    get banRequestNotices() {
+        return this.data.banRequestNotices ?? {};
+    }
+
+    get muteRequestNotices() {
+        return this.data.muteRequestNotices ?? {};
     }
 
     private get logging() {
@@ -188,7 +209,7 @@ export default class Config {
     }
 
     async applyDeferralState(data: {
-        interaction: ModalSubmitInteraction | ButtonInteraction | SelectMenuInteraction | CommandInteraction,
+        interaction: ModalSubmitInteraction | ButtonInteraction | AnySelectMenuInteraction | CommandInteraction,
         state: InteractionResponseType,
         skipInternalUsageCheck: boolean
         ephemeral?: boolean

@@ -5,6 +5,7 @@ import { cacheMessage } from "../utils/cache";
 import { referenceLog } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
+import ClientManager from "../client";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -12,9 +13,10 @@ export default class MessageDeleteEventListener extends EventListener {
     }
 
     async execute(message: Message): Promise<void> {
-        if (!message.guildId) return;
+        if (!message.inGuild()) return;
+
         cacheMessage(message.id, { deleted: true });
-        if (!message.content) return;
+        ClientManager.cache.requests.delete(message.id);
 
         const channel = message.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
@@ -43,17 +45,21 @@ export default class MessageDeleteEventListener extends EventListener {
         }];
 
         if (message.reference) {
-            await referenceLog(message).then(res => {
-                embeds.unshift(res.embed);
-                files.push(res.icon);
-            });
+            await referenceLog(message)
+                .then(res => {
+                    embeds.unshift(res.embed);
+                    files.push(res.icon);
+                })
+                .catch(() => null);
         }
 
         const loggedMessage = await sendLog({
             event: LoggingEvent.Message,
             options: { embeds, files },
             channel
-        }) as Message;
+        });
+
+        if (!loggedMessage) return;
 
         await linkToPurgeLog({
             channel,

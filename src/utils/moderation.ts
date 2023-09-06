@@ -1,20 +1,37 @@
-import { ColorResolvable, Colors, EmbedBuilder, GuildMember, GuildTextBasedChannel, User } from "discord.js";
-import { InfractionData } from "../types/utils";
-import { formatTimestamp, msToString, MUTE_DURATION_VALIDATION_REGEX } from "./index";
-import { InfractionFlag, InfractionPunishment } from "../types/db";
+import {
+    ColorResolvable,
+    Colors,
+    EmbedBuilder,
+    GuildMember,
+    GuildTextBasedChannel,
+    Message,
+    User,
+    userMention
+} from "discord.js";
+
+import {
+    CHANNEL_ID_FROM_URL_REGEX,
+    formatTimestamp,
+    msToString,
+    MUTE_DURATION_VALIDATION_REGEX,
+    REQUEST_VALIDATION_REGEX
+} from "./index";
+
+import { InfractionFlag, InfractionPunishment, MessageModel } from "../types/db";
+import { InfractionData, RequestType } from "../types/utils";
 import { cacheMessage, getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
+import { LoggingEvent } from "../types/config";
 import { sendLog } from "./logging";
 
 import ClientManager from "../client";
 import Config from "./config";
 import ms from "ms";
-import { LoggingEvent } from "../types/config";
 
-export async function resolveInfraction(data: InfractionData): Promise<void> {
+export async function resolveInfraction(data: InfractionData): Promise<number | null> {
     const {
         executor,
-        target,
+        targetId,
         reason,
         guildId,
         punishment,
@@ -70,7 +87,7 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
         .setColor(color)
         .setAuthor({ name: authorText, iconURL: `attachment://${icon}` })
         .setFields([
-            { name: "Member", value: `${target} (\`${target.id}\`)` },
+            { name: "Member", value: `${userMention(targetId)} (\`${targetId}\`)` },
             { name: "Moderator", value: `${executor} (\`${executor.id}\`)` }
         ])
         .setTimestamp();
@@ -79,14 +96,14 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
     if (reason) log.addFields([{ name: "Reason", value: reason }]);
 
     const expiresAt = duration ? Math.floor((Date.now() + duration) / 1000) : null;
-    await Promise.all([
+    const [infractionId] = await Promise.all([
         storeInfraction({
             guildId: guildId,
             action: punishment,
             executorId: executor.id,
-            targetId: target.id,
             expiresAt: expiresAt,
             requestAuthorId: requestAuthor?.id,
+            targetId,
             reason,
             flag
         }),
@@ -102,16 +119,19 @@ export async function resolveInfraction(data: InfractionData): Promise<void> {
             }
         })
     ]);
+
+    return infractionId;
 }
 
 export async function muteMember(offender: GuildMember, data: {
     config: Config,
     moderator: User,
     duration: string,
+    requestAuthor?: User,
     reason?: string | null,
     quick?: boolean
-}): Promise<string | number> {
-    const { config, moderator, duration, reason, quick } = data;
+}): Promise<[number | string, number | null]> {
+    const { config, moderator, duration, reason, quick, requestAuthor } = data;
 
     const notModerateableReason = validateModerationAction({
         config,
@@ -123,32 +143,33 @@ export async function muteMember(offender: GuildMember, data: {
         }]
     });
 
-    if (notModerateableReason) return notModerateableReason;
+    if (notModerateableReason) return [notModerateableReason, null];
 
-    const expiresAt = await muteExpirationTimestamp(offender);
-    if (expiresAt) return `This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`;
+    const expiresAt = muteExpirationTimestamp(offender);
+    if (expiresAt) return [`This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`, null];
 
     let msMuteDuration = ms(duration);
 
     /* Only allow the duration to be given in days, hours, and minutes */
-    if (!duration.match(MUTE_DURATION_VALIDATION_REGEX) || msMuteDuration <= 0) return "The duration provided is not valid.";
+    if (!duration.match(MUTE_DURATION_VALIDATION_REGEX) || msMuteDuration <= 0) return ["The duration provided is not valid.", null];
     if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {
         await offender.timeout(msMuteDuration, reason ?? undefined);
-        await resolveInfraction({
+        const infractionId = await resolveInfraction({
             guildId: offender.guild.id,
             punishment: InfractionPunishment.Mute,
-            target: offender.user,
+            targetId: offender.user.id,
             duration: msMuteDuration,
             flag: quick ? InfractionFlag.Quick : undefined,
             executor: moderator,
+            requestAuthor,
             reason
         });
 
-        return Math.floor((msMuteDuration + Date.now()) / 1000);
+        return [Math.floor((msMuteDuration + Date.now()) / 1000), infractionId];
     } catch {
-        return "An error has occurred while trying to execute this interaction";
+        return ["An error has occurred while trying to execute this interaction", null];
     }
 }
 
@@ -161,7 +182,10 @@ export function validateModerationAction(data: {
     config: Config,
     moderatorId: string,
     offender: GuildMember,
-    additionalValidation?: { condition: boolean, reason: string }[]
+    additionalValidation?: {
+        condition: boolean,
+        reason: string
+    }[]
 }): string | void {
     const { moderatorId, offender, additionalValidation, config } = data;
 
@@ -200,7 +224,7 @@ export async function purgeMessages(data: {
             const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
 
             // @formatter:off
-            const storedMessages = await allQuery<{ messageId: string }>(`
+            const storedMessages = await allQuery<Pick<MessageModel, "message_id">>(`
                 DELETE FROM messages
                 WHERE message_id IN (
                     SELECT message_id FROM messages
@@ -213,7 +237,7 @@ export async function purgeMessages(data: {
                 RETURNING message_id;
             `);
 
-            removableMessageIds.push(...storedMessages.map(({ messageId }) => messageId));
+            removableMessageIds.push(...storedMessages.map(({ message_id }) => message_id));
         } catch (err) {
             console.error(err);
         }
@@ -227,4 +251,118 @@ export async function purgeMessages(data: {
 
     const res = await channel.bulkDelete(removableMessageIds);
     return res.size;
+}
+
+export async function validateRequest(data: {
+    requestType: RequestType,
+    message: Message<true>,
+    config: Config,
+    isAutoMuteEnabled: boolean
+}) {
+    const { requestType, message, config, isAutoMuteEnabled } = data;
+    if (message.attachments.size && !config.loggingChannel(LoggingEvent.Media)) throw "You cannot add attachments to the request, please link them instead.";
+
+    const isMuteRequest = requestType === RequestType.Mute;
+    const { targetId, reason } = REQUEST_VALIDATION_REGEX.exec(message.content)?.groups ?? {};
+    REQUEST_VALIDATION_REGEX.lastIndex = 0;
+
+    if (!targetId || !reason) {
+        throw [
+            "## Invalid request format",
+            `Format: \`{user_id / @user}${isMuteRequest ? "(duration)" : ""} {reason}\``,
+            "Examples:",
+            "- `123456789012345678 Mass spam`",
+            "- `<@123456789012345678> Mass spam`",
+            isMuteRequest ? "- `123456789012345678 2h Mass spam`" : ""
+        ].join("\n");
+    }
+
+    // Check if all URLs lead to whitelisted channels
+    if (config.allowedProofChannelIds.length) {
+        const channelIdMatches = Array.from(reason.matchAll(CHANNEL_ID_FROM_URL_REGEX));
+        if (channelIdMatches.some(m => !config.allowedProofChannelIds.includes(m[1]))) {
+            throw "Your request contains links to non-whitelisted channels.";
+        }
+    }
+
+    const cache = ClientManager.cache.requests;
+    const requestMessageId = cache.findKey(v => v.targetId === targetId
+            && v.requestType === requestType);
+
+    if (requestMessageId && requestMessageId !== message.id) {
+        const jumpUrl = `https://discord.com/channels/${message.guildId}/${message.channelId}/${requestMessageId}`;
+        throw `A ${requestType} request for ${userMention(targetId)} has already been submitted: ${jumpUrl}`;
+    }
+
+    if (reason.length + (message.attachments.size * 90) > 1024) throw "The reason length cannot exceed 1,024 characters, this includes potential media URLs.";
+
+    const targetMember = await message.guild.members.fetch(targetId).catch(() => null);
+    const targetUser = targetMember?.user || await ClientManager.client.users.fetch(targetId).catch(() => null);
+
+    if (!targetUser) throw "The user specified is invalid.";
+
+    if (!isAutoMuteEnabled || requestType === RequestType.Mute) {
+        if (targetUser.id === message.author.id) throw "This action cannot be carried out on yourself.";
+        if (targetUser.bot) throw "This action cannot be carried out on bots.";
+        if (targetMember && config.isGuildStaff(targetMember)) throw "This action cannot be carried out on server staff.";
+    }
+
+    if (requestType === RequestType.Mute) {
+        if (!targetMember) throw "The member specified is not in the server.";
+        if (targetMember.isCommunicationDisabled()) throw "This member is already muted.";
+    } else {
+        const isBanned = await message.guild.bans.fetch(targetId).catch(() => null);
+        if (isBanned) throw "This user is already banned.";
+    }
+
+    const reaction = message.reactions.cache.filter(r => r.me).first();
+
+    if (reaction) await reaction.users.remove(ClientManager.client.user?.id);
+    if (!cache.has(message.id)) {
+        cache.set(message.id, {
+            targetId,
+            requestType
+        });
+    }
+
+    return { targetMember, reason };
+}
+
+export async function handleBanRequestAutoMute(data: {
+    targetMember: GuildMember,
+    message: Message<true>,
+    reason: string,
+    config: Config
+}) {
+    const { targetMember, message, reason, config } = data;
+    const [res, infractionId] = await muteMember(targetMember, {
+        moderator: message.author,
+        duration: "28d",
+        reason,
+        config
+    }) as [string | number, number];
+
+    if (typeof res === "string") {
+        if (targetMember.isCommunicationDisabled()) return;
+        const reply = await message.reply(`${config.emojis.error} Failed to mute the member automatically.`);
+
+        // Remove after 3 seconds
+        setTimeout(async() => {
+            await reply.delete().catch(() => null);
+        }, 3000);
+
+        return;
+    }
+
+    const confirmation = `muted **${targetMember.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
+    await config.sendConfirmation({
+        guild: message.guild,
+        message: confirmation,
+        authorId: message.author.id,
+        allowMentions: true,
+        reason
+    });
+
+    const requestData = ClientManager.cache.requests.get(message.id)!;
+    ClientManager.cache.requests.set(message.id, { ...requestData, infractionId });
 }

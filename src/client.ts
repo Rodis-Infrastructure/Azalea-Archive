@@ -1,5 +1,5 @@
-import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { Cache, CachedInfractions, CachedMessage } from "./types/cache";
+import { Client, Collection, GatewayIntentBits } from "discord.js";
+import { Cache, CachedInfractions, CachedMessage, CachedRequest } from "./types/cache";
 import { loadListeners } from "./handlers/listeners/loader";
 
 import SelectMenuHandler from "./handlers/interactions/select_menus/manager";
@@ -22,6 +22,7 @@ class ClientManager {
     public cache: Cache = {
         activeMutes: new Collection<string, number>(),
         infractions: new Collection<string, CachedInfractions>(),
+        requests: new Collection<string, CachedRequest>(),
         messages: {
             store: new Collection<string, CachedMessage>(),
             remove: new Set<string>(),
@@ -33,19 +34,11 @@ class ClientManager {
         intents: [
             GatewayIntentBits.GuildMessageReactions,
             GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.GuildModeration,
             GatewayIntentBits.MessageContent,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.GuildBans,
             GatewayIntentBits.Guilds
-        ],
-        partials: [
-            Partials.ThreadMember,
-            Partials.GuildMember,
-            Partials.Reaction,
-            Partials.Channel,
-            Partials.Message,
-            Partials.User
         ]
     });
 
