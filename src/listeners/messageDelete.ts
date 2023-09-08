@@ -1,22 +1,11 @@
-import {
-    AttachmentPayload,
-    channelMention,
-    Colors,
-    EmbedBuilder,
-    Events,
-    Message,
-    MessageType,
-    userMention
-} from "discord.js";
-
+import { AttachmentPayload, channelMention, Colors, EmbedBuilder, Events, Message, userMention } from "discord.js";
 import { createReferenceLog, formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
 import { processPartialDeletedMessage } from "../utils/cache";
+import { serializeMessageToDatabaseModel } from "../utils";
 import { LoggingEvent } from "../types/config";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
-import { MessageModel } from "../types/db";
-import { serializeMessageToDatabaseModel } from "../utils";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -25,24 +14,21 @@ export default class MessageDeleteEventListener extends EventListener {
 
     async execute(deletedMessage: Message): Promise<void> {
         if (!deletedMessage.inGuild()) return;
+
         ClientManager.cache.requests.delete(deletedMessage.id);
 
-        let reference!: MessageModel | null;
-        let message!: MessageModel | null;
+        const fetchedReference = await deletedMessage.fetchReference().catch(() => null);
+        const data = await processPartialDeletedMessage(deletedMessage.id, {
+            fetchReference: !fetchedReference
+        });
 
-        if (!deletedMessage.partial) message = serializeMessageToDatabaseModel(deletedMessage, true);
-        if (deletedMessage.reference) {
-            const fetchedReference = await deletedMessage.fetchReference();
-            reference = serializeMessageToDatabaseModel(fetchedReference);
-        }
+        const reference = fetchedReference
+            ? serializeMessageToDatabaseModel(fetchedReference)
+            : data.reference;
 
-        const data = await processPartialDeletedMessage(
-            deletedMessage.id,
-            deletedMessage.type === MessageType.Reply && !deletedMessage.reference
-        );
-
-        message ??= data.message;
-        reference ??= data.reference;
+        const message = !deletedMessage.partial
+            ? serializeMessageToDatabaseModel(deletedMessage, true)
+            : data.message;
 
         if (!message) return;
 
@@ -73,16 +59,9 @@ export default class MessageDeleteEventListener extends EventListener {
 
         // Message is a reply
         if (reference) {
-            const referenceLog = createReferenceLog({
-                authorId: reference.author_id,
-                content: reference.content,
-                messageId: reference.message_id,
-                guildId: reference.guild_id,
-                channelId: reference.channel_id
-            });
-
-            embeds.unshift(referenceLog.embed);
-            files.push(referenceLog.file);
+            const { embed, file } = createReferenceLog(reference);
+            embeds.unshift(embed);
+            files.push(file);
         }
 
         const log = await sendLog({

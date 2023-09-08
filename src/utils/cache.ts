@@ -23,7 +23,10 @@ export function getCachedMessageIds(data: {
         .slice(0, limit);
 }
 
-export async function processPartialDeletedMessage(messageId: string, fetchReference: boolean): Promise<Record<"message" | "reference", MessageModel | null>> {
+export async function processPartialDeletedMessage(messageId: string, options: {
+    fetchReference: boolean
+}): Promise<Record<"message" | "reference", MessageModel | null>> {
+    const { fetchReference } = options;
     const cache = ClientManager.cache.messages.store;
     const data: Record<"message" | "reference", MessageModel | null> = {
         message: cache.get(messageId) || null,
@@ -42,15 +45,36 @@ export async function processPartialDeletedMessage(messageId: string, fetchRefer
     }
 
     if (fetchReference && data.message?.reference_id) {
-        data.reference = cache.get(data.message.reference_id) || null;
-        data.reference ??= await getQuery<MessageModel>(`
-            SELECT *
-            FROM messages
-            WHERE message_id = ${data.message.reference_id};
-        `);
+        data.reference = await fetchMessage(data.message.reference_id);
     }
 
     return data;
+}
+
+export async function processEditedMessage(messageId: string, updatedContent: string) {
+    const cache = ClientManager.cache.messages.store;
+    const message = cache.get(messageId) || null;
+
+    if (message) {
+        message.content = updatedContent;
+    } else {
+        await getQuery<MessageModel>(`
+            UPDATE messages
+            SET content = ${stringify(updatedContent)}
+            WHERE message_id = ${messageId};
+        `);
+    }
+}
+
+export function fetchMessage(messageId: string): Promise<MessageModel | null> {
+    const cachedMessage = ClientManager.cache.messages.store.get(messageId);
+    if (cachedMessage) return Promise.resolve(cachedMessage);
+
+    return getQuery<MessageModel>(`
+        SELECT *
+        FROM messages
+        WHERE message_id = ${messageId};
+    `);
 }
 
 export async function processBulkDeletedMessages(messageIds: string[]): Promise<MessageModel[]> {
