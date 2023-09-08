@@ -44,7 +44,7 @@ export default class ReadyEventListener extends EventListener {
 
         setInterval(async() => {
             await processCachedMessages();
-        }, ms("5s"));
+        }, ms("10m"));
 
         // Removes old data from the database
         setInterval(async() => {
