@@ -1,11 +1,10 @@
-import { MinimalInfraction } from "./db";
+import { MessageModel, MinimalInfraction } from "./db";
 import { InfractionFilter, RequestType } from "./utils";
 import { Collection } from "discord.js";
 
 export interface Cache {
     messages: {
-        store: Collection<string, CachedMessage>;
-        remove: Set<string>;
+        store: Collection<string, MessageModel>;
         purged?: {
             targetId?: string;
             moderatorId: string;
@@ -27,13 +26,6 @@ export interface CachedInfractions {
     messages: Collection<string, InfractionSearchResponse>;
     data: MinimalInfraction[];
     timeout?: NodeJS.Timeout;
-}
-
-export interface CachedMessage {
-    authorId: string;
-    channelId: string;
-    guildId: string;
-    createdAt: number;
 }
 
 interface InfractionSearchResponse {

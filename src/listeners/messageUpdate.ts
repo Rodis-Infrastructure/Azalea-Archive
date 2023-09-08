@@ -137,7 +137,8 @@ export default class MessageUpdateEventListener extends EventListener {
         await sendLog({
             event: LoggingEvent.Message,
             options: { embeds, files },
-            channel
+            channelId: channel.id,
+            guildId: newMessage.guildId
         });
     }
 }

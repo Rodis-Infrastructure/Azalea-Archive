@@ -91,7 +91,6 @@ export default class BanCommand extends ChatInputCommand {
                 ephemeral
             }),
             config.sendConfirmation({
-                guild: interaction.guild!,
                 authorId: interaction.user.id,
                 message: `banned **${user.tag}**`,
                 channelId: interaction.channelId,

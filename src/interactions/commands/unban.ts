@@ -73,7 +73,6 @@ export default class UnbanCommand extends ChatInputCommand {
                 ephemeral
             }),
             config.sendConfirmation({
-                guild: interaction.guild!,
                 message: `unbanned **${offender.tag}**`,
                 authorId: interaction.user.id,
                 channelId: interaction.channelId,

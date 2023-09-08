@@ -46,7 +46,6 @@ export default class StoreMediaCtxCommand extends ContextMenuCommand {
 
         await Promise.all([
             config.sendConfirmation({
-                guild: interaction.guild!,
                 allowMentions: true,
                 message: `${interaction.user} Your media links:\n\n>>> ${mediaUrls.join("\n")}`,
                 full: true

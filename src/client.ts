@@ -1,5 +1,5 @@
-import { Client, Collection, GatewayIntentBits } from "discord.js";
-import { Cache, CachedInfractions, CachedMessage, CachedRequest } from "./types/cache";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { Cache, CachedInfractions, CachedRequest } from "./types/cache";
 import { loadListeners } from "./handlers/listeners/loader";
 
 import SelectMenuHandler from "./handlers/interactions/select_menus/manager";
@@ -9,6 +9,7 @@ import ModalHandler from "./handlers/interactions/modals/manager";
 import Config from "./utils/config";
 
 import "dotenv/config";
+import { MessageModel } from "./types/db";
 
 process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
@@ -24,9 +25,7 @@ class ClientManager {
         infractions: new Collection<string, CachedInfractions>(),
         requests: new Collection<string, CachedRequest>(),
         messages: {
-            store: new Collection<string, CachedMessage>(),
-            remove: new Set<string>(),
-            purged: undefined
+            store: new Collection<string, MessageModel>()
         }
     };
 
@@ -39,6 +38,9 @@ class ClientManager {
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMembers,
             GatewayIntentBits.Guilds
+        ],
+        partials: [
+            Partials.Message
         ]
     });
 

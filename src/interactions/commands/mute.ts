@@ -72,7 +72,6 @@ export default class MuteCommand extends ChatInputCommand {
                     ephemeral
                 }),
                 config.sendConfirmation({
-                    guild: interaction.guild!,
                     authorId: interaction.user.id,
                     message: reply,
                     channelId: interaction.channelId,

@@ -41,6 +41,8 @@ export interface MessageModel {
     channel_id: string;
     guild_id: string;
     created_at: number;
+    reference_id?: string;
+    deleted: boolean;
     content: string;
 }
 

@@ -1,4 +1,4 @@
-import { GuildTextBasedChannel, MessageCreateOptions, MessagePayload, User } from "discord.js";
+import { MessageCreateOptions, MessagePayload, User } from "discord.js";
 import { InfractionFlag, InfractionPunishment } from "./db";
 import { LoggingEvent } from "./config";
 
@@ -33,14 +33,12 @@ export type InfractionData = {
 
 export type LogData = {
     event: LoggingEvent,
-    options: string | MessagePayload | MessageCreateOptions
-} & (
-    {
-        channel: GuildTextBasedChannel,
-        guildId?: never
-    } |
-    {
-        channel?: never,
-        guildId: string
-    }
-);
+    options: string | MessagePayload | MessageCreateOptions,
+    guildId: string
+} & ({
+    channelId: string,
+    categoryId?: string | null
+} | {
+    channelId?: never,
+    categoryId?: never
+})

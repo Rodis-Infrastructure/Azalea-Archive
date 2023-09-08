@@ -1,7 +1,6 @@
 import {
     AnySelectMenuInteraction,
     ButtonInteraction,
-    Guild,
     GuildMember,
     GuildTextBasedChannel,
     MessageMentionTypes,
@@ -82,7 +81,7 @@ export default class Config {
         return this.logging?.[event]?.channelId;
     }
 
-    loggingAllowed(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
+    loggingAllowed(eventName: LoggingEvent, channelId: string, categoryId = ""): boolean {
         if (!this.logging) return false;
 
         const {
@@ -92,18 +91,16 @@ export default class Config {
             excludedCategories
         } = this.logging;
 
-        const categoryId = channel.parentId ?? "";
-
         return (
             /* Global logging is enabled and the channel/category is not excluded */
             enabled &&
-            !excludedChannels?.includes(channel.id) &&
+            !excludedChannels?.includes(channelId) &&
             !excludedCategories?.includes(categoryId) &&
 
             /* The event's logging is enabled and the channel/category is not excluded */
             event?.enabled &&
             event.channelId &&
-            !event.excludedChannels?.includes(channel.id) &&
+            !event.excludedChannels?.includes(channelId) &&
             !event.excludedCategories?.includes(categoryId)
         ) as boolean;
     }
@@ -171,7 +168,6 @@ export default class Config {
     }
 
     async sendConfirmation(data: {
-        guild: Guild,
         authorId?: string,
         message: string,
         reason?: string | null,
@@ -179,7 +175,7 @@ export default class Config {
         channelId?: string,
         allowMentions?: boolean
     }) {
-        const { guild, authorId, message, reason, full, channelId, allowMentions } = data;
+        const { authorId, message, reason, full, channelId, allowMentions } = data;
 
         if (!this.confirmationChannel) return;
         if (channelId && channelId === this.confirmationChannel) return;
@@ -187,7 +183,7 @@ export default class Config {
         const confirmationChannelId = this.confirmationChannel;
         if (!confirmationChannelId) return;
 
-        const confirmationChannel = await guild.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+        const confirmationChannel = await ClientManager.client.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
         if (!confirmationChannel) return;
 
         const parsedMentions: MessageMentionTypes[] = allowMentions ? ["users"] : [];

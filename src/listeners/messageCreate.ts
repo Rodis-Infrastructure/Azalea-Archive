@@ -1,27 +1,30 @@
-import { Events, GuildMember, Message } from "discord.js";
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
-import { cacheMessage } from "../utils/cache";
+import { serializeMessageToDatabaseModel } from "../utils";
+import { Events, GuildMember, Message } from "discord.js";
+import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
+import { sendLog } from "../utils/logging";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
-import { sendLog } from "../utils/logging";
-import { LoggingEvent } from "../types/config";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {
         super(Events.MessageCreate);
     }
 
-    async execute(message: Message): Promise<void> {
+    async execute(message: Message<true>): Promise<void> {
         if (!message.inGuild() || message.author.bot) return;
 
-        cacheMessage(message);
+        // Cache the message
+        const serializedMessage = serializeMessageToDatabaseModel(message);
+        ClientManager.cache.messages.store.set(message.id, serializedMessage);
+
         const config = ClientManager.config(message.guildId);
         if (!config) return;
 
+        // Handle media to link conversion
         if (message.channelId === config.channels?.mediaConversion && message.attachments.size) {
-            const mediaUrls = [];
             const mediaStorageLog = await sendLog({
                 event: LoggingEvent.Media,
                 guildId: message.guildId,
@@ -32,16 +35,14 @@ export default class MessageCreateEventListener extends EventListener {
                 }
             }) as Message<true>;
 
-            for (const attachment of mediaStorageLog.attachments.values()) {
-                mediaUrls.push(`<${attachment.url}>`);
-            }
-
+            const mediaURLs = mediaStorageLog.attachments.map(({ url }) => `<${url}>`);
             await Promise.all([
                 message.delete().catch(() => null),
-                message.channel.send(`${message.author} Your media links:\n\n>>> ${mediaUrls.join("\n")}`)
+                message.channel.send(`${message.author} Your media links:\n\n>>> ${mediaURLs.join("\n")}`)
             ]);
         }
 
+        // Handle mute/ban requests
         if (
             (message.channelId === config.channels?.muteRequestQueue || message.channelId === config.channels?.banRequestQueue) &&
             !message.reactions.cache.size

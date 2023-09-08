@@ -85,7 +85,6 @@ export default class NoteCommand extends ChatInputCommand {
                 ephemeral
             }),
             config.sendConfirmation({
-                guild: interaction.guild!,
                 authorId: interaction.user.id,
                 message: `added a note to **${user.tag}**`,
                 channelId: interaction.channelId,
