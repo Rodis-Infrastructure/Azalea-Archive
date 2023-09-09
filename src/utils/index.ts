@@ -105,7 +105,7 @@ export function elipsify(str: string, length: number) {
 }
 
 export function stringify(str: string | undefined | null): string | null {
-    return str ? `'${str}'` : null;
+    return str ? `'${str.replaceAll("'", "''")}'` : null;
 }
 
 export function formatReason(reason: string | null | undefined): string {
