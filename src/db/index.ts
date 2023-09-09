@@ -61,11 +61,11 @@ export async function storeInfraction(data: {
             reason
         )
         VALUES (
-            '${guildId}', 
-            '${executorId}', 
-            '${targetId}', 
+            ${guildId}, 
+            ${executorId}, 
+            ${targetId}, 
             ${action}, 
-            ${stringify(requestAuthorId)},
+            ${requestAuthorId || null},
             ${expiresAt || null}, 
             ${flag || null},
             ${stringify(reason)}

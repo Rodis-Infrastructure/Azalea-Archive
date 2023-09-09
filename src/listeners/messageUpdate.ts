@@ -1,11 +1,21 @@
-import { Colors, EmbedBuilder, Events, GuildMember, GuildTextBasedChannel, hyperlink, Message } from "discord.js";
+import {
+    AttachmentPayload,
+    Colors,
+    EmbedBuilder,
+    Events,
+    GuildMember,
+    GuildTextBasedChannel,
+    hyperlink,
+    Message
+} from "discord.js";
 
+import { createReferenceLog, formatLogContent, sendLog } from "../utils/logging";
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
 import { handleReasonChange } from "../interactions/commands/infraction";
-import { formatLogContent, sendLog } from "../utils/logging";
+import { fetchMessage, processEditedMessage } from "../utils/cache";
+import { serializeMessageToDatabaseModel } from "../utils";
 import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
-import { referenceLog } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
@@ -15,8 +25,16 @@ export default class MessageUpdateEventListener extends EventListener {
         super(Events.MessageUpdate);
     }
 
-    async execute(oldMessage: Message, newMessage: Message): Promise<void> {
+    async execute(oldMessage: Message<true>, newMessage: Message<true>): Promise<void> {
         if (!oldMessage.inGuild() || !newMessage.inGuild()) return;
+        if (newMessage.partial) newMessage = await newMessage.fetch();
+        if (oldMessage.partial) oldMessage = await oldMessage.fetch();
+
+        const [fetchedReference] = await Promise.all([
+            newMessage.fetchReference().catch(() => null),
+            processEditedMessage(newMessage.id, newMessage.content)
+        ]);
+
         const config = ClientManager.config(newMessage.guildId);
         if (!config) return;
 
@@ -86,12 +104,7 @@ export default class MessageUpdateEventListener extends EventListener {
 
         // Log the updated message
 
-        if (
-            newMessage.author?.bot ||
-            !newMessage.content ||
-            !oldMessage.author ||
-            newMessage.content === oldMessage.content
-        ) return;
+        if (newMessage.author?.bot || newMessage.content === oldMessage.content) return;
 
         const channel = newMessage.channel as GuildTextBasedChannel;
         const log = new EmbedBuilder()
@@ -122,22 +135,29 @@ export default class MessageUpdateEventListener extends EventListener {
             .setTimestamp();
 
         const embeds = [log];
-        const files = [{
+        const files: AttachmentPayload[] = [{
             attachment: "./icons/messageUpdate.png",
             name: "messageUpdate.png"
         }];
 
-        if (newMessage.reference) {
-            referenceLog(newMessage).then(res => {
-                embeds.unshift(res.embed);
-                files.push(res.icon);
-            });
+        if (newMessage.reference?.messageId) {
+            const reference = fetchedReference
+                ? serializeMessageToDatabaseModel(fetchedReference)
+                : await fetchMessage(newMessage.reference.messageId);
+
+            if (reference) {
+                const { embed, file } = createReferenceLog(reference);
+
+                embeds.unshift(embed);
+                files.push(file);
+            }
         }
 
         await sendLog({
             event: LoggingEvent.Message,
             options: { embeds, files },
-            channel
+            channelId: channel.id,
+            guildId: newMessage.guildId
         });
     }
 }

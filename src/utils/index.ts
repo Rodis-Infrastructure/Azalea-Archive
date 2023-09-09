@@ -1,12 +1,12 @@
-import { InfractionCount, InfractionFlag, InfractionPunishment, MinimalInfraction } from "../types/db";
-import { Collection, Colors, EmbedBuilder, hyperlink, Message, userMention } from "discord.js";
+import { InfractionCount, InfractionFlag, InfractionPunishment, MessageModel, MinimalInfraction } from "../types/db";
+import { Collection, Colors, Message, userMention } from "discord.js";
 import { InteractionCustomIdFilter } from "../types/interactions";
-import { formatLogContent } from "./logging";
 import { InfractionFilter } from "../types/utils";
 
 import SelectMenu from "../handlers/interactions/select_menus/selectMenu";
 import Button from "../handlers/interactions/buttons/button";
 import Modal from "../handlers/interactions/modals/modal";
+import ClientManager from "../client";
 
 export function capitalize(str: string): string {
     return str[0].toUpperCase() + str.slice(1);
@@ -105,44 +105,33 @@ export function elipsify(str: string, length: number) {
 }
 
 export function stringify(str: string | undefined | null): string | null {
-    return str ? `'${str}'` : null;
+    return str ? `'${str.replaceAll("'", "''")}'` : null;
 }
 
 export function formatReason(reason: string | null | undefined): string {
     return reason ? ` (\`${reason}\`)` : "";
 }
 
-export function formatTimestamp(timestamp: number | string, type: "d" | "D" | "f" | "F" | "R" | "t" | "T"): string {
-    return `<t:${timestamp}:${type}>`;
-}
-
-export async function referenceLog(message: Message<true>) {
-    const reference = await message.fetchReference();
-    const referenceData = new EmbedBuilder()
-        .setColor(Colors.NotQuiteBlack)
-        .setDescription(hyperlink("Jump to message", reference.url))
-        .setAuthor({
-            name: "Reference",
-            iconURL: "attachment://reply.png"
-        })
-        .setFields([
-            {
-                name: "Author",
-                value: `${reference.author} (\`${reference.author.id}\`)`
-            },
-            {
-                name: "Content",
-                value: formatLogContent(reference.content)
-            }
-        ]);
+export function serializeMessageToDatabaseModel(message: Message<true>, deleted = false): MessageModel {
+    if (deleted) {
+        const cachedMessage = ClientManager.cache.messages.store.get(message.id);
+        if (cachedMessage) cachedMessage.deleted ||= true;
+    }
 
     return {
-        embed: referenceData,
-        icon: {
-            attachment: "./icons/reply.png",
-            name: "reply.png"
-        }
+        message_id: message.id,
+        author_id: message.author.id,
+        channel_id: message.channelId,
+        content: message.content,
+        guild_id: message.guildId,
+        created_at: message.createdTimestamp,
+        reference_id: message.reference?.messageId,
+        deleted
     };
+}
+
+export function formatTimestamp(timestamp: number | string, type: "d" | "D" | "f" | "F" | "R" | "t" | "T"): string {
+    return `<t:${timestamp}:${type}>`;
 }
 
 export function currentTimestamp(): number {

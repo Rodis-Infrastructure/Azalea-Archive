@@ -75,7 +75,9 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                 await sendLog({
                     event: LoggingEvent.Message,
-                    channel: message.channel as GuildTextBasedChannel,
+                    channelId: message.channelId,
+                    categoryId: message.channel.parentId,
+                    guildId: message.guildId,
                     options: {
                         embeds: [embed],
                         files: [{
@@ -122,7 +124,6 @@ export default class MessageReactionAddEventListener extends EventListener {
                         authorId: message.member.id
                     }),
                     config.sendConfirmation({
-                        guild: message.guild,
                         message: `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
                         authorId: user.id,
                         reason
@@ -136,7 +137,6 @@ export default class MessageReactionAddEventListener extends EventListener {
             await Promise.all([
                 reaction.remove(),
                 config.sendConfirmation({
-                    guild: message.guild,
                     message: `${emojis.error} ${user} ${res}`,
                     allowMentions: true,
                     full: true
@@ -161,7 +161,6 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                 if (notModerateableReason) {
                     await config.sendConfirmation({
-                        guild: message.guild,
                         message: `${emojis.error} ${user} ${notModerateableReason}`,
                         allowMentions: true,
                         full: true
@@ -200,7 +199,6 @@ export default class MessageReactionAddEventListener extends EventListener {
                 const jumpUrl = hyperlink(`${requestType} request`, `https://discord.com/channels/${message.guildId}/${message.channelId}/${message.id}`);
 
                 await config.sendConfirmation({
-                    guild: message.guild,
                     message: `${emojis.denyRequest} ${message.author} Your ${jumpUrl} against ${userMention(targetId)} has been **denied** by ${user}`,
                     allowMentions: true,
                     full: true
@@ -245,7 +243,6 @@ export default class MessageReactionAddEventListener extends EventListener {
                                 targetId
                             }),
                             config.sendConfirmation({
-                                guild: message.guild,
                                 authorId: user.id,
                                 message: `banned ${userMention(targetId)}`,
                                 reason: formattedReason
@@ -260,7 +257,6 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                     if (!targetMember) {
                         await config.sendConfirmation({
-                            guild: message.guild,
                             message: `${emojis.error} ${message.author} Failed to ${requestType} ${userMention(targetId)}, user may no longer be in the server`,
                             allowMentions: true,
                             full: true
@@ -279,7 +275,6 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                     if (typeof res === "string") {
                         await config.sendConfirmation({
-                            guild: message.guild,
                             message: `${emojis.error} ${message.author} ${res}`,
                             allowMentions: true,
                             full: true
@@ -289,7 +284,6 @@ export default class MessageReactionAddEventListener extends EventListener {
                     }
 
                     await config.sendConfirmation({
-                        guild: message.guild,
                         authorId: user.id,
                         message: `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
                         reason: formattedReason
@@ -298,7 +292,6 @@ export default class MessageReactionAddEventListener extends EventListener {
                     ClientManager.cache.requests.delete(message.id);
                 } catch {
                     await config.sendConfirmation({
-                        guild: message.guild,
                         message: `${emojis.error} ${message.author} Failed to ${requestType} ${userMention(targetId)}`,
                         allowMentions: true,
                         full: true

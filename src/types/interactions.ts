@@ -29,6 +29,11 @@ export interface CustomComponentProperties {
     ephemeral?: boolean;
 }
 
+export enum PurgeSubcommand {
+    User = "user",
+    All = "all"
+}
+
 export type Command = ChatInputCommand | ContextMenuCommand;
 export type CommandInteraction =
     ChatInputCommandInteraction

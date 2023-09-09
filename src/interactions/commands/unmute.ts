@@ -102,7 +102,6 @@ export default class UnmuteCommand extends ChatInputCommand {
                 ephemeral
             }),
             config.sendConfirmation({
-                guild: interaction.guild!,
                 message: `unmuted **${offender.user.tag}**`,
                 channelId: interaction.channelId,
                 authorId: interaction.user.id,

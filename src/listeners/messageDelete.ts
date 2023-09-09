@@ -1,8 +1,8 @@
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, Message } from "discord.js";
-import { formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
+import { AttachmentPayload, channelMention, Colors, EmbedBuilder, Events, Message, userMention } from "discord.js";
+import { createReferenceLog, formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
+import { processPartialDeletedMessage } from "../utils/cache";
+import { serializeMessageToDatabaseModel } from "../utils";
 import { LoggingEvent } from "../types/config";
-import { cacheMessage } from "../utils/cache";
-import { referenceLog } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
@@ -12,24 +12,37 @@ export default class MessageDeleteEventListener extends EventListener {
         super(Events.MessageDelete);
     }
 
-    async execute(message: Message): Promise<void> {
-        if (!message.inGuild()) return;
+    async execute(deletedMessage: Message): Promise<void> {
+        if (!deletedMessage.inGuild()) return;
 
-        cacheMessage(message.id, { deleted: true });
-        ClientManager.cache.requests.delete(message.id);
+        ClientManager.cache.requests.delete(deletedMessage.id);
 
-        const channel = message.channel as GuildTextBasedChannel;
-        const log = new EmbedBuilder()
+        const fetchedReference = await deletedMessage.fetchReference().catch(() => null);
+        const data = await processPartialDeletedMessage(deletedMessage.id, {
+            fetchReference: !fetchedReference
+        });
+
+        const reference = fetchedReference
+            ? serializeMessageToDatabaseModel(fetchedReference)
+            : data.reference;
+
+        const message = !deletedMessage.partial
+            ? serializeMessageToDatabaseModel(deletedMessage, true)
+            : data.message;
+
+        if (!message) return;
+
+        const messageDeleteLog = new EmbedBuilder()
             .setColor(Colors.Red)
             .setAuthor({ name: "Message Deleted", iconURL: "attachment://messageDelete.png" })
             .setFields([
                 {
                     name: "Author",
-                    value: `${message.author} (\`${message.author.id}\`)`
+                    value: userMention(message.author_id)
                 },
                 {
                     name: "Channel",
-                    value: `${channel} (\`#${channel.name}\`)`
+                    value: channelMention(message.channel_id)
                 },
                 {
                     name: "Content",
@@ -38,33 +51,32 @@ export default class MessageDeleteEventListener extends EventListener {
             ])
             .setTimestamp();
 
-        const embeds = [log];
-        const files = [{
+        const embeds = [messageDeleteLog];
+        const files: AttachmentPayload[] = [{
             attachment: "./icons/messageDelete.png",
             name: "messageDelete.png"
         }];
 
-        if (message.reference) {
-            await referenceLog(message)
-                .then(res => {
-                    embeds.unshift(res.embed);
-                    files.push(res.icon);
-                })
-                .catch(() => null);
+        // Message is a reply
+        if (reference) {
+            const { embed, file } = createReferenceLog(reference);
+            embeds.unshift(embed);
+            files.push(file);
         }
 
-        const loggedMessage = await sendLog({
+        const log = await sendLog({
             event: LoggingEvent.Message,
             options: { embeds, files },
-            channel
+            channelId: message.channel_id,
+            guildId: message.guild_id
         });
 
-        if (!loggedMessage) return;
+        if (!log) return;
 
         await linkToPurgeLog({
-            channel,
-            content: message.id,
-            url: loggedMessage.url
+            content: message.message_id,
+            guildId: message.guild_id,
+            url: log.url
         });
     }
 }

@@ -53,7 +53,6 @@ export default class QuickMute30Command extends ContextMenuCommand {
                     ephemeral: true
                 }),
                 config.sendConfirmation({
-                    guild: interaction.guild!,
                     message: reply,
                     authorId: message.author.id,
                     channelId: message.channel.id,

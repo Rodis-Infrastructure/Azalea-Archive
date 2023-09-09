@@ -91,7 +91,9 @@ export default class ButtonHandler {
 
         await sendLog({
             event: LoggingEvent.Interaction,
-            channel: usageChannel,
+            channelId: usageChannel.id,
+            categoryId: usageChannel.parentId,
+            guildId: usageChannel.guildId,
             options: {
                 embeds: [log],
                 files: [{

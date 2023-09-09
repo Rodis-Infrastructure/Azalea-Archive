@@ -19,7 +19,7 @@ import {
 
 import { InfractionFlag, InfractionPunishment, MessageModel } from "../types/db";
 import { InfractionData, RequestType } from "../types/utils";
-import { cacheMessage, getCachedMessageIds } from "./cache";
+import { getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
 import { LoggingEvent } from "../types/config";
 import { sendLog } from "./logging";
@@ -205,8 +205,6 @@ export async function purgeMessages(data: {
     authorId?: string
 }): Promise<number> {
     const { channel, amount, authorId, moderatorId } = data;
-
-    const cache = ClientManager.cache.messages;
     const removableMessageIds = getCachedMessageIds({
         channelId: channel.id,
         guildId: channel.guildId,
@@ -214,23 +212,21 @@ export async function purgeMessages(data: {
         limit: amount
     });
 
-    removableMessageIds.forEach(id => cacheMessage(id, { deleted: true }));
-
     if (removableMessageIds.length < amount) {
         const messagesToFetch = amount - removableMessageIds.length;
         const authorCondition = authorId ? `AND author_id = ${authorId}` : "";
 
         try {
-            const excludedIds = [...removableMessageIds, ...Array.from(cache.remove)].join(",");
-
             // @formatter:off
             const storedMessages = await allQuery<Pick<MessageModel, "message_id">>(`
-                DELETE FROM messages
+                UPDATE messages
+                SET deleted = 1
                 WHERE message_id IN (
                     SELECT message_id FROM messages
                     WHERE channel_id = ${channel.id} ${authorCondition} 
                         AND guild_id = ${channel.guildId}
-                        AND message_id NOT IN (${excludedIds})
+                        AND message_id NOT IN (${removableMessageIds.join(",")}) -- Not cached
+                        AND deleted = 0
                     ORDER BY created_at DESC
                     LIMIT ${messagesToFetch}
                 )
@@ -243,7 +239,7 @@ export async function purgeMessages(data: {
         }
     }
 
-    cache.purged = {
+    ClientManager.cache.messages.purged = {
         targetId: authorId,
         data: removableMessageIds,
         moderatorId
@@ -356,7 +352,6 @@ export async function handleBanRequestAutoMute(data: {
 
     const confirmation = `muted **${targetMember.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
     await config.sendConfirmation({
-        guild: message.guild,
         message: confirmation,
         authorId: message.author.id,
         allowMentions: true,

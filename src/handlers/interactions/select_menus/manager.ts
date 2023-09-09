@@ -99,7 +99,9 @@ export default class SelectMenuHandler {
 
         await sendLog({
             event: LoggingEvent.Interaction,
-            channel: usageChannel,
+            channelId: usageChannel.id,
+            categoryId: usageChannel.parentId,
+            guildId: interaction.guildId!,
             options: {
                 embeds: [log],
                 files: [{

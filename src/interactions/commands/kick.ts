@@ -94,7 +94,6 @@ export default class KickCommand extends ChatInputCommand {
                 ephemeral
             }),
             config.sendConfirmation({
-                guild: interaction.guild!,
                 authorId: interaction.user.id,
                 message: `kicked **${member.user.tag}**`,
                 channelId: interaction.channelId,

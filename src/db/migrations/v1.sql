@@ -2,11 +2,14 @@ BEGIN EXCLUSIVE;
 
 CREATE TABLE IF NOT EXISTS messages
 (
-    message_id TEXT      NOT NULL PRIMARY KEY,
-    author_id  TEXT      NOT NULL,
-    channel_id TEXT      NOT NULL,
-    guild_id   TEXT      NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    message_id   TEXT      NOT NULL PRIMARY KEY,
+    author_id    TEXT      NOT NULL,
+    channel_id   TEXT      NOT NULL,
+    guild_id     TEXT      NOT NULL,
+    created_at   TIMESTAMP NOT NULL,
+    content      TEXT      NOT NULL,
+    reference_id TEXT,
+    deleted      TINYINT
 );
 
 CREATE INDEX IF NOT EXISTS idx_created_at ON messages (created_at);

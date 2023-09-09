@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 
 import { purgeMessages, validateModerationAction } from "../../utils/moderation";
-import { InteractionResponseType } from "../../types/interactions";
+import { InteractionResponseType, PurgeSubcommand } from "../../types/interactions";
 import { pluralize } from "../../utils";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -23,7 +23,7 @@ export default class CleanCommand extends ChatInputCommand {
             skipInternalUsageCheck: false,
             options: [
                 {
-                    name: "all",
+                    name: PurgeSubcommand.All,
                     description: "Purge all messages in the channel.",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [{
@@ -36,7 +36,7 @@ export default class CleanCommand extends ChatInputCommand {
                     }]
                 },
                 {
-                    name: "user",
+                    name: PurgeSubcommand.User,
                     description: "Purge messages from a user in the channel.",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [
@@ -100,7 +100,7 @@ export default class CleanCommand extends ChatInputCommand {
             }
 
             let messageAuthor = "";
-            if (action === "user") messageAuthor = ` by **${user!.tag}**`;
+            if (action === PurgeSubcommand.User) messageAuthor = ` by **${user!.tag}**`;
 
             await interaction.reply({
                 content: `${success} Successfully purged \`${purgedMessages}\` ${pluralize("message", purgedMessages)}${messageAuthor}.`,

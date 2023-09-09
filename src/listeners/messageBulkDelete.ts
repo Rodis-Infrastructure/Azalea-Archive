@@ -10,38 +10,61 @@ import {
 
 import { linkToPurgeLog, sendLog } from "../utils/logging";
 import { LoggingEvent } from "../types/config";
-import { cacheMessage } from "../utils/cache";
+import { processBulkDeletedMessages } from "../utils/cache";
 
 import EventListener from "../handlers/listeners/eventListener";
+import { serializeMessageToDatabaseModel } from "../utils";
+import { MessageModel } from "../types/db";
 
 export default class MessageBulkDeleteEventListener extends EventListener {
     constructor() {
         super(Events.MessageBulkDelete);
     }
 
-    async execute(messages: Collection<string, Message<true>>, channel: GuildTextBasedChannel): Promise<void> {
+    async execute(deletedMessages: Collection<string, Message<true>>, channel: GuildTextBasedChannel): Promise<void> {
         if (!channel.guildId) return;
 
         const content: string[] = [];
-        let authorId = messages.first()?.author.id;
+        const partialMessageIds: string[] = [];
+        const messages: MessageModel[] = [];
 
-        messages.forEach(message => {
-            cacheMessage(message.id, { deleted: true });
+        let authorId = deletedMessages.first()?.author.id;
 
-            content.push(`[${message.createdAt.toLocaleString("en-GB")}] ${message.author.tag} (${message.author.id})\n${message.content}`);
-            if (authorId && message.author.id !== authorId) authorId = undefined;
-        });
+        for (const message of deletedMessages.values()) {
+            if (message.partial) {
+                partialMessageIds.push(message.id);
+            } else {
+                content.push(`[${message.createdAt.toLocaleString("en-GB")}] ${message.author.id} — ${message.content}`);
+                messages.push(serializeMessageToDatabaseModel(message, true));
+
+                if (message.author.id !== authorId) authorId = undefined;
+            }
+        }
+
+        for (const message of await processBulkDeletedMessages(partialMessageIds)) {
+            const msCreatedAt = message.created_at * 1000;
+
+            content.push(`[${msCreatedAt.toLocaleString("en-GB")}] ${message.author_id} — ${message.content}`);
+            messages.push(message);
+
+            if (message.author_id !== authorId) authorId = undefined;
+        }
+
+        if (!content.length) return;
 
         const file = new AttachmentBuilder(Buffer.from(content.join("\n\n")))
             .setName(`messages.txt`)
             .setDescription("Purged messages");
 
+        // Mention the author if all messages were sent by the same user
         const author = authorId ? ` by ${userMention(authorId)}` : "";
         const log = await sendLog({
             event: LoggingEvent.Message,
-            channel,
+            channelId: channel.id,
+            categoryId: channel.parentId,
+            guildId: channel.guildId,
             options: {
-                content: `Purged \`${messages.size}\` messages${author} in ${channel} (\`#${channel.name}\`)`,
+                content: `Purged \`${content.length}\` messages${author} in ${channel} (\`#${channel.name}\`)`,
                 allowedMentions: { parse: [] },
                 files: [file]
             }
@@ -50,12 +73,12 @@ export default class MessageBulkDeleteEventListener extends EventListener {
         if (!log) return;
 
         const attachmentId = log.attachments.first()!.id;
-        const jumpUrl = hyperlink("Open in browser", `https://txt.discord.website?txt=${log.channelId}/${attachmentId}/messages&raw=true`);
+        const jumpURL = hyperlink("Open in browser", `https://txt.discord.website?txt=${log.channelId}/${attachmentId}/messages&raw=true`);
 
         await Promise.all([
-            log.edit(`${log.content}\n\n${jumpUrl}`),
+            log.edit(`${log.content}\n\n${jumpURL}`),
             linkToPurgeLog({
-                channel,
+                guildId: channel.guildId,
                 content: messages,
                 url: log.url
             })

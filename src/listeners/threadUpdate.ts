@@ -48,7 +48,9 @@ export default class ThreadUpdateEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Thread,
-            channel: parent,
+            channelId: parent.id,
+            categoryId: parent.parentId,
+            guildId: parent.guildId,
             options: {
                 embeds: [embed],
                 files: [{

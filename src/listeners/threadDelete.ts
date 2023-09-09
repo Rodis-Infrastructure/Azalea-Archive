@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, ThreadChannel, userMention } from "discord.js";
+import { Colors, EmbedBuilder, Events, ThreadChannel, userMention } from "discord.js";
 import { LoggingEvent } from "../types/config";
 import { sendLog } from "../utils/logging";
 
@@ -32,7 +32,9 @@ export default class ThreadDeleteEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Thread,
-            channel: thread.parent as GuildTextBasedChannel,
+            channelId: thread.parentId as string,
+            guildId: thread.guildId,
+            categoryId: thread.parent?.parentId,
             options: {
                 embeds: [log],
                 files: [{
