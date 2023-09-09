@@ -38,7 +38,7 @@ export default class MessageDeleteEventListener extends EventListener {
             .setFields([
                 {
                     name: "Author",
-                    value: userMention(message.author_id)
+                    value: `${userMention(message.author_id)} (\`${message.author_id}\`)`
                 },
                 {
                     name: "Channel",
