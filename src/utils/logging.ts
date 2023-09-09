@@ -77,11 +77,12 @@ export function formatLogContent(content: string): string {
     return codeBlock(formatted);
 }
 
-export function createReferenceLog(reference: MessageModel): { embed: EmbedBuilder, file: AttachmentPayload } {
+export function createReferenceLog(reference: MessageModel, options: {
+    referenceDeleted: boolean
+}): { embed: EmbedBuilder, file: AttachmentPayload } {
     const referenceURL = `https://discord.com/channels/${reference.guild_id}/${reference.channel_id}/${reference.message_id}`;
     const referenceLog = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
-        .setDescription(hyperlink("Jump to message", referenceURL))
         .setAuthor({
             name: "Reference",
             iconURL: "attachment://reply.png"
@@ -96,6 +97,8 @@ export function createReferenceLog(reference: MessageModel): { embed: EmbedBuild
                 value: formatLogContent(reference.content)
             }
         ]);
+
+    if (!options.referenceDeleted) referenceLog.setDescription(hyperlink("Jump to message", referenceURL));
 
     return {
         embed: referenceLog,

@@ -59,7 +59,10 @@ export default class MessageDeleteEventListener extends EventListener {
 
         // Message is a reply
         if (reference) {
-            const { embed, file } = createReferenceLog(reference);
+            const { embed, file } = createReferenceLog(reference, {
+                referenceDeleted: !fetchedReference
+            });
+
             embeds.unshift(embed);
             files.push(file);
         }

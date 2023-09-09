@@ -146,7 +146,9 @@ export default class MessageUpdateEventListener extends EventListener {
                 : await fetchMessage(newMessage.reference.messageId);
 
             if (reference) {
-                const { embed, file } = createReferenceLog(reference);
+                const { embed, file } = createReferenceLog(reference, {
+                    referenceDeleted: !fetchedReference
+                });
 
                 embeds.unshift(embed);
                 files.push(file);
