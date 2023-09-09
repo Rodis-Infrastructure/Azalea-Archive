@@ -35,58 +35,56 @@ export default class MessageReactionAddEventListener extends EventListener {
         const emojiId = emoji.id ?? emoji.name ?? "N/A";
         const { emojis } = config;
 
+        const fetchedReaction = await reaction.fetch();
+
         // First to react logs
-        if (message.channelId === config.loggingChannel(LoggingEvent.Message)) {
-            const fetchedReaction = await reaction.fetch();
+        if (fetchedReaction.count === 1) {
+            const embed = new EmbedBuilder()
+                .setColor(0x9C84EF)
+                .setAuthor({ name: "Reaction Added", iconURL: "attachment://addReaction.png" })
+                .setDescription(hyperlink("Jump to message", message.url))
+                .setTimestamp();
 
-            if (fetchedReaction.count === 1) {
-                const embed = new EmbedBuilder()
-                    .setColor(0x9C84EF)
-                    .setAuthor({ name: "Reaction Added", iconURL: "attachment://addReaction.png" })
-                    .setDescription(hyperlink("Jump to message", message.url))
-                    .setTimestamp();
-
-                if (emoji.id && emoji.url) {
-                    embed.setFields({
-                        name: "Emoji",
-                        value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emoji.url)})`
-                    });
-                } else {
-                    embed.setFields({
-                        name: "Emoji",
-                        value: `\n\n${emoji}`
-                    });
-                }
-
-                embed.addFields([
-                    {
-                        name: "Reactee",
-                        value: `${user} (\`${user.id}\`)`
-                    },
-                    {
-                        name: "Channel",
-                        value: `${message.channel} (\`#${message.channel.name}\`)`
-                    },
-                    {
-                        name: "Content",
-                        value: formatLogContent(message.content)
-                    }
-                ]);
-
-                await sendLog({
-                    event: LoggingEvent.Message,
-                    channelId: message.channelId,
-                    categoryId: message.channel.parentId,
-                    guildId: message.guildId,
-                    options: {
-                        embeds: [embed],
-                        files: [{
-                            attachment: "./icons/addReaction.png",
-                            name: "addReaction.png"
-                        }]
-                    }
+            if (emoji.id && emoji.url) {
+                embed.setFields({
+                    name: "Emoji",
+                    value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emoji.url)})`
+                });
+            } else {
+                embed.setFields({
+                    name: "Emoji",
+                    value: `\n\n${emoji}`
                 });
             }
+
+            embed.addFields([
+                {
+                    name: "Reactee",
+                    value: `${user} (\`${user.id}\`)`
+                },
+                {
+                    name: "Channel",
+                    value: `${message.channel} (\`#${message.channel.name}\`)`
+                },
+                {
+                    name: "Content",
+                    value: formatLogContent(message.content)
+                }
+            ]);
+
+            await sendLog({
+                event: LoggingEvent.Message,
+                channelId: message.channelId,
+                categoryId: message.channel.parentId,
+                guildId: message.guildId,
+                options: {
+                    embeds: [embed],
+                    files: [{
+                        attachment: "./icons/addReaction.png",
+                        name: "addReaction.png"
+                    }]
+                }
+            });
         }
 
         /* Quick mutes - 30 minutes and 1 hour */
