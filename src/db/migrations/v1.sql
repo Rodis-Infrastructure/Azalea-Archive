@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS messages
     channel_id   TEXT      NOT NULL,
     guild_id     TEXT      NOT NULL,
     created_at   TIMESTAMP NOT NULL,
-    content      TEXT      NOT NULL,
+    content      TEXT,
     reference_id TEXT,
     deleted      TINYINT
 );
