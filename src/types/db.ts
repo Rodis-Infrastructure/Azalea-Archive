@@ -41,9 +41,10 @@ export interface MessageModel {
     channel_id: string;
     guild_id: string;
     created_at: number;
-    reference_id?: string;
     deleted: boolean;
-    content: string;
+    reference_id: string | null;
+    category_id: string | null;
+    content: string | null;
 }
 
 export type MinimalInfraction = Omit<Infraction, "updated_by" | "updated_at" | "request_author_id" | "target_id">

@@ -1,4 +1,5 @@
 import { AttachmentPayload, channelMention, Colors, EmbedBuilder, Events, Message, userMention } from "discord.js";
+
 import { createReferenceLog, formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
 import { processPartialDeletedMessage } from "../utils/cache";
 import { serializeMessageToDatabaseModel } from "../utils";
@@ -71,6 +72,7 @@ export default class MessageDeleteEventListener extends EventListener {
             event: LoggingEvent.Message,
             options: { embeds, files },
             channelId: message.channel_id,
+            categoryId: message.category_id,
             guildId: message.guild_id
         });
 

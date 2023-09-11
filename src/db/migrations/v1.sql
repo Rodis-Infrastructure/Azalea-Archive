@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS messages
     created_at   TIMESTAMP NOT NULL,
     content      TEXT,
     reference_id TEXT,
+    category_id  TEXT,
     deleted      TINYINT
 );
 
