@@ -120,7 +120,7 @@ export async function processCachedMessages(): Promise<void> {
             ${stringify(data.content)},
             ${data.reference_id || null},
             ${data.category_id || null}.
-            ${data.deleted}
+            ${data.deleted ? 1 : 0}
         )`)
         .join(",");
 
