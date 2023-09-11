@@ -119,6 +119,7 @@ export async function processCachedMessages(): Promise<void> {
             ${data.created_at},
             ${stringify(data.content)},
             ${data.reference_id || null},
+            ${data.category_id || null}.
             ${data.deleted}
         )`)
         .join(",");
@@ -134,6 +135,7 @@ export async function processCachedMessages(): Promise<void> {
                 created_at,
                 content,
                 reference_id,
+                category_id,
                 deleted
             )
             VALUES ${messagesToInsert};

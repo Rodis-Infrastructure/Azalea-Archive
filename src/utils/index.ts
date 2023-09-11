@@ -125,7 +125,8 @@ export function serializeMessageToDatabaseModel(message: Message<true>, deleted 
         content: message.content,
         guild_id: message.guildId,
         created_at: message.createdTimestamp,
-        reference_id: message.reference?.messageId,
+        reference_id: message.reference?.messageId || null,
+        category_id: message.channel.parentId,
         deleted
     };
 }

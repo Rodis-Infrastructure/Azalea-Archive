@@ -68,7 +68,7 @@ export async function linkToPurgeLog(data: {
     ClientManager.cache.messages.purged = undefined;
 }
 
-export function formatLogContent(content: string): string {
+export function formatLogContent(content: string | null): string {
     if (!content) return "No message content.";
 
     let formatted = content.replaceAll("```", "\\`\\`\\`");

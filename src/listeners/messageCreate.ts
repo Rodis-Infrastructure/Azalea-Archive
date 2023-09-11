@@ -16,44 +16,49 @@ export default class MessageCreateEventListener extends EventListener {
     async execute(message: Message<true>): Promise<void> {
         if (!message.inGuild() || message.author.bot) return;
 
-        // Cache the message
-        const serializedMessage = serializeMessageToDatabaseModel(message);
-        ClientManager.cache.messages.store.set(message.id, serializedMessage);
+        const fetchedMessage = message.partial
+            ? await message.fetch().catch(() => null)
+            : message;
 
-        const config = ClientManager.config(message.guildId);
+        if (!fetchedMessage) return;
+
+        // Cache the message
+        ClientManager.cache.messages.store.set(fetchedMessage.id, serializeMessageToDatabaseModel(fetchedMessage));
+
+        const config = ClientManager.config(fetchedMessage.guildId);
         if (!config) return;
 
         // Handle media to link conversion
-        if (message.channelId === config.channels?.mediaConversion && message.attachments.size) {
+        if (fetchedMessage.channelId === config.channels?.mediaConversion && fetchedMessage.attachments.size) {
             const mediaStorageLog = await sendLog({
                 event: LoggingEvent.Media,
-                guildId: message.guildId,
+                guildId: fetchedMessage.guildId,
                 options: {
-                    content: `Media stored by ${message.author}`,
-                    files: Array.from(message.attachments.values()),
+                    content: `Media stored by ${fetchedMessage.author}`,
+                    files: Array.from(fetchedMessage.attachments.values()),
                     allowedMentions: { parse: [] }
                 }
             }) as Message<true>;
 
             const mediaURLs = mediaStorageLog.attachments.map(({ url }) => `<${url}>`);
             await Promise.all([
-                message.delete().catch(() => null),
-                message.channel.send(`${message.author} Your media links:\n\n>>> ${mediaURLs.join("\n")}`)
+                fetchedMessage.delete().catch(() => null),
+                fetchedMessage.channel.send(`${fetchedMessage.author} Your media links:\n\n>>> ${mediaURLs.join("\n")}`)
             ]);
         }
 
         // Handle mute/ban requests
         if (
-            (message.channelId === config.channels?.muteRequestQueue || message.channelId === config.channels?.banRequestQueue) &&
-            !message.reactions.cache.size
+            (fetchedMessage.channelId === config.channels?.muteRequestQueue || fetchedMessage.channelId === config.channels?.banRequestQueue) &&
+            !fetchedMessage.reactions.cache.size
         ) {
-            const requestType = message.channelId === config.channels?.muteRequestQueue
+            const requestType = fetchedMessage.channelId === config.channels?.muteRequestQueue
                 ? RequestType.Mute
                 : RequestType.Ban;
 
             try {
                 const isAutoMuteEnabled = requestType === RequestType.Ban
-                    && config.actionAllowed(message.member as GuildMember, {
+                    && config.actionAllowed(fetchedMessage.member as GuildMember, {
                         permission: "autoMuteBanRequests",
                         requiredValue: true
                     });
@@ -61,7 +66,7 @@ export default class MessageCreateEventListener extends EventListener {
                 const { targetMember, reason } = await validateRequest({
                     isAutoMuteEnabled,
                     requestType,
-                    message,
+                    message: fetchedMessage,
                     config
                 });
 
@@ -70,7 +75,7 @@ export default class MessageCreateEventListener extends EventListener {
                         targetMember,
                         reason,
                         config,
-                        message
+                        message: fetchedMessage
                     });
                 }
             } catch (err) {
@@ -78,11 +83,11 @@ export default class MessageCreateEventListener extends EventListener {
                 const reaction = reason.includes("already been submitted") ? "🔄" : "⚠️";
 
                 const [reply] = await Promise.all([
-                    message.reply({
+                    fetchedMessage.reply({
                         content: reason,
                         allowedMentions: { parse: [], repliedUser: true }
                     }),
-                    message.react(reaction)
+                    fetchedMessage.react(reaction)
                 ]);
 
                 // Remove after 5 seconds
