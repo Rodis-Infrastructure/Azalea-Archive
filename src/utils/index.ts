@@ -109,7 +109,7 @@ export function stringify(str: string | undefined | null): string | null {
 }
 
 export function formatReason(reason: string | null | undefined): string {
-    return reason ? ` (\`${reason}\`)` : "";
+    return reason ? ` (\`${reason.replaceAll("`", "")}\`)` : "";
 }
 
 export function serializeMessageToDatabaseModel(message: Message<true>, deleted = false): MessageModel {
