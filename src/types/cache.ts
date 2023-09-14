@@ -11,15 +11,14 @@ export interface Cache {
             data: string[];
         }
     }
-    activeMutes: Collection<string, number>;
-    infractions: Collection<string, CachedInfractions>;
     requests: Collection<string, CachedRequest>
 }
 
 export interface CachedRequest {
     targetId: string;
     requestType: RequestType;
-    infractionId?: number;
+    /** The ID of an automatic mute created for a ban request, defined if `autoMuteBanRequests` is `true`. */
+    muteId?: number;
 }
 
 export interface CachedInfractions {
