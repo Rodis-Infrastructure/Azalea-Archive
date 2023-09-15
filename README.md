@@ -26,6 +26,18 @@ allowedProofChannelIds:
   - "channel-id"
 ```
 
+### Auto Reactions
+
+The `autoReactions` section allows you to configure which reactions the bot will add to every message sent in a
+specified channel.
+
+```yaml
+autoReactions:
+  - channelId: "channel-id"
+    reactions:
+      - "emoji"
+```
+
 ### Channel Configuration
 
 The `channels` section allows you to configure which channels the bot will perform certain actions in.
