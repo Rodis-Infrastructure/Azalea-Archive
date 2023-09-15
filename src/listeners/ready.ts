@@ -9,6 +9,7 @@ import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
 import Config from "../utils/config";
 import ms from "ms";
+import { CronJob } from "cron";
 import { RequestType } from "../types/utils";
 
 export default class ReadyEventListener extends EventListener {
@@ -29,6 +30,7 @@ export default class ReadyEventListener extends EventListener {
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
             new Config(config).bind(guildId);
 
+            await setCronJobs(config);
             setBanRequestNoticeInterval(config, guildId);
             setMuteRequestNoticeInterval(config, guildId);
         }
@@ -88,7 +90,7 @@ function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
         if (cachedMuteRequests.size < config.muteRequestNotices!.threshold) return;
 
         const channel = await ClientManager.client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
-        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedMuteRequests.lastKey()}`;
+        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.muteRequestQueue}/${cachedMuteRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()
             .setColor(Colors.Red)
@@ -101,4 +103,14 @@ function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
             embeds: [embed]
         });
     }, config.muteRequestNotices.interval);
+}
+
+async function setCronJobs(config: ConfigData) {
+    for (const data of config.scheduledMessages || []) {
+        const channel = await ClientManager.client.channels.fetch(data.channelId)
+            .catch(() => null) as GuildTextBasedChannel | null;
+
+        if (!channel || !data.cron || !data.message) continue;
+        new CronJob(data.cron, () => channel.send(data.message)).start();
+    }
 }

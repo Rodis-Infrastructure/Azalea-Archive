@@ -1,3 +1,5 @@
+import { MessageCreateOptions, MessagePayload } from "discord.js";
+
 export enum RolePermission {
     Button = "buttons",
     Modal = "modals",
@@ -62,8 +64,15 @@ type LoggingData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
+interface ScheduledMessageData {
+    channelId: string
+    cron: string
+    message: string | MessagePayload | MessageCreateOptions
+}
+
 export interface ConfigData {
     deleteMessageSecondsOnBan?: number
+    scheduledMessages?: ScheduledMessageData[]
     allowedProofChannelIds?: string[]
     confirmationChannel?: string
     banRequestNotices?: RequestNoticeData
