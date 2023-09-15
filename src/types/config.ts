@@ -50,8 +50,7 @@ interface RequestNoticeData {
     enabled: boolean
     channelId: string
     threshold: number
-    interval: number
-    mentionedRoles?: string[]
+    cron: string
 }
 
 interface ChannelData {

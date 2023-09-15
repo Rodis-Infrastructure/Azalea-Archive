@@ -1,16 +1,16 @@
+import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js";
 import { processCachedMessages } from "../utils/cache";
 import { readdir, readFile } from "node:fs/promises";
 import { ConfigData } from "../types/config";
-import { parse } from "yaml";
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js";
+import { RequestType } from "../types/utils";
 import { runQuery } from "../db";
+import { CronJob } from "cron";
+import { parse } from "yaml";
 
 import EventListener from "../handlers/listeners/eventListener";
 import ClientManager from "../client";
 import Config from "../utils/config";
 import ms from "ms";
-import { CronJob } from "cron";
-import { RequestType } from "../types/utils";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -30,9 +30,7 @@ export default class ReadyEventListener extends EventListener {
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
             new Config(config).bind(guildId);
 
-            await setCronJobs(config);
-            setBanRequestNoticeInterval(config, guildId);
-            setMuteRequestNoticeInterval(config, guildId);
+            await setGuildCronJobs(config);
         }
 
         await Promise.all([
@@ -44,73 +42,82 @@ export default class ReadyEventListener extends EventListener {
 
         await ClientManager.commands.publish();
 
-        setInterval(async() => {
-            await processCachedMessages();
-        }, ms("10m"));
+        // Store cached messages every 10 minutes
+        new CronJob("*/10 * * * *", processCachedMessages).start();
 
-        // Removes old data from the database
-        setInterval(async() => {
+        // Delete messages older than 24 hours every 2 hours
+        new CronJob("0 */2 * * *", async() => {
             await runQuery(`
                 DELETE
                 FROM messages
                 WHERE ${Date.now()} - created_at > ${ms("24h")}
             `);
-        }, ms("3h"));
+        }).start();
     }
 }
 
-function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
-    if (!config.channels?.banRequestQueue || !config.banRequestNotices?.enabled) return;
+async function setGuildCronJobs(config: ConfigData) {
+    const { client, cache } = ClientManager;
+    const { scheduledMessages, channels, muteRequestNotices, banRequestNotices } = config;
 
-    setInterval(async() => {
-        const cachedBanRequests = ClientManager.cache.requests.filter(r => r.requestType === RequestType.Ban);
-        if (cachedBanRequests.size < config.banRequestNotices!.threshold) return;
-
-        const channel = await ClientManager.client.channels.fetch(config.banRequestNotices!.channelId) as GuildTextBasedChannel;
-        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedBanRequests.lastKey()}`;
-
-        const embed = new EmbedBuilder()
-            .setColor(Colors.Red)
-            .setTitle(`${cachedBanRequests.size} Unhandled Ban Requests`)
-            .setDescription(`There are currently ${cachedBanRequests.size} unhandled ban requests starting from [here](${jumpUrl})`)
-            .setTimestamp();
-
-        await channel.send({
-            content: "@here",
-            embeds: [embed]
-        });
-    }, config.banRequestNotices.interval);
-}
-
-function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
-    if (!config.channels?.muteRequestQueue || !config.muteRequestNotices?.enabled) return;
-
-    setInterval(async() => {
-        const cachedMuteRequests = ClientManager.cache.requests.filter(r => r.requestType === RequestType.Mute);
-        if (cachedMuteRequests.size < config.muteRequestNotices!.threshold) return;
-
-        const channel = await ClientManager.client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
-        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.muteRequestQueue}/${cachedMuteRequests.lastKey()}`;
-
-        const embed = new EmbedBuilder()
-            .setColor(Colors.Red)
-            .setTitle(`${cachedMuteRequests.size} Unhandled Mute Requests`)
-            .setDescription(`There are currently ${cachedMuteRequests.size} unhandled mute requests starting from [here](${jumpUrl})`)
-            .setTimestamp();
-
-        await channel.send({
-            content: "@here",
-            embeds: [embed]
-        });
-    }, config.muteRequestNotices.interval);
-}
-
-async function setCronJobs(config: ConfigData) {
-    for (const data of config.scheduledMessages || []) {
-        const channel = await ClientManager.client.channels.fetch(data.channelId)
+    // Scheduled messages
+    for (const data of scheduledMessages || []) {
+        const channel = await client.channels.fetch(data.channelId)
             .catch(() => null) as GuildTextBasedChannel | null;
 
         if (!channel || !data.cron || !data.message) continue;
         new CronJob(data.cron, () => channel.send(data.message)).start();
+    }
+
+    const [
+        muteRequestQueue,
+        banRequestQueue,
+        muteRequestNoticesChannel,
+        banRequestNoticesChannel
+    ] = await Promise.all([
+        client.channels.fetch(channels?.muteRequestQueue ?? "").catch(() => null),
+        client.channels.fetch(channels?.banRequestQueue ?? "").catch(() => null),
+        client.channels.fetch(muteRequestNotices?.channelId ?? "").catch(() => null),
+        client.channels.fetch(banRequestNotices?.channelId ?? "").catch(() => null)
+    ]) as (GuildTextBasedChannel | null)[];
+
+    // Mute request notices
+    if (muteRequestNotices?.enabled && muteRequestQueue && muteRequestNoticesChannel) {
+        new CronJob(muteRequestNotices.cron, async() => {
+            const cachedMuteRequests = cache.requests.filter(r => r.requestType === RequestType.Mute);
+            if (cachedMuteRequests.size < muteRequestNotices.threshold) return;
+
+            const requestJumpURL = `https://discord.com/channels/${muteRequestQueue.guildId}/${muteRequestQueue.id}/${cachedMuteRequests.lastKey()}`;
+            const requestNotice = new EmbedBuilder()
+                .setColor(Colors.Red)
+                .setTitle(`${cachedMuteRequests.size} Unhandled Mute Requests`)
+                .setDescription(`There are currently ${cachedMuteRequests.size} unhandled mute requests starting from [here](${requestJumpURL})`)
+                .setTimestamp();
+
+            await muteRequestNoticesChannel.send({
+                content: "@here",
+                embeds: [requestNotice]
+            });
+        }).start();
+    }
+
+    // Ban request notices
+    if (banRequestNotices?.enabled && banRequestQueue && banRequestNoticesChannel) {
+        new CronJob(banRequestNotices.cron, async() => {
+            const cachedBanRequests = cache.requests.filter(r => r.requestType === RequestType.Ban);
+            if (cachedBanRequests.size < banRequestNotices.threshold) return;
+
+            const requestJumpURL = `https://discord.com/channels/${banRequestQueue.guildId}/${banRequestQueue.id}/${cachedBanRequests.lastKey()}`;
+            const requestNotice = new EmbedBuilder()
+                .setColor(Colors.Red)
+                .setTitle(`${cachedBanRequests.size} Unhandled Ban Requests`)
+                .setDescription(`There are currently ${cachedBanRequests.size} unhandled ban requests starting from [here](${requestJumpURL})`)
+                .setTimestamp();
+
+            await banRequestNoticesChannel.send({
+                content: "@here",
+                embeds: [requestNotice]
+            });
+        }).start();
     }
 }
