@@ -71,7 +71,7 @@ type LoggingData =
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
 export interface ConfigData {
-    customCommands?: CustomCommand[]
+    commands?: CustomCommand[]
     deleteMessageSecondsOnBan?: number
     allowedProofChannelIds?: string[]
     confirmationChannel?: string

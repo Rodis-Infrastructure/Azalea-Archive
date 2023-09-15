@@ -55,11 +55,11 @@ export default class Config {
     }
 
     get customCommandChoices() {
-        return this.data.customCommands?.map(({ name, value }) => ({ name, value })) || [];
+        return this.data.commands?.map(({ name, value }) => ({ name, value })) || [];
     }
 
     get customCommandResponses() {
-        const commands = this.data.customCommands || [];
+        const commands = this.data.commands || [];
         const responses = commands.map(({ value, embed }) => [value, embed]);
 
         return new Collection(responses as [string, APIEmbed][]);
