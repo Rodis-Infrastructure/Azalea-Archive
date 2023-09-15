@@ -1,3 +1,5 @@
+import { APIEmbed } from "discord.js";
+
 export enum RolePermission {
     Button = "buttons",
     Modal = "modals",
@@ -58,11 +60,18 @@ interface ChannelData {
     mediaConversion?: string
 }
 
+interface CustomCommand {
+    name: string
+    value: string
+    embed: APIEmbed
+}
+
 type LoggingData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
 export interface ConfigData {
+    customCommands?: CustomCommand[]
     deleteMessageSecondsOnBan?: number
     allowedProofChannelIds?: string[]
     confirmationChannel?: string
