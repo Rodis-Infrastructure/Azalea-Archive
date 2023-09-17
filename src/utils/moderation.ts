@@ -359,5 +359,5 @@ export async function handleBanRequestAutoMute(data: {
     });
 
     const requestData = ClientManager.cache.requests.get(message.id)!;
-    ClientManager.cache.requests.set(message.id, { ...requestData, infractionId });
+    ClientManager.cache.requests.set(message.id, { ...requestData, muteId: infractionId });
 }

@@ -1,9 +1,9 @@
+import { InfractionPunishment } from "../types/db";
 import { Events, GuildMember } from "discord.js";
 import { currentTimestamp } from "../utils";
 import { runQuery } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
@@ -12,17 +12,17 @@ export default class InteractionCreateEventListener extends EventListener {
 
     async execute(oldMember: GuildMember, newMember: GuildMember): Promise<void> {
         if (oldMember.isCommunicationDisabled() && !newMember.isCommunicationDisabled()) {
-            const infractionId = ClientManager.cache.activeMutes.get(newMember.id);
+            const now = currentTimestamp();
 
-            if (infractionId) {
-                ClientManager.cache.activeMutes.delete(newMember.id);
-                await runQuery(`
-					UPDATE infractions
-					SET expires_at = ${currentTimestamp()}
-					WHERE guild_id = ${newMember.guild.id}
-					  AND infraction_id = ${infractionId};
-                `);
-            }
+            // Update the mute expiration timestamp to now
+            await runQuery(`
+                UPDATE infractions
+                SET expires_at = ${now}
+                WHERE guild_id = ${newMember.guild.id}
+                  AND target_id = ${newMember.id}
+                  AND action = ${InfractionPunishment.Mute}
+                  AND expires_at > ${now};
+            `);
         }
     }
 }

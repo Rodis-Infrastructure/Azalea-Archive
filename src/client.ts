@@ -1,5 +1,5 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { Cache, CachedInfractions, CachedRequest } from "./types/cache";
+import { Cache, CachedRequest } from "./types/cache";
 import { loadListeners } from "./handlers/listeners/loader";
 
 import SelectMenuHandler from "./handlers/interactions/select_menus/manager";
@@ -21,8 +21,6 @@ class ClientManager {
     public buttons = new ButtonHandler();
     public modals = new ModalHandler();
     public cache: Cache = {
-        activeMutes: new Collection<string, number>(),
-        infractions: new Collection<string, CachedInfractions>(),
         requests: new Collection<string, CachedRequest>(),
         messages: {
             store: new Collection<string, MessageModel>()
