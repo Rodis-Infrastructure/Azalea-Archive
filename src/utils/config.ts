@@ -52,6 +52,10 @@ export default class Config {
         return this.data.muteRequestNotices ?? {};
     }
 
+    private get autoReactions() {
+        return this.data.autoReactions ?? [];
+    }
+
     private get logging() {
         return this.data.logging;
     }
@@ -75,6 +79,12 @@ export default class Config {
     bind(guildId: string) {
         ClientManager.configs.set(guildId, this);
         console.log(`Bound configuration to guild (${guildId})`);
+    }
+
+    getAutoReactions(channelId: string): string[] {
+        return this.autoReactions
+            .filter(property => property.channelId === channelId)
+            .flatMap(({ reactions }) => reactions);
     }
 
     loggingChannel(event: LoggingEvent): string | undefined {
