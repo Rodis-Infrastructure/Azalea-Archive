@@ -65,6 +65,10 @@ export default class Config {
         return new Collection(responses as [string, APIEmbed][]);
     }
 
+    private get autoReactions() {
+        return this.data.autoReactions ?? [];
+    }
+
     private get logging() {
         return this.data.logging;
     }
@@ -89,6 +93,12 @@ export default class Config {
         ClientManager.configs.set(this.guildId, this);
         console.log(`Bound configuration to guild (${this.guildId})`);
         return this;
+    }
+
+    getAutoReactions(channelId: string): string[] {
+        return this.autoReactions
+            .filter(property => property.channelId === channelId)
+            .flatMap(({ reactions }) => reactions);
     }
 
     loggingChannel(event: LoggingEvent): string | undefined {

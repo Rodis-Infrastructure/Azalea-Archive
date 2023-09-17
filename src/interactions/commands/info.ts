@@ -17,7 +17,6 @@ import { InteractionResponseType } from "../../types/interactions";
 import { getQuery } from "../../db";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
-import ClientManager from "../../client";
 import Config from "../../utils/config";
 
 export default class InfoCommand extends ChatInputCommand {
@@ -110,49 +109,20 @@ export default class InfoCommand extends ChatInputCommand {
 
         /* Only allows staff to view member infractions, but not the infractions of other staff */
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member as GuildMember)) {
-            const infractions = ClientManager.cache.infractions.get(user.id)?.data;
-            let infCount = {
-                note: 0,
-                mute: 0,
-                kick: 0,
-                ban: 0
-            };
+            const infractionCount = await getQuery<InfractionCount, true>(`
+                SELECT SUM(action = ${InfractionPunishment.Note}) AS note,
+                       SUM(action = ${InfractionPunishment.Mute}) AS mute,
+                       SUM(action = ${InfractionPunishment.Kick}) AS kick,
+                       SUM(action = ${InfractionPunishment.Ban})  AS ban
+                FROM infractions
+                WHERE target_id = ${user.id}
+                  AND guild_id = ${interaction.guildId!};
 
-            if (infractions) {
-                for (const infraction of infractions) {
-                    switch (infraction.action) {
-                        case InfractionPunishment.Note:
-                            infCount.note++;
-                            break;
-                        case InfractionPunishment.Mute:
-                            infCount.mute++;
-                            break;
-                        case InfractionPunishment.Kick:
-                            infCount.kick++;
-                            break;
-                        case InfractionPunishment.Ban:
-                            infCount.ban++;
-                            break;
-                    }
-                }
-            } else {
-                const fetchedInfCount = await getQuery<InfractionCount>(`
-                    SELECT SUM(action = ${InfractionPunishment.Note}) AS note,
-                           SUM(action = ${InfractionPunishment.Mute}) AS mute,
-                           SUM(action = ${InfractionPunishment.Kick}) AS kick,
-                           SUM(action = ${InfractionPunishment.Ban})  AS ban
-                    FROM infractions
-                    WHERE target_id = ${user.id}
-                      AND guild_id = ${interaction.guildId!};
-
-                `);
-
-                if (fetchedInfCount) infCount = fetchedInfCount;
-            }
+            `);
 
             embed.addFields({
                 name: "Infractions",
-                value: mapInfractionCount(infCount),
+                value: mapInfractionCount(infractionCount),
                 inline: flags.length > 0
             });
 

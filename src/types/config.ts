@@ -37,8 +37,8 @@ interface ToggleableProperty {
 }
 
 interface EmojiData {
-    success: string | "✅"
-    error: string | "❌"
+    success: string
+    error: string
     quickMute30?: string
     quickMute60?: string
     purgeMessages?: string
@@ -70,8 +70,14 @@ type LoggingData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
+export interface AutoReactionData {
+    channelId: string
+    reactions: string[]
+}
+
 export interface ConfigData {
     commands?: CustomCommand[]
+    autoReactions?: AutoReactionData[]
     deleteMessageSecondsOnBan?: number
     allowedProofChannelIds?: string[]
     confirmationChannel?: string

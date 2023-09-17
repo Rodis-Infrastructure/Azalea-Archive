@@ -129,9 +129,9 @@ async function handleRequestEdit(message: Message<true>, config: Config) {
         });
 
         const request = ClientManager.cache.requests.get(message.id);
-        if (request && request.infractionId) {
+        if (request && request.muteId) {
             await handleReasonChange({
-                infractionId: request.infractionId,
+                infractionId: request.muteId,
                 newReason: reason,
                 updatedBy: message.author,
                 guildId: message.guildId

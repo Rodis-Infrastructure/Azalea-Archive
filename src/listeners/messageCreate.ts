@@ -28,6 +28,9 @@ export default class MessageCreateEventListener extends EventListener {
         const config = ClientManager.config(fetchedMessage.guildId);
         if (!config) return;
 
+        const reactions = config.getAutoReactions(fetchedMessage.channelId);
+        if (reactions.length) await Promise.all(reactions.map(r => fetchedMessage.react(r)));
+
         // Handle media to link conversion
         if (fetchedMessage.channelId === config.channels?.mediaConversion && fetchedMessage.attachments.size) {
             const mediaStorageLog = await sendLog({
