@@ -163,7 +163,7 @@ export function mapInfractionsToFields(data: {
         }
     });
 
-    const fields = filteredInfractions.slice((page * 5) - 5, page * 5).map(infraction => {
+    const fields = filteredInfractions.slice((page - 1) * 5, page * 5).map(infraction => {
         let flag = getInfractionFlagName(infraction.flag);
         flag &&= `${flag} `;
 

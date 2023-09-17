@@ -37,8 +37,8 @@ interface ToggleableProperty {
 }
 
 interface EmojiData {
-    success: string | "✅"
-    error: string | "❌"
+    success: string
+    error: string
     quickMute30?: string
     quickMute60?: string
     purgeMessages?: string
@@ -69,7 +69,13 @@ interface ScheduledMessageData {
     message: string | MessagePayload | MessageCreateOptions
 }
 
+export interface AutoReactionData {
+    channelId: string
+    reactions: string[]
+}
+
 export interface ConfigData {
+    autoReactions?: AutoReactionData[]
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessageData[]
     allowedProofChannelIds?: string[]

@@ -6,7 +6,6 @@ import {
     ButtonInteraction,
     ButtonStyle,
     ChatInputCommandInteraction,
-    Collection,
     Colors,
     EmbedBuilder,
     GuildMember,
@@ -241,26 +240,21 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
         return;
     }
 
-    const cachedInfractions = ClientManager.cache.infractions.get(user.id);
-    let infractions = cachedInfractions?.data || [];
-
-    if (!cachedInfractions) {
-        infractions = await allQuery<MinimalInfraction>(`
-            SELECT infraction_id,
-                   executor_id,
-                   created_at,
-                   reason,
-                   deleted_by,
-                   deleted_at,
-                   flag,
-                   expires_at,
-                   action
-            FROM infractions
-            WHERE target_id = ${user.id}
-              AND guild_id = ${interaction.guildId}
-            ORDER BY created_at DESC
-        `) || [];
-    }
+    const infractions = await allQuery<MinimalInfraction>(`
+        SELECT infraction_id,
+               executor_id,
+               created_at,
+               reason,
+               deleted_by,
+               deleted_at,
+               flag,
+               expires_at,
+               action
+        FROM infractions
+        WHERE target_id = ${user.id}
+          AND guild_id = ${interaction.guildId}
+        ORDER BY created_at DESC
+    `);
 
     const components: ActionRowBuilder<ButtonBuilder>[] = [];
     const embed = new EmbedBuilder()
@@ -280,7 +274,6 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
         });
 
         if (fields.length) embed.setFields(fields);
-
         if (maxPageCount > 1) {
             const nextBtn = new ButtonBuilder()
                 .setCustomId(`inf-page-next-${user.id}`)
@@ -305,41 +298,11 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
         }
     }
 
-    const message = await interaction.reply({
-        fetchReply: true,
+    await interaction.reply({
         embeds: [embed],
         components,
         ephemeral
     });
-
-    let timeout!: NodeJS.Timeout | undefined;
-
-    if (components.length) {
-        timeout = setTimeout(() => {
-            ClientManager.cache.infractions.delete(user.id);
-        }, 300_000);
-    }
-
-    const messageData = {
-        authorId: interaction.user.id,
-        filter,
-        page: 1
-    };
-
-    if (cachedInfractions) {
-        if (timeout) {
-            clearTimeout(cachedInfractions.timeout);
-            cachedInfractions.timeout = timeout;
-        }
-
-        cachedInfractions.messages.set(message.id, messageData);
-    } else if (components.length) {
-        ClientManager.cache.infractions.set(user.id, {
-            data: infractions,
-            messages: new Collection([[message.id, messageData]]),
-            timeout
-        });
-    }
 }
 
 export async function handleReasonChange(data: {
