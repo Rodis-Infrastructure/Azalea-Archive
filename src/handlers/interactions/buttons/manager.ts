@@ -16,7 +16,7 @@ export default class ButtonHandler {
         this.list = new Collection();
     }
 
-    public async load() {
+    async load() {
         const files = await readdir(join(__dirname, "../../../interactions/buttons"));
 
         for (const file of files) {
@@ -25,11 +25,11 @@ export default class ButtonHandler {
         }
     }
 
-    public register(button: Button) {
+    register(button: Button) {
         this.list.set(button.data.name, button);
     }
 
-    public async handle(interaction: ButtonInteraction) {
+    async handle(interaction: ButtonInteraction) {
         const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {

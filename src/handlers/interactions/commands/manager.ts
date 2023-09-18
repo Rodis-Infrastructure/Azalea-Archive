@@ -22,7 +22,7 @@ export default class CommandHandler {
         this.list = new Collection();
     }
 
-    public async load() {
+    async load() {
         const files = await readdir(join(__dirname, "../../../interactions/commands"));
 
         for (const file of files) {
@@ -31,11 +31,11 @@ export default class CommandHandler {
         }
     }
 
-    public register(command: Command) {
+    register(command: Command) {
         this.list.set(`${command.data.name}_${command.data.type}`, command);
     }
 
-    public async publish() {
+    async publish() {
         const commandData = ClientManager.commands.list.map(command => command.build());
 
         try {
@@ -46,7 +46,7 @@ export default class CommandHandler {
         }
     }
 
-    public async handle(interaction: CommandInteraction) {
+    async handle(interaction: CommandInteraction) {
         const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {

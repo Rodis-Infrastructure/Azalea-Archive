@@ -15,19 +15,19 @@ process.on("unhandledRejection", (error: Error) => console.error(error.stack));
 process.on("uncaughtException", (error: Error) => console.error(error.stack));
 
 class ClientManager {
-    public configs: Collection<string, Config> = new Collection();
-    public selections = new SelectMenuHandler();
-    public commands = new CommandHandler();
-    public buttons = new ButtonHandler();
-    public modals = new ModalHandler();
-    public cache: Cache = {
+    configs: Collection<string, Config> = new Collection();
+    selections = new SelectMenuHandler();
+    commands = new CommandHandler();
+    buttons = new ButtonHandler();
+    modals = new ModalHandler();
+    cache: Cache = {
         requests: new Collection<string, CachedRequest>(),
         messages: {
             store: new Collection<string, MessageModel>()
         }
     };
 
-    public client = new Client({
+    client = new Client({
         intents: [
             GatewayIntentBits.GuildMessageReactions,
             GatewayIntentBits.GuildVoiceStates,
