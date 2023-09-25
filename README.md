@@ -47,6 +47,7 @@ channels:
   banRequestQueue: "channel-id"
   muteRequestQueue: "channel-id"
   mediaConversion: "channel-id"
+  confirmations: "channel-id"
 ```
 
 ### Request Notices
@@ -89,15 +90,6 @@ ephemeralResponses:
   enabled: true
   excludedCategories: []
   excludedChannels: []
-```
-
-### Confirmation Messages
-
-When specified, confirmation messages will be sent in the specified channel whenever a moderation action is carried out
-outside said channel.
-
-```yaml
-confirmationChannel: "channel-id"
 ```
 
 ### User Flags
@@ -177,8 +169,8 @@ logging:
   excludedChannels: []
 
   loggingEvent:
-      enabled: true
-      channelId: "channel-id"
-      excludedCategories: []
-      excludedChannels: []
+    enabled: true
+    channelId: "channel-id"
+    excludedCategories: []
+    excludedChannels: []
 ```

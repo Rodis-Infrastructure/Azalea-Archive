@@ -56,6 +56,7 @@ interface ChannelData {
     banRequestQueue?: string
     muteRequestQueue?: string
     mediaConversion?: string
+    confirmations?: string
 }
 
 type LoggingData =
@@ -71,7 +72,6 @@ export interface ConfigData {
     autoReactions?: AutoReactionData[]
     deleteMessageSecondsOnBan?: number
     allowedProofChannelIds?: string[]
-    confirmationChannel?: string
     banRequestNotices?: RequestNoticeData
     muteRequestNotices?: RequestNoticeData
     ephemeralResponses?: ToggleableProperty
