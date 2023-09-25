@@ -86,7 +86,7 @@ export default class Config {
     }
 
     private get confirmationChannel() {
-        return this.data.confirmationChannel;
+        return this.data.channels?.confirmations;
     }
 
     bind(): this {

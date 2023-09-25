@@ -23,7 +23,7 @@ export default class ModalHandler {
         this.list = new Collection();
     }
 
-    public async load() {
+    async load() {
         const files = await readdir(join(__dirname, "../../../interactions/modals"));
 
         for (const file of files) {
@@ -32,11 +32,11 @@ export default class ModalHandler {
         }
     }
 
-    public register(modal: Modal) {
+    register(modal: Modal) {
         this.list.set(modal.data.name, modal);
     }
 
-    public async handle(interaction: ModalSubmitInteraction) {
+    async handle(interaction: ModalSubmitInteraction) {
         const config = ClientManager.config(interaction.guildId as string);
 
         if (!config) {

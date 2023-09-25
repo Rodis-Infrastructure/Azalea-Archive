@@ -25,7 +25,7 @@ export default class CommandHandler {
         this.guild = new Collection();
     }
 
-    public async loadGlobalCommands() {
+    async loadGlobalCommands() {
         const files = await readdir(join(__dirname, "../../../interactions/commands"));
 
         for (const file of files) {
@@ -34,7 +34,7 @@ export default class CommandHandler {
         }
     }
 
-    public async loadGuildCommands(config: Config) {
+    async loadGuildCommands(config: Config) {
         const files = await readdir(join(__dirname, "../../../interactions/guild_commands"));
 
         for (const file of files) {
@@ -43,7 +43,7 @@ export default class CommandHandler {
         }
     }
 
-    public async publishGlobalCommands() {
+    async publishGlobalCommands() {
         const commandData = ClientManager.commands.global.map(command => command.build());
 
         try {
@@ -54,7 +54,7 @@ export default class CommandHandler {
         }
     }
 
-    public async publishGuildCommands(config: Config) {
+    async publishGuildCommands(config: Config) {
         const commandData = ClientManager.commands.guild
             .filter((_, name) => name.includes(config.guildId))
             .map(command => command.build());
@@ -70,7 +70,7 @@ export default class CommandHandler {
         }
     }
 
-    public async handle(interaction: CommandInteraction) {
+    async handle(interaction: CommandInteraction) {
         const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {

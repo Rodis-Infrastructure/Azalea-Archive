@@ -47,6 +47,7 @@ channels:
   banRequestQueue: "channel-id"
   muteRequestQueue: "channel-id"
   mediaConversion: "channel-id"
+  confirmations: "channel-id"
 ```
 
 ### Custom Commands
@@ -106,15 +107,6 @@ ephemeralResponses:
   enabled: true
   excludedCategories: []
   excludedChannels: []
-```
-
-### Confirmation Messages
-
-When specified, confirmation messages will be sent in the specified channel whenever a moderation action is carried out
-outside said channel.
-
-```yaml
-confirmationChannel: "channel-id"
 ```
 
 ### User Flags

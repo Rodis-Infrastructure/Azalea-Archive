@@ -58,6 +58,7 @@ interface ChannelData {
     banRequestQueue?: string
     muteRequestQueue?: string
     mediaConversion?: string
+    confirmations?: string
 }
 
 interface CustomCommand {
@@ -80,7 +81,6 @@ export interface ConfigData {
     autoReactions?: AutoReactionData[]
     deleteMessageSecondsOnBan?: number
     allowedProofChannelIds?: string[]
-    confirmationChannel?: string
     banRequestNotices?: RequestNoticeData
     muteRequestNotices?: RequestNoticeData
     ephemeralResponses?: ToggleableProperty
