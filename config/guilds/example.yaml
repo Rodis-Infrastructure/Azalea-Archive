@@ -13,6 +13,18 @@ userFlags:
     roleIds:
       - "role-id"
 
+commands:
+  - name: "Some command"
+    value: "some-command"
+    embed:
+      color: 0xff0000
+      title: "Some title"
+      description: "Some description"
+      fields:
+        - name: "Some field"
+          value: "Some value"
+          inline: true
+
 banRequestNotices:
   enabled: true
   channelId: "channel-id"
