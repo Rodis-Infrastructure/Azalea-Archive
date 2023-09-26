@@ -1,5 +1,4 @@
 deleteMessageSecondsOnBan: 0
-confirmationChannel: "channel-id"
 
 ephemeralResponses:
   enabled: true
@@ -28,6 +27,12 @@ muteRequestNotices:
   interval: 3_600_000 # 1 hour
   mentionedRoles:
     - "role-id"
+
+channels:
+  banRequestQueue: "channel-id"
+  muteRequestQueue: "channel-id"
+  confirmations: "channel-id"
+  mediaConversion: "channel-id"
 
 groups:
   - guildStaff: false
