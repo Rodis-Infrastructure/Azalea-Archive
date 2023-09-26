@@ -11,6 +11,7 @@ import { sendLog } from "../../utils/logging";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";
+import { formatMediaURL } from "../../utils";
 
 export default class StoreMediaCtxCommand extends ContextMenuCommand {
     constructor() {
@@ -44,7 +45,7 @@ export default class StoreMediaCtxCommand extends ContextMenuCommand {
             return;
         }
 
-        const mediaUrls = [];
+        const mediaURLs = [];
         const storedMediaLog = await sendLog({
             event: LoggingEvent.Media,
             guildId: interaction.guildId!,
@@ -56,14 +57,14 @@ export default class StoreMediaCtxCommand extends ContextMenuCommand {
         }) as Message<true>;
 
         for (const attachment of storedMediaLog.attachments.values()) {
-            mediaUrls.push(`<${attachment.url}>`);
+            mediaURLs.push(formatMediaURL(attachment.url));
         }
 
         const mediaConversionChannel = await interaction.guild!.channels.fetch(config.channels.mediaConversion) as GuildTextBasedChannel;
         await Promise.all([
-            mediaConversionChannel.send(`${interaction.user} Your media links:\n\n>>> ${mediaUrls.join("\n")}`),
+            mediaConversionChannel.send(`${interaction.user} Your media links: ${storedMediaLog.url}\n\n>>> ${mediaURLs.join("\n")}`),
             interaction.reply({
-                content: `${success} Successfully stored \`${mediaUrls.length}\` attachments from ${targetMessage.author}`,
+                content: `${success} Successfully stored \`${mediaURLs.length}\` attachments from ${targetMessage.author}`,
                 ephemeral: true
             })
         ]);

@@ -1,4 +1,4 @@
-import { capitalize, formatTimestamp, REQUEST_VALIDATION_REGEX } from "../utils";
+import { capitalize, formatMediaURL, formatTimestamp, REQUEST_VALIDATION_REGEX } from "../utils";
 import { muteMember, purgeMessages, resolveInfraction, validateModerationAction } from "../utils/moderation";
 import {
     EmbedBuilder,
@@ -220,7 +220,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                     }) as Message<true>;
 
                     for (const attachment of storedMediaLog.attachments.values()) {
-                        formattedReason += ` ${attachment.url}`;
+                        formattedReason += ` ${formatMediaURL(attachment.url, true)}`;
                     }
                 }
 
