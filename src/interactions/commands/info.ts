@@ -63,7 +63,7 @@ export default class InfoCommand extends ChatInputCommand {
             embed.addFields([
                 {
                     name: member.nickname ? "Nickname" : "Display Name",
-                    value: member.nickname || member.displayName,
+                    value: member.displayName,
                     inline: true
                 },
                 {
