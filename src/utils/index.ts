@@ -1,3 +1,5 @@
+import { InteractionCustomIdFilter } from "../types/interactions";
+
 export function capitalize(str: string): string {
     return str[0].toUpperCase() + str.slice(1);
 }
@@ -51,6 +53,12 @@ export function currentTimestamp(): number {
 
 export function pluralize(str: string, count: number) {
     return count === 1 ? str : `${str}s`;
+}
+
+export function getCustomId(customId: InteractionCustomIdFilter): string {
+    return typeof customId === "string"
+        ? customId
+        : Object.values(customId)[0];
 }
 
 export const RegexPatterns = {
