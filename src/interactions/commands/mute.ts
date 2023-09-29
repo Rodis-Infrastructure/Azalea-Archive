@@ -6,13 +6,13 @@ import {
 } from "discord.js";
 
 import { InteractionResponseType } from "../../types/interactions";
-import { formatReason, formatTimestamp } from "../../utils";
+import { Command } from "../../handlers/interactions/interaction";
+import { discordTimestamp, formatReason } from "../../utils";
 import { muteMember } from "../../utils/moderation";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
 
-export default class MuteCommand extends ChatInputCommand {
+export default class MuteCommand extends Command {
     constructor() {
         super({
             name: "mute",
@@ -65,7 +65,7 @@ export default class MuteCommand extends ChatInputCommand {
 
         /* The result is the mute's expiration timestamp */
         if (typeof res === "number") {
-            const reply = `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
+            const reply = `muted **${member.user.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`;
             await Promise.all([
                 interaction.reply({
                     content: `${success} Successfully ${reply}${formatReason(reason)}`,

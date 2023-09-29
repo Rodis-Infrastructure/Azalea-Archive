@@ -2,16 +2,13 @@ import { MessageModel, MinimalInfraction } from "./db";
 import { InfractionFilter, RequestType } from "./utils";
 import { Collection } from "discord.js";
 
-export interface Cache {
-    messages: {
-        store: Collection<string, MessageModel>;
-        purged?: {
-            targetId?: string;
-            moderatorId: string;
-            data: string[];
-        }
+export interface MessageCache {
+    store: Collection<string, MessageModel>;
+    purged?: {
+        targetId?: string;
+        moderatorId: string;
+        data: string[];
     }
-    requests: Collection<string, CachedRequest>
 }
 
 export interface CachedRequest {

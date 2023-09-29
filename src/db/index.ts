@@ -1,7 +1,10 @@
-import { Infraction, InfractionFlag, InfractionPunishment } from "../types/db";
-import { stringify } from "../utils";
+import { Infraction, InfractionFlag, InfractionType, MessageModel } from "../types/db";
+import { sanitizeString } from "../utils";
 import { Database } from "sqlite3";
+import { Message } from "discord.js";
+
 import * as process from "process";
+import Cache from "../utils/cache";
 
 if (!process.env.DB_PATH) throw new Error("No database path provided");
 const conn = new Database(process.env.DB_PATH);
@@ -36,7 +39,7 @@ export function allQuery<T>(query: string): Promise<T[]> {
 export async function storeInfraction(data: {
     executorId: string;
     targetId: string;
-    action: InfractionPunishment;
+    action: InfractionType;
     guildId: string;
     requestAuthorId?: string;
     expiresAt?: number | null;
@@ -66,10 +69,31 @@ export async function storeInfraction(data: {
             ${requestAuthorId || null},
             ${expiresAt || null}, 
             ${flag || null},
-            ${stringify(reason)}
+            ${sanitizeString(reason)}
         )
         RETURNING infraction_id, created_at;
     `);
 
     return infraction?.infraction_id || null;
+}
+
+/** Serializes a message to be stored in the database */
+export function serializeMessage(message: Message<true>, deleted = false): MessageModel {
+    if (deleted) {
+        const cache = Cache.get(message.guildId);
+        const cachedMessage = cache.messages.store.get(message.id);
+        if (cachedMessage) cachedMessage.deleted ||= true;
+    }
+
+    return {
+        message_id: message.id,
+        author_id: message.author.id,
+        channel_id: message.channelId,
+        content: message.content,
+        guild_id: message.guildId,
+        created_at: message.createdTimestamp,
+        reference_id: message.reference?.messageId || null,
+        category_id: message.channel.parentId,
+        deleted
+    };
 }

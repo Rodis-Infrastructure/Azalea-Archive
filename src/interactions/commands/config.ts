@@ -8,12 +8,12 @@ import {
 } from "discord.js";
 
 import { InteractionResponseType } from "../../types/interactions";
+import { Command } from "../../handlers/interactions/interaction";
 import { stringify } from "yaml";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
-import ClientManager from "../../client";
+import Config from "../../utils/config";
 
-export default class ConfigCommand extends ChatInputCommand {
+export default class ConfigCommand extends Command {
     constructor() {
         super({
             name: "config",
@@ -31,8 +31,7 @@ export default class ConfigCommand extends ChatInputCommand {
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId!;
-        const config = ClientManager.config(guildId)?.data;
-
+        const config = Config.get(guildId)?.data;
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
             .setTitle("Guild Configuration")

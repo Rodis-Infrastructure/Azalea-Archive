@@ -9,24 +9,17 @@ import {
     userMention
 } from "discord.js";
 
-import {
-    CHANNEL_ID_FROM_URL_REGEX,
-    formatTimestamp,
-    msToString,
-    MUTE_DURATION_VALIDATION_REGEX,
-    REQUEST_VALIDATION_REGEX
-} from "./index";
-
-import { InfractionFlag, InfractionPunishment, MessageModel } from "../types/db";
+import { InfractionFlag, InfractionType, MessageModel } from "../types/db";
+import { discordTimestamp, msToString, RegexPatterns } from "./index";
 import { InfractionData, RequestType } from "../types/utils";
-import { getCachedMessageIds } from "./cache";
 import { allQuery, storeInfraction } from "../db";
 import { LoggingEvent } from "../types/config";
 import { sendLog } from "./logging";
 
-import ClientManager from "../client";
 import Config from "./config";
+import Cache from "./cache";
 import ms from "ms";
+import { client } from "../client";
 
 export async function resolveInfraction(data: InfractionData): Promise<number | null> {
     const {
@@ -40,52 +33,52 @@ export async function resolveInfraction(data: InfractionData): Promise<number | 
         flag
     } = data;
 
-    let color: ColorResolvable = Colors.Red;
-    let icon = "memberDelete.png";
-    let authorText = "Failed to resolve punishment type";
+    let embedColor: ColorResolvable = Colors.Red;
+    let embedAuthorIcon = "memberDelete.png";
+    let embedAuthorText = "Failed to resolve punishment type";
 
     switch (punishment) {
-        case InfractionPunishment.Ban: {
-            authorText = "Member Banned";
-            color = Colors.Blue;
+        case InfractionType.Ban: {
+            embedAuthorText = "Member Banned";
+            embedColor = Colors.Blue;
             break;
         }
 
-        case InfractionPunishment.Kick: {
-            authorText = "Member Kicked";
+        case InfractionType.Kick: {
+            embedAuthorText = "Member Kicked";
             break;
         }
 
-        case InfractionPunishment.Mute: {
-            authorText = "Member Muted";
-            color = Colors.Orange;
+        case InfractionType.Mute: {
+            embedAuthorText = "Member Muted";
+            embedColor = Colors.Orange;
             break;
         }
 
-        case InfractionPunishment.Note: {
-            authorText = "Note Added";
-            color = Colors.Yellow;
-            icon = "note.png";
+        case InfractionType.Note: {
+            embedAuthorText = "Note Added";
+            embedColor = Colors.Yellow;
+            embedAuthorIcon = "note.png";
             break;
         }
 
-        case InfractionPunishment.Unban: {
-            authorText = "Member Unbanned";
-            icon = "memberCreate.png";
-            color = Colors.Green;
+        case InfractionType.Unban: {
+            embedAuthorText = "Member Unbanned";
+            embedAuthorIcon = "memberCreate.png";
+            embedColor = Colors.Green;
             break;
         }
 
-        case InfractionPunishment.Unmute:
-            authorText = "Member Unmuted";
-            icon = "memberCreate.png";
-            color = Colors.Green;
+        case InfractionType.Unmute:
+            embedAuthorText = "Member Unmuted";
+            embedAuthorIcon = "memberCreate.png";
+            embedColor = Colors.Green;
             break;
     }
 
     const log = new EmbedBuilder()
-        .setColor(color)
-        .setAuthor({ name: authorText, iconURL: `attachment://${icon}` })
+        .setColor(embedColor)
+        .setAuthor({ name: embedAuthorText, iconURL: `attachment://${embedAuthorIcon}` })
         .setFields([
             { name: "Member", value: `${userMention(targetId)} (\`${targetId}\`)` },
             { name: "Moderator", value: `${executor} (\`${executor.id}\`)` }
@@ -113,8 +106,8 @@ export async function resolveInfraction(data: InfractionData): Promise<number | 
             options: {
                 embeds: [log],
                 files: [{
-                    attachment: `./icons/${icon}`,
-                    name: icon
+                    attachment: `./icons/${embedAuthorIcon}`,
+                    name: embedAuthorIcon
                 }]
             }
         })
@@ -146,19 +139,19 @@ export async function muteMember(offender: GuildMember, data: {
     if (notModerateableReason) return [notModerateableReason, null];
 
     const expiresAt = muteExpirationTimestamp(offender);
-    if (expiresAt) return [`This member has already been muted until ${formatTimestamp(expiresAt, "F")} (expires ${formatTimestamp(expiresAt, "R")}).`, null];
+    if (expiresAt) return [`This member has already been muted until ${discordTimestamp(expiresAt, "F")} (expires ${discordTimestamp(expiresAt, "R")}).`, null];
 
     let msMuteDuration = ms(duration);
 
     /* Only allow the duration to be given in days, hours, and minutes */
-    if (!duration.match(MUTE_DURATION_VALIDATION_REGEX) || msMuteDuration <= 0) return ["The duration provided is not valid.", null];
+    if (!duration.match(RegexPatterns.DurationValidation) || msMuteDuration <= 0) return ["The duration provided is not valid.", null];
     if (msMuteDuration > ms("28d")) msMuteDuration = ms("28d");
 
     try {
         await offender.timeout(msMuteDuration, reason ?? undefined);
         const infractionId = await resolveInfraction({
             guildId: offender.guild.id,
-            punishment: InfractionPunishment.Mute,
+            punishment: InfractionType.Mute,
             targetId: offender.user.id,
             duration: msMuteDuration,
             flag: quick ? InfractionFlag.Quick : undefined,
@@ -205,9 +198,10 @@ export async function purgeMessages(data: {
     authorId?: string
 }): Promise<number> {
     const { channel, amount, authorId, moderatorId } = data;
-    const removableMessageIds = getCachedMessageIds({
+    const cache = Cache.get(channel.guildId);
+
+    const removableMessageIds = cache.getMessageIds({
         channelId: channel.id,
-        guildId: channel.guildId,
         authorId: authorId,
         limit: amount
     });
@@ -239,7 +233,7 @@ export async function purgeMessages(data: {
         }
     }
 
-    ClientManager.cache.messages.purged = {
+    cache.messages.purged = {
         targetId: authorId,
         data: removableMessageIds,
         moderatorId
@@ -259,8 +253,8 @@ export async function validateRequest(data: {
     if (message.attachments.size && !config.loggingChannel(LoggingEvent.Media)) throw "You cannot add attachments to the request, please link them instead.";
 
     const isMuteRequest = requestType === RequestType.Mute;
-    const { targetId, reason } = REQUEST_VALIDATION_REGEX.exec(message.content)?.groups ?? {};
-    REQUEST_VALIDATION_REGEX.lastIndex = 0;
+    const { targetId, reason } = RegexPatterns.RequestValidation.exec(message.content)?.groups ?? {};
+    RegexPatterns.RequestValidation.lastIndex = 0;
 
     if (!targetId || !reason) {
         throw [
@@ -275,13 +269,13 @@ export async function validateRequest(data: {
 
     // Check if all URLs lead to whitelisted channels
     if (config.allowedProofChannelIds.length) {
-        const channelIdMatches = Array.from(reason.matchAll(CHANNEL_ID_FROM_URL_REGEX));
+        const channelIdMatches = Array.from(reason.matchAll(RegexPatterns.ChannelIdFromURL));
         if (channelIdMatches.some(m => !config.allowedProofChannelIds.includes(m[1]))) {
             throw "Your request contains links to non-whitelisted channels.";
         }
     }
 
-    const cache = ClientManager.cache.requests;
+    const cache = Cache.get(config.guildId).requests;
     const requestMessageId = cache.findKey(v => v.targetId === targetId
             && v.requestType === requestType);
 
@@ -293,7 +287,7 @@ export async function validateRequest(data: {
     if (reason.length + (message.attachments.size * 90) > 1024) throw "The reason length cannot exceed 1,024 characters, this includes potential media URLs.";
 
     const targetMember = await message.guild.members.fetch(targetId).catch(() => null);
-    const targetUser = targetMember?.user || await ClientManager.client.users.fetch(targetId).catch(() => null);
+    const targetUser = targetMember?.user || await client.users.fetch(targetId).catch(() => null);
 
     if (!targetUser) throw "The user specified is invalid.";
 
@@ -313,7 +307,7 @@ export async function validateRequest(data: {
 
     const reaction = message.reactions.cache.filter(r => r.me).first();
 
-    if (reaction) await reaction.users.remove(ClientManager.client.user?.id);
+    if (reaction) await reaction.users.remove(client.user?.id);
     if (!cache.has(message.id)) {
         cache.set(message.id, {
             targetId,
@@ -350,7 +344,7 @@ export async function handleBanRequestAutoMute(data: {
         return;
     }
 
-    const confirmation = `muted **${targetMember.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
+    const confirmation = `muted **${targetMember.user.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`;
     await config.sendConfirmation({
         message: confirmation,
         authorId: message.author.id,
@@ -358,6 +352,8 @@ export async function handleBanRequestAutoMute(data: {
         reason
     });
 
-    const requestData = ClientManager.cache.requests.get(message.id)!;
-    ClientManager.cache.requests.set(message.id, { ...requestData, muteId: infractionId });
+    const cache = Cache.get(config.guildId).requests;
+    const requestData = cache.get(message.id)!;
+
+    cache.set(message.id, { ...requestData, muteId: infractionId });
 }

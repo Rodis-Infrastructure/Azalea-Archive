@@ -12,60 +12,65 @@ import {
 import { elipsify, pluralize } from "./index";
 import { MessageModel } from "../types/db";
 import { LogData } from "../types/utils";
+import { client } from "../client";
 
-import ClientManager from "../client";
+import Cache from "./cache";
+import Config from "./config";
 
 export async function sendLog(data: LogData): Promise<Message<true> | void> {
     const { event, channelId, guildId, options, categoryId } = data;
 
-    const config = ClientManager.config(guildId)!;
+    const config = Config.get(guildId)!;
     if (channelId && !config?.loggingAllowed(event, channelId, categoryId || undefined)) return;
 
     const loggingChannelId = config?.loggingChannel(event);
     if (!loggingChannelId) throw `Channel ID for event ${event} not configured.`;
 
-    const loggingChannel = await ClientManager.client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
+    const loggingChannel = await client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
 
     if (!loggingChannel) throw `Logging channel for event ${event} not found.`;
     return loggingChannel.send(options);
 }
 
-export async function linkToPurgeLog(data: {
+export async function linkToPurgeLog(params: {
     guildId: string,
     content: string | MessageModel[],
     url: string | void
 }) {
-    const { url, content, guildId } = data;
-    const cache = ClientManager.cache.messages.purged;
+    const { url, content, guildId } = params;
 
-    if (!cache) return;
-    if (typeof content === "string" && !cache.data.includes(content)) return;
-    if (typeof content !== "string" && !content.some(({ message_id }) => cache.data.includes(message_id))) return;
+    const cache = Cache.get(guildId);
+    if (!cache.messages.purged) return;
 
-    const config = ClientManager.config(guildId)!;
+    const { data, moderatorId, targetId } = cache.messages.purged;
+
+    if (typeof content === "string" && !data.includes(content)) return;
+    if (typeof content !== "string" && !content.some(({ message_id }) => data.includes(message_id))) return;
+
+    const config = Config.get(guildId)!;
 
     if (!url) {
         await config.sendConfirmation({
-            message: `${config.emojis.error} ${userMention(cache.moderatorId)} failed to retrieve the log's URL`,
+            message: `${config.emojis.error} ${userMention(moderatorId)} failed to retrieve the log's URL`,
             full: true
         });
 
-        ClientManager.cache.messages.purged = undefined;
+        cache.messages.purged = undefined;
         return;
     }
 
     const amount = typeof content === "string" ? 1 : content.length;
-    const author = cache.targetId
-        ? ` by <@${cache.targetId}> (\`${cache.targetId}\`)`
+    const author = targetId
+        ? ` by <@${targetId}> (\`${targetId}\`)`
         : "";
 
     await config.sendConfirmation({
         message: `purged \`${amount}\` ${pluralize("message", amount)}${author}: ${url}`,
-        authorId: cache.moderatorId,
+        authorId: moderatorId,
         allowMentions: true
     });
 
-    ClientManager.cache.messages.purged = undefined;
+    cache.messages.purged = undefined;
 }
 
 export function formatLogContent(content: string | null): string {

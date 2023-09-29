@@ -1,11 +1,11 @@
+import { ComponentInteraction } from "../../handlers/interactions/interaction";
 import { handleUserInfractionSearch } from "../commands/infraction";
 import { InteractionResponseType } from "../../types/interactions";
 import { ButtonInteraction } from "discord.js";
 
-import Button from "../../handlers/interactions/buttons/button";
 import Config from "../../utils/config";
 
-export default class InfractionSearchButton extends Button {
+export default class InfractionSearchButton extends ComponentInteraction<ButtonInteraction> {
     constructor() {
         super({
             name: { startsWith: "inf-search" },

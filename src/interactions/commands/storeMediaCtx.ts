@@ -6,14 +6,14 @@ import {
 } from "discord.js";
 
 import { InteractionResponseType } from "../../types/interactions";
+import { Command } from "../../handlers/interactions/interaction";
 import { LoggingEvent } from "../../types/config";
 import { sendLog } from "../../utils/logging";
-
-import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
-import Config from "../../utils/config";
 import { formatMediaURL } from "../../utils";
 
-export default class StoreMediaCtxCommand extends ContextMenuCommand {
+import Config from "../../utils/config";
+
+export default class StoreMediaCtxCommand extends Command {
     constructor() {
         super({
             name: "Store media",

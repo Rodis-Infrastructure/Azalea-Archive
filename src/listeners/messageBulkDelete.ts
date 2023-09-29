@@ -8,13 +8,13 @@ import {
     userMention
 } from "discord.js";
 
-import { processBulkDeletedMessages } from "../utils/cache";
-import { serializeMessageToDatabaseModel } from "../utils";
 import { linkToPurgeLog, sendLog } from "../utils/logging";
 import { LoggingEvent } from "../types/config";
 import { MessageModel } from "../types/db";
+import { serializeMessage } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
+import Cache from "../utils/cache";
 
 export default class MessageBulkDeleteEventListener extends EventListener {
     constructor() {
@@ -36,14 +36,16 @@ export default class MessageBulkDeleteEventListener extends EventListener {
                 partialMessageIds.push(message.id);
             } else {
                 content.push(`[${message.createdAt.toLocaleString("en-GB")}] ${message.author.id} — ${message.content}`);
-                messages.push(serializeMessageToDatabaseModel(message, true));
+                messages.push(serializeMessage(message, true));
 
                 if (lastAuthorId && message.author.id !== lastAuthorId) oneAuthor = false;
                 lastAuthorId = message.author.id;
             }
         }
 
-        for (const message of await processBulkDeletedMessages(partialMessageIds)) {
+        const cache = Cache.get(channel.guildId);
+
+        for (const message of await cache.handleBulkDeletedMessages(partialMessageIds)) {
             const msCreatedAt = message.created_at * 1000;
 
             content.push(`[${msCreatedAt.toLocaleString("en-GB")}] ${message.author_id} — ${message.content}`);

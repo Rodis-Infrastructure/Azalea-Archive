@@ -1,7 +1,6 @@
 import { readdir } from "node:fs/promises";
+import { client } from "../../client";
 import { join } from "node:path";
-
-import ClientManager from "../../client";
 
 export async function loadListeners() {
     const files = await readdir(join(__dirname, "../../listeners"));
@@ -11,9 +10,9 @@ export async function loadListeners() {
         const listener = new EventListener();
 
         if (listener.data?.once) {
-            ClientManager.client.once(listener.name, (...args) => listener.execute(...args));
+            client.once(listener.name, (...args) => listener.execute(...args));
         } else {
-            ClientManager.client.on(listener.name, (...args) => listener.execute(...args));
+            client.on(listener.name, (...args) => listener.execute(...args));
         }
     }
 }

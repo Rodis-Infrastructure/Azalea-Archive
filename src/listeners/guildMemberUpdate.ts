@@ -1,4 +1,4 @@
-import { InfractionPunishment } from "../types/db";
+import { InfractionType } from "../types/db";
 import { Events, GuildMember } from "discord.js";
 import { currentTimestamp } from "../utils";
 import { runQuery } from "../db";
@@ -20,7 +20,7 @@ export default class InteractionCreateEventListener extends EventListener {
                 SET expires_at = ${now}
                 WHERE guild_id = ${newMember.guild.id}
                   AND target_id = ${newMember.id}
-                  AND action = ${InfractionPunishment.Mute}
+                  AND action = ${InfractionType.Mute}
                   AND expires_at > ${now};
             `);
         }

@@ -11,15 +11,16 @@ import {
     inlineCode
 } from "discord.js";
 
-import { InfractionCount, InfractionPunishment } from "../../types/db";
-import { formatTimestamp, mapInfractionCount } from "../../utils";
+import { InfractionCount, InfractionType } from "../../types/db";
 import { InteractionResponseType } from "../../types/interactions";
+import { Command } from "../../handlers/interactions/interaction";
+import { mapInfractionCount } from "../../utils/infractions";
+import { discordTimestamp } from "../../utils";
 import { getQuery } from "../../db";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
 
-export default class InfoCommand extends ChatInputCommand {
+export default class InfoCommand extends Command {
     constructor() {
         super({
             name: "info",
@@ -68,12 +69,12 @@ export default class InfoCommand extends ChatInputCommand {
                 },
                 {
                     name: "Created",
-                    value: formatTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
+                    value: discordTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
                     inline: true
                 },
                 {
                     name: "Joined",
-                    value: formatTimestamp(Math.floor(member.joinedTimestamp as number / 1000), "R"),
+                    value: discordTimestamp(Math.floor(member.joinedTimestamp as number / 1000), "R"),
                     inline: true
                 }
             ]);
@@ -81,7 +82,7 @@ export default class InfoCommand extends ChatInputCommand {
             embed.setColor(Colors.Red);
             embed.setFields({
                 name: "Created",
-                value: formatTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
+                value: discordTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
                 inline: true
             });
 
@@ -95,7 +96,7 @@ export default class InfoCommand extends ChatInputCommand {
                     FROM infractions
                     WHERE target_id = ${user.id}
                       AND guild_id = ${interaction.guildId!}
-                      AND action = ${InfractionPunishment.Ban}
+                      AND action = ${InfractionType.Ban}
                     ORDER BY infraction_id DESC
                     LIMIT 1;
                 `);
@@ -110,10 +111,10 @@ export default class InfoCommand extends ChatInputCommand {
         /* Only allows staff to view member infractions, but not the infractions of other staff */
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member as GuildMember)) {
             const infractionCount = await getQuery<InfractionCount, true>(`
-                SELECT SUM(action = ${InfractionPunishment.Note}) AS note,
-                       SUM(action = ${InfractionPunishment.Mute}) AS mute,
-                       SUM(action = ${InfractionPunishment.Kick}) AS kick,
-                       SUM(action = ${InfractionPunishment.Ban})  AS ban
+                SELECT SUM(action = ${InfractionType.Note}) AS note,
+                       SUM(action = ${InfractionType.Mute}) AS mute,
+                       SUM(action = ${InfractionType.Kick}) AS kick,
+                       SUM(action = ${InfractionType.Ban})  AS ban
                 FROM infractions
                 WHERE target_id = ${user.id}
                   AND guild_id = ${interaction.guildId!};
@@ -144,10 +145,10 @@ export default class InfoCommand extends ChatInputCommand {
         ) {
             ephemeral = true;
             const dealtInfCount = await getQuery<InfractionCount>(`
-                SELECT SUM(action = ${InfractionPunishment.Note}) AS note,
-                       SUM(action = ${InfractionPunishment.Mute}) AS mute,
-                       SUM(action = ${InfractionPunishment.Kick}) AS kick,
-                       SUM(action = ${InfractionPunishment.Ban})  AS ban
+                SELECT SUM(action = ${InfractionType.Note}) AS note,
+                       SUM(action = ${InfractionType.Mute}) AS mute,
+                       SUM(action = ${InfractionType.Kick}) AS kick,
+                       SUM(action = ${InfractionType.Ban})  AS ban
                 FROM infractions
                 WHERE (target_id = ${user.id} OR request_author_id = ${user.id})
                   AND guild_id = ${interaction.guildId!};

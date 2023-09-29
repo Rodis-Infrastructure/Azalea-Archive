@@ -1,12 +1,14 @@
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
-import { formatMediaURL, serializeMessageToDatabaseModel } from "../utils";
 import { Events, GuildMember, Message } from "discord.js";
 import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
 import { sendLog } from "../utils/logging";
+import { formatMediaURL } from "../utils";
+import { serializeMessage } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
+import Config from "../utils/config";
+import Cache from "../utils/cache";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {
@@ -23,9 +25,10 @@ export default class MessageCreateEventListener extends EventListener {
         if (!fetchedMessage) return;
 
         // Cache the message
-        ClientManager.cache.messages.store.set(fetchedMessage.id, serializeMessageToDatabaseModel(fetchedMessage));
+        const cache = Cache.get(fetchedMessage.guildId);
+        cache.messages.store.set(fetchedMessage.id, serializeMessage(fetchedMessage));
 
-        const config = ClientManager.config(fetchedMessage.guildId);
+        const config = Config.get(fetchedMessage.guildId);
         if (!config) return;
 
         const reactions = config.getAutoReactions(fetchedMessage.channelId);

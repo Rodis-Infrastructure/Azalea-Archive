@@ -1,12 +1,12 @@
 import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
-import { formatTimestamp } from "../../utils";
 import { muteMember, purgeMessages } from "../../utils/moderation";
+import { Command } from "../../handlers/interactions/interaction";
+import { discordTimestamp } from "../../utils";
 
-import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";
 
-export default class QuickMute60Command extends ContextMenuCommand {
+export default class QuickMute60Command extends Command {
     constructor() {
         super({
             name: "Quick mute (60m)",
@@ -39,7 +39,7 @@ export default class QuickMute60Command extends ContextMenuCommand {
 
         /* The result is the mute's expiration timestamp */
         if (typeof res === "number") {
-            const reply = `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`;
+            const reply = `quick muted **${message.author?.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`;
 
             await Promise.all([
                 purgeMessages({

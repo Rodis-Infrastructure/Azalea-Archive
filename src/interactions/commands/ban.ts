@@ -1,13 +1,13 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
-import { InfractionPunishment } from "../../types/db";
+import { Command } from "../../handlers/interactions/interaction";
+import { InfractionType } from "../../types/db";
 import { formatReason } from "../../utils";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
 
-export default class BanCommand extends ChatInputCommand {
+export default class BanCommand extends Command {
     constructor() {
         super({
             name: "ban",
@@ -97,7 +97,7 @@ export default class BanCommand extends ChatInputCommand {
                 reason
             }),
             resolveInfraction({
-                punishment: InfractionPunishment.Ban,
+                punishment: InfractionType.Ban,
                 executor: interaction.user,
                 targetId: user.id,
                 guildId: interaction.guildId!,

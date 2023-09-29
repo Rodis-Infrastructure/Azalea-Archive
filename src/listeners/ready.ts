@@ -1,4 +1,3 @@
-import { processCachedMessages } from "../utils/cache";
 import { readdir, readFile } from "node:fs/promises";
 import { ConfigData } from "../types/config";
 import { parse } from "yaml";
@@ -6,10 +5,12 @@ import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js"
 import { runQuery } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
 import Config from "../utils/config";
 import ms from "ms";
 import { RequestType } from "../types/utils";
+import { client } from "../client";
+import { loadInteractions, publishCommands } from "../handlers/interactions";
+import Cache from "../utils/cache";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -19,7 +20,7 @@ export default class ReadyEventListener extends EventListener {
     }
 
     async execute(): Promise<void> {
-        console.log(`${ClientManager.client.user?.tag} is online!`);
+        console.log(`${client.user?.tag} is online!`);
         const configFiles = await readdir("config/guilds/");
 
         for (const file of configFiles) {
@@ -33,17 +34,11 @@ export default class ReadyEventListener extends EventListener {
             setMuteRequestNoticeInterval(config, guildId);
         }
 
-        await Promise.all([
-            ClientManager.selections.load(),
-            ClientManager.buttons.load(),
-            ClientManager.modals.load(),
-            ClientManager.commands.load()
-        ]);
-
-        await ClientManager.commands.publish();
+        await loadInteractions();
+        await publishCommands();
 
         setInterval(async() => {
-            await processCachedMessages();
+            await Cache.storeMessages();
         }, ms("10m"));
 
         // Removes old data from the database
@@ -59,12 +54,13 @@ export default class ReadyEventListener extends EventListener {
 
 function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
     if (!config.channels?.banRequestQueue || !config.banRequestNotices?.enabled) return;
+    const cache = Cache.get(guildId);
 
     setInterval(async() => {
-        const cachedBanRequests = ClientManager.cache.requests.filter(r => r.requestType === RequestType.Ban);
+        const cachedBanRequests = cache.requests.filter(r => r.requestType === RequestType.Ban);
         if (cachedBanRequests.size < config.banRequestNotices!.threshold) return;
 
-        const channel = await ClientManager.client.channels.fetch(config.banRequestNotices!.channelId) as GuildTextBasedChannel;
+        const channel = await client.channels.fetch(config.banRequestNotices!.channelId) as GuildTextBasedChannel;
         const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedBanRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()
@@ -82,12 +78,13 @@ function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
 
 function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
     if (!config.channels?.muteRequestQueue || !config.muteRequestNotices?.enabled) return;
+    const cache = Cache.get(guildId);
 
     setInterval(async() => {
-        const cachedMuteRequests = ClientManager.cache.requests.filter(r => r.requestType === RequestType.Mute);
+        const cachedMuteRequests = cache.requests.filter(r => r.requestType === RequestType.Mute);
         if (cachedMuteRequests.size < config.muteRequestNotices!.threshold) return;
 
-        const channel = await ClientManager.client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
+        const channel = await client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
         const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedMuteRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()

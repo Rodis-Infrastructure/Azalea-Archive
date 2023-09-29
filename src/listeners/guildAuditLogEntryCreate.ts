@@ -1,10 +1,11 @@
 import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
+import { InfractionFlag, InfractionType } from "../types/db";
 import { resolveInfraction } from "../utils/moderation";
-import { InfractionFlag, InfractionPunishment } from "../types/db";
-import { formatTimestamp } from "../utils";
+import { discordTimestamp } from "../utils";
+import { client } from "../client";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
+import Config from "../utils/config";
 
 export default class GuildAuditLogEntryCreateListener extends EventListener {
     constructor() {
@@ -16,9 +17,9 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         const { executor } = log;
 
         if (!executor || !target) return;
-        if (executor.id === ClientManager.client.user?.id) return;
+        if (executor.id === client.user?.id) return;
 
-        let punishment: InfractionPunishment | undefined;
+        let punishment: InfractionType | undefined;
         let muteReply!: Partial<string>;
         let action!: string;
 
@@ -26,17 +27,17 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
         switch (log.action) {
             case AuditLogEvent.MemberKick:
-                punishment = InfractionPunishment.Kick;
+                punishment = InfractionType.Kick;
                 action = "kicked";
                 break;
 
             case AuditLogEvent.MemberBanAdd:
-                punishment = InfractionPunishment.Ban;
+                punishment = InfractionType.Ban;
                 action = "banned";
                 break;
 
             case AuditLogEvent.MemberBanRemove:
-                punishment = InfractionPunishment.Unban;
+                punishment = InfractionType.Unban;
                 action = "unbanned";
                 break;
 
@@ -45,14 +46,14 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
                 if (muteDurationDiff) {
                     if (!muteDurationDiff.old && muteDurationDiff.new) {
-                        punishment = InfractionPunishment.Mute;
+                        punishment = InfractionType.Mute;
                         action = "muted";
 
                         const msDuration = Date.parse(muteDurationDiff.new as string);
                         const expiresAt = Math.floor(msDuration / 1000);
                         const duration = msDuration - Date.now();
 
-                        muteReply = `muted until ${formatTimestamp(expiresAt, "F")} | Expires ${formatTimestamp(expiresAt, "R")}`;
+                        muteReply = `muted until ${discordTimestamp(expiresAt, "F")} | Expires ${discordTimestamp(expiresAt, "R")}`;
 
                         try {
                             await resolveInfraction({
@@ -73,7 +74,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                     }
 
                     if (muteDurationDiff.old && !muteDurationDiff.new) {
-                        punishment = InfractionPunishment.Unmute;
+                        punishment = InfractionType.Unmute;
                         action = "unmuted";
                     }
                 }
@@ -83,7 +84,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         }
 
         if (punishment) {
-            if (punishment !== InfractionPunishment.Mute) {
+            if (punishment !== InfractionType.Mute) {
                 await resolveInfraction({
                     executor: executor,
                     targetId: (target as User).id,
@@ -94,7 +95,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                 });
             }
 
-            const config = ClientManager.config(guild.id)!;
+            const config = Config.get(guild.id)!;
             await config.sendConfirmation({
                 message: `${action} **${(target as User).tag}** ${muteReply || ""}`,
                 authorId: executor.id,

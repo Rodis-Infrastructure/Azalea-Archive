@@ -1,12 +1,10 @@
 import { AttachmentPayload, channelMention, Colors, EmbedBuilder, Events, Message, userMention } from "discord.js";
-
 import { createReferenceLog, formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
-import { processPartialDeletedMessage } from "../utils/cache";
-import { serializeMessageToDatabaseModel } from "../utils";
 import { LoggingEvent } from "../types/config";
+import { serializeMessage } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
+import Cache from "../utils/cache";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -16,19 +14,18 @@ export default class MessageDeleteEventListener extends EventListener {
     async execute(deletedMessage: Message): Promise<void> {
         if (!deletedMessage.inGuild()) return;
 
-        ClientManager.cache.requests.delete(deletedMessage.id);
+        const cache = Cache.get(deletedMessage.guildId);
+        cache.requests.delete(deletedMessage.id);
 
         const fetchedReference = await deletedMessage.fetchReference().catch(() => null);
-        const data = await processPartialDeletedMessage(deletedMessage.id, {
-            fetchReference: !fetchedReference
-        });
+        const data = await cache.handleDeletedMessage(deletedMessage.id, !fetchedReference);
 
         const reference = fetchedReference
-            ? serializeMessageToDatabaseModel(fetchedReference)
+            ? serializeMessage(fetchedReference)
             : data.reference;
 
         const message = !deletedMessage.partial
-            ? serializeMessageToDatabaseModel(deletedMessage, true)
+            ? serializeMessage(deletedMessage, true)
             : data.message;
 
         if (!message) return;

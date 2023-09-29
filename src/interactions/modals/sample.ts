@@ -1,9 +1,8 @@
+import { ComponentInteraction } from "../../handlers/interactions/interaction";
 import { InteractionResponseType } from "../../types/interactions";
 import { ModalSubmitInteraction } from "discord.js";
 
-import Modal from "../../handlers/interactions/modals/modal";
-
-export default class SampleModal extends Modal {
+export default class SampleModal extends ComponentInteraction<ModalSubmitInteraction> {
     constructor() {
         super({
             name: "sample-modal",

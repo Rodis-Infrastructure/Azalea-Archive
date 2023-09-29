@@ -81,4 +81,5 @@ export interface ConfigData {
     emojis?: EmojiData
     userFlags?: UserFlag[]
     channels?: ChannelData
+    guildId: string
 }

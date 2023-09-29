@@ -1,9 +1,8 @@
 import { InteractionResponseType } from "../../types/interactions";
 import { ButtonInteraction } from "discord.js";
+import { ComponentInteraction } from "../../handlers/interactions/interaction";
 
-import Button from "../../handlers/interactions/buttons/button";
-
-export default class DeleteButton extends Button {
+export default class DeleteButton extends ComponentInteraction<ButtonInteraction> {
     constructor() {
         super({
             name: "delete",

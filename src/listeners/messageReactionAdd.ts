@@ -1,5 +1,3 @@
-import { capitalize, formatMediaURL, formatTimestamp, REQUEST_VALIDATION_REGEX } from "../utils";
-import { muteMember, purgeMessages, resolveInfraction, validateModerationAction } from "../utils/moderation";
 import {
     EmbedBuilder,
     Events,
@@ -10,13 +8,17 @@ import {
     User,
     userMention
 } from "discord.js";
-import { InfractionPunishment } from "../types/db";
+
+import { muteMember, purgeMessages, resolveInfraction, validateModerationAction } from "../utils/moderation";
+import { capitalize, discordTimestamp, formatMediaURL, RegexPatterns } from "../utils";
 import { LoggingEvent, RolePermission } from "../types/config";
+import { formatLogContent, sendLog } from "../utils/logging";
+import { InfractionType } from "../types/db";
 import { RequestType } from "../types/utils";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
-import { formatLogContent, sendLog } from "../utils/logging";
+import Config from "../utils/config";
+import Cache from "../utils/cache";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {
@@ -27,7 +29,7 @@ export default class MessageReactionAddEventListener extends EventListener {
         if (!reaction.message.inGuild() || user.bot) return;
 
         const { emoji, message } = reaction;
-        const config = ClientManager.config(message.guildId);
+        const config = Config.get(message.guildId);
 
         if (!config) return;
 
@@ -122,7 +124,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                         authorId: message.member.id
                     }),
                     config.sendConfirmation({
-                        message: `quick muted **${message.author?.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
+                        message: `quick muted **${message.author?.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`,
                         authorId: user.id,
                         reason
                     })
@@ -204,9 +206,13 @@ export default class MessageReactionAddEventListener extends EventListener {
             }
 
             if (emojis.approveRequest?.includes(emojiId)) {
-                const { targetId, reason, duration } = REQUEST_VALIDATION_REGEX.exec(message.content)?.groups ?? {};
+                const {
+                    targetId,
+                    reason,
+                    duration
+                } = RegexPatterns.RequestValidation.exec(message.content)?.groups ?? {};
                 let formattedReason = reason.trim().replaceAll(/ +/g, " ");
-                REQUEST_VALIDATION_REGEX.lastIndex = 0;
+                RegexPatterns.RequestValidation.lastIndex = 0;
 
                 if (message.attachments.size) {
                     const storedMediaLog = await sendLog({
@@ -225,6 +231,8 @@ export default class MessageReactionAddEventListener extends EventListener {
                 }
 
                 try {
+                    const cache = Cache.get(message.guildId);
+
                     if (requestType === RequestType.Ban) {
                         await message.guild.members.ban(targetId, {
                             deleteMessageSeconds: config.deleteMessageSecondsOnBan,
@@ -233,7 +241,7 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                         await Promise.all([
                             resolveInfraction({
-                                punishment: InfractionPunishment.Ban,
+                                punishment: InfractionType.Ban,
                                 requestAuthor: message.author,
                                 executor: user,
                                 guildId: message.guildId,
@@ -247,7 +255,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                             })
                         ]);
 
-                        ClientManager.cache.requests.delete(message.id);
+                        cache.requests.delete(message.id);
                         return;
                     }
 
@@ -283,11 +291,11 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                     await config.sendConfirmation({
                         authorId: user.id,
-                        message: `muted **${member.user.tag}** until ${formatTimestamp(res, "F")} | Expires ${formatTimestamp(res, "R")}`,
+                        message: `muted **${member.user.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`,
                         reason: formattedReason
                     });
 
-                    ClientManager.cache.requests.delete(message.id);
+                    cache.requests.delete(message.id);
                 } catch {
                     await config.sendConfirmation({
                         message: `${emojis.error} ${message.author} Failed to ${requestType} ${userMention(targetId)}`,

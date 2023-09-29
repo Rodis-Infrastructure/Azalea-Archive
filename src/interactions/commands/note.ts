@@ -7,13 +7,13 @@ import {
 
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
-import { InfractionPunishment } from "../../types/db";
+import { Command } from "../../handlers/interactions/interaction";
+import { InfractionType } from "../../types/db";
 import { formatReason } from "../../utils";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
 
-export default class NoteCommand extends ChatInputCommand {
+export default class NoteCommand extends Command {
     constructor() {
         super({
             name: "note",
@@ -68,7 +68,7 @@ export default class NoteCommand extends ChatInputCommand {
                 targetId: user.id,
                 guildId: interaction.guildId!,
                 reason: note,
-                punishment: InfractionPunishment.Note
+                punishment: InfractionType.Note
             });
         } catch (err) {
             console.error(err);

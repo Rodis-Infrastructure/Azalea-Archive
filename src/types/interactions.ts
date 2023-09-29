@@ -1,8 +1,9 @@
-import ChatInputCommand from "../handlers/interactions/commands/chatInputCommand";
-import ContextMenuCommand from "../handlers/interactions/commands/contextMenuCommand";
 import {
+    AnySelectMenuInteraction,
+    ButtonInteraction,
     ChatInputCommandInteraction,
     MessageContextMenuCommandInteraction,
+    ModalSubmitInteraction,
     UserContextMenuCommandInteraction
 } from "discord.js";
 
@@ -22,19 +23,12 @@ export enum InteractionResponseType {
     DeferUpdate = 2,
 }
 
-export interface CustomComponentProperties {
-    name: InteractionCustomIdFilter;
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
-    ephemeral?: boolean;
-}
-
 export enum PurgeSubcommand {
     User = "user",
     All = "all"
 }
 
-export type Command = ChatInputCommand | ContextMenuCommand;
+export type AnyComponentInteraction = ButtonInteraction | ModalSubmitInteraction | AnySelectMenuInteraction;
 export type CommandInteraction =
     ChatInputCommandInteraction
     | UserContextMenuCommandInteraction

@@ -1,9 +1,8 @@
+import { ComponentInteraction } from "../../handlers/interactions/interaction";
 import { InteractionResponseType } from "../../types/interactions";
-import { AnySelectMenuInteraction } from "discord.js";
+import { StringSelectMenuInteraction } from "discord.js";
 
-import SelectMenu from "../../handlers/interactions/select_menus/selectMenu";
-
-export default class SampleSelectMenu extends SelectMenu {
+export default class SampleSelectMenu extends ComponentInteraction<StringSelectMenuInteraction> {
     constructor() {
         super({
             name: "sample-select-menu",
@@ -12,7 +11,7 @@ export default class SampleSelectMenu extends SelectMenu {
         });
     }
 
-    async execute(interaction: AnySelectMenuInteraction): Promise<void> {
+    async execute(interaction: StringSelectMenuInteraction): Promise<void> {
         await interaction.editReply("This is a sample **SELECT MENU** interaction.");
     }
 }

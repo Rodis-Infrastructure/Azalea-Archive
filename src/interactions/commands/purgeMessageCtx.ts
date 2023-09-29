@@ -1,11 +1,11 @@
 import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
 import { purgeMessages, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
+import { Command } from "../../handlers/interactions/interaction";
 
-import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";
 
-export default class PurgeMessageCtxCommand extends ContextMenuCommand {
+export default class PurgeMessageCtxCommand extends Command {
     constructor() {
         super({
             name: "Purge messages",

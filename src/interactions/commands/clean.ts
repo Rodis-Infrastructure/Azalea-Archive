@@ -8,12 +8,12 @@ import {
 
 import { purgeMessages, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType, PurgeSubcommand } from "../../types/interactions";
+import { Command } from "../../handlers/interactions/interaction";
 import { pluralize } from "../../utils";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
 
-export default class CleanCommand extends ChatInputCommand {
+export default class CleanCommand extends Command {
     constructor() {
         super({
             name: "clean",

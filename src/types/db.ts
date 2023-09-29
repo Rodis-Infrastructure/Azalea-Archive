@@ -9,7 +9,7 @@ export interface Infraction {
     executor_id: string;
     created_at: number;
     expires_at?: number;
-    action: InfractionPunishment;
+    action: InfractionType;
     flag?: InfractionFlag;
     reason?: string;
 }
@@ -21,7 +21,7 @@ export interface InfractionCount {
     ban: number;
 }
 
-export enum InfractionPunishment {
+export enum InfractionType {
     Note = 1,
     Mute = 2,
     Kick = 3,

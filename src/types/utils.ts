@@ -1,5 +1,5 @@
 import { MessageCreateOptions, MessagePayload, User } from "discord.js";
-import { InfractionFlag, InfractionPunishment } from "./db";
+import { InfractionFlag, InfractionType } from "./db";
 import { LoggingEvent } from "./config";
 
 export enum RequestType {
@@ -22,11 +22,11 @@ export type InfractionData = {
     reason?: string | null
 } & (
     {
-        punishment: InfractionPunishment.Mute,
+        punishment: InfractionType.Mute,
         duration: number
     } |
     {
-        punishment: Exclude<InfractionPunishment, InfractionPunishment.Mute>,
+        punishment: Exclude<InfractionType, InfractionType.Mute>,
         duration?: never
     }
 );

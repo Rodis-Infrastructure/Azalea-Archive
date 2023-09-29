@@ -7,13 +7,13 @@ import {
 
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
-import { InfractionPunishment } from "../../types/db";
+import { Command } from "../../handlers/interactions/interaction";
+import { InfractionType } from "../../types/db";
 import { formatReason } from "../../utils";
 
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
 import Config from "../../utils/config";
 
-export default class KickCommand extends ChatInputCommand {
+export default class KickCommand extends Command {
     constructor() {
         super({
             name: "kick",
@@ -73,7 +73,7 @@ export default class KickCommand extends ChatInputCommand {
         try {
             await member.kick(reason);
             await resolveInfraction({
-                punishment: InfractionPunishment.Kick,
+                punishment: InfractionType.Kick,
                 executor: interaction.user,
                 targetId: member.id,
                 guildId: interaction.guildId!,

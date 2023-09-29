@@ -2,14 +2,14 @@ import { AttachmentPayload, Colors, EmbedBuilder, Events, GuildMember, hyperlink
 import { createReferenceLog, formatLogContent, sendLog } from "../utils/logging";
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
 import { handleReasonChange } from "../interactions/commands/infraction";
-import { fetchMessage, processEditedMessage } from "../utils/cache";
-import { serializeMessageToDatabaseModel } from "../utils";
 import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
+import { serializeMessage } from "../db";
+import { client } from "../client";
 
 import EventListener from "../handlers/listeners/eventListener";
-import ClientManager from "../client";
 import Config from "../utils/config";
+import Cache from "../utils/cache";
 
 export default class MessageUpdateEventListener extends EventListener {
     constructor() {
@@ -25,19 +25,21 @@ export default class MessageUpdateEventListener extends EventListener {
 
         if (!fetchedMessage) return;
 
-        const config = ClientManager.config(fetchedMessage.guildId);
+        const config = Config.get(fetchedMessage.guildId);
         if (!config) return;
 
         if (fetchedMessage.channelId === config.channels?.muteRequestQueue || fetchedMessage.channelId === config.channels?.banRequestQueue) {
             await handleRequestEdit(fetchedMessage, config);
         }
 
+        const cache = Cache.get(fetchedMessage.guildId);
+
         if (!fetchedMessage.author?.bot && fetchedMessage.content !== oldMessage.content) {
-            await processEditedMessage(newMessage.id, fetchedMessage.content);
+            await cache.handleMessageEdit(newMessage.id, fetchedMessage.content);
 
             const serializedOldMessage = oldMessage.partial
-                ? await fetchMessage(oldMessage.id)
-                : serializeMessageToDatabaseModel(oldMessage);
+                ? await cache.getMessage(oldMessage.id)
+                : serializeMessage(oldMessage);
 
             if (serializedOldMessage?.content) await handleMessageEditLog(fetchedMessage, serializedOldMessage.content);
         }
@@ -81,9 +83,10 @@ async function handleMessageEditLog(message: Message<true>, oldContent: string) 
 
     if (message?.reference?.messageId) {
         const fetchedReference = await message.fetchReference().catch(() => null);
+        const cache = Cache.get(message.guildId);
         const serializedReference = fetchedReference
-            ? serializeMessageToDatabaseModel(fetchedReference)
-            : await fetchMessage(message.reference.messageId);
+            ? serializeMessage(fetchedReference)
+            : await cache.getMessage(message.reference.messageId);
 
         if (serializedReference) {
             const { embed, file } = createReferenceLog(serializedReference, {
@@ -128,7 +131,9 @@ async function handleRequestEdit(message: Message<true>, config: Config) {
             config
         });
 
-        const request = ClientManager.cache.requests.get(message.id);
+        const cache = Cache.get(message.guildId);
+        const request = cache.requests.get(message.id);
+
         if (request && request.muteId) {
             await handleReasonChange({
                 infractionId: request.muteId,
@@ -151,7 +156,7 @@ async function handleRequestEdit(message: Message<true>, config: Config) {
             .filter(r => r.me && r.emoji.name !== reaction)
             .first();
 
-        if (existingReaction) await existingReaction.users.remove(ClientManager.client.user?.id);
+        if (existingReaction) await existingReaction.users.remove(client.user?.id);
 
         const [reply] = await Promise.all([
             message.reply({

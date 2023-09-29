@@ -1,6 +1,7 @@
 import {
     AnySelectMenuInteraction,
     ButtonInteraction,
+    Collection,
     GuildMember,
     GuildTextBasedChannel,
     MessageMentionTypes,
@@ -12,13 +13,18 @@ import { CommandInteraction, InteractionResponseType } from "../types/interactio
 import { ConfigData, LoggingEvent, PermissionData } from "../types/config";
 import { Infraction } from "../types/db";
 import { formatReason } from "./index";
-
-import ClientManager from "../client";
+import { client } from "../client";
 
 export default class Config {
+    private static items = new Collection<string, Config>();
+
     // @formatter:off
     // eslint-disable-next-line no-empty-function
     constructor(public readonly data: ConfigData) {}
+
+    get guildId() {
+        return this.data.guildId;
+    }
 
     get allowedProofChannelIds() {
         return this.data.allowedProofChannelIds ?? [];
@@ -76,8 +82,12 @@ export default class Config {
         return this.data.channels?.confirmations;
     }
 
+    static get(guildId: string): Config | undefined {
+        return this.items.get(guildId);
+    }
+
     bind(guildId: string) {
-        ClientManager.configs.set(guildId, this);
+        Config.items.set(guildId, this);
         console.log(`Bound configuration to guild (${guildId})`);
     }
 
@@ -193,7 +203,7 @@ export default class Config {
         const confirmationChannelId = this.confirmationChannel;
         if (!confirmationChannelId) return;
 
-        const confirmationChannel = await ClientManager.client.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
+        const confirmationChannel = await client.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
         if (!confirmationChannel) return;
 
         const parsedMentions: MessageMentionTypes[] = allowMentions ? ["users"] : [];

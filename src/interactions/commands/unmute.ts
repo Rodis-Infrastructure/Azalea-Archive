@@ -7,13 +7,13 @@ import {
 
 import { muteExpirationTimestamp, resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
-import { InfractionPunishment } from "../../types/db";
-
-import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
-import Config from "../../utils/config";
+import { Command } from "../../handlers/interactions/interaction";
+import { InfractionType } from "../../types/db";
 import { formatReason } from "../../utils";
 
-export default class UnmuteCommand extends ChatInputCommand {
+import Config from "../../utils/config";
+
+export default class UnmuteCommand extends Command {
     constructor() {
         super({
             name: "unmute",
@@ -82,7 +82,7 @@ export default class UnmuteCommand extends ChatInputCommand {
             await offender.timeout(null);
             await resolveInfraction({
                 guildId: interaction.guildId!,
-                punishment: InfractionPunishment.Unmute,
+                punishment: InfractionType.Unmute,
                 targetId: offender.id,
                 executor: interaction.user,
                 reason
