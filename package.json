@@ -18,6 +18,7 @@
     },
     "homepage": "https://github.com/Rodis-Infrastructure/moderation-bot#readme",
     "dependencies": {
+        "cron": "^2.4.3",
         "discord.js": "^14.13.0",
         "dotenv": "^16.3.1",
         "ms": "^2.1.3",

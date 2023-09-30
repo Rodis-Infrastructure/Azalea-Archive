@@ -77,8 +77,23 @@ banRequestNotices: # or muteRequestNotices
   enabled: true
   channelId: "channel-id"
   threshold: 25
-  interval: 3_600_000 # 1 hour
+  cron: "0 * * * *" # Every hour
 ```
+
+### Scheduled Messages
+
+The `scheduledMessages` section allows you to configure messages that will be sent in the specified channel at a
+
+```yaml
+scheduledMessages:
+  - channelId: "channel-id"
+    cron: "0 0 * * *" # Every day at midnight
+    message: MessagePayload
+```
+
+See [discord.js](https://www.npmjs.com/package/discord.js) documentation on what can be parsed
+to [TextChannel.send()](https://old.discordjs.dev/#/docs/discord.js/main/class/TextChannel?scrollTo=send) for more
+information on the `message` field.
 
 ### Custom Emojis
 

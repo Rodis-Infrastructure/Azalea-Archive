@@ -1,4 +1,4 @@
-import { APIEmbed } from "discord.js";
+import { MessageCreateOptions, MessagePayload, APIEmbed } from "discord.js";
 
 export enum RolePermission {
     Button = "buttons",
@@ -50,8 +50,7 @@ interface RequestNoticeData {
     enabled: boolean
     channelId: string
     threshold: number
-    interval: number
-    mentionedRoles?: string[]
+    cron: string
 }
 
 interface ChannelData {
@@ -71,6 +70,12 @@ type LoggingData =
     ToggleableProperty
     & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
 
+interface ScheduledMessageData {
+    channelId: string
+    cron: string
+    message: string | MessagePayload | MessageCreateOptions
+}
+
 export interface AutoReactionData {
     channelId: string
     reactions: string[]
@@ -80,6 +85,7 @@ export interface ConfigData {
     commands?: CustomCommand[]
     autoReactions?: AutoReactionData[]
     deleteMessageSecondsOnBan?: number
+    scheduledMessages?: ScheduledMessageData[]
     allowedProofChannelIds?: string[]
     banRequestNotices?: RequestNoticeData
     muteRequestNotices?: RequestNoticeData
