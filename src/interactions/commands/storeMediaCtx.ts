@@ -1,10 +1,17 @@
-import { ApplicationCommandType, Message, MessageContextMenuCommandInteraction } from "discord.js";
+import {
+    ApplicationCommandType,
+    GuildTextBasedChannel,
+    Message,
+    MessageContextMenuCommandInteraction
+} from "discord.js";
+
 import { InteractionResponseType } from "../../types/interactions";
+import { LoggingEvent } from "../../types/config";
+import { sendLog } from "../../utils/logging";
 
 import ContextMenuCommand from "../../handlers/interactions/commands/contextMenuCommand";
 import Config from "../../utils/config";
-import { sendLog } from "../../utils/logging";
-import { LoggingEvent } from "../../types/config";
+import { formatMediaURL } from "../../utils";
 
 export default class StoreMediaCtxCommand extends ContextMenuCommand {
     constructor() {
@@ -20,6 +27,15 @@ export default class StoreMediaCtxCommand extends ContextMenuCommand {
         const { success, error } = config.emojis;
         const { targetMessage } = interaction;
 
+        if (!config.channels?.mediaConversion) {
+            await interaction.reply({
+                content: `${error} This guild doesn't have a media conversion channel set up!`,
+                ephemeral: true
+            });
+
+            return;
+        }
+
         if (!targetMessage.attachments.size) {
             await interaction.reply({
                 content: `${error} This message doesn't have any attachments!`,
@@ -29,7 +45,7 @@ export default class StoreMediaCtxCommand extends ContextMenuCommand {
             return;
         }
 
-        const mediaUrls = [];
+        const mediaURLs = [];
         const storedMediaLog = await sendLog({
             event: LoggingEvent.Media,
             guildId: interaction.guildId!,
@@ -41,17 +57,14 @@ export default class StoreMediaCtxCommand extends ContextMenuCommand {
         }) as Message<true>;
 
         for (const attachment of storedMediaLog.attachments.values()) {
-            mediaUrls.push(`<${attachment.url}>`);
+            mediaURLs.push(formatMediaURL(attachment.url));
         }
 
+        const mediaConversionChannel = await interaction.guild!.channels.fetch(config.channels.mediaConversion) as GuildTextBasedChannel;
         await Promise.all([
-            config.sendConfirmation({
-                allowMentions: true,
-                message: `${interaction.user} Your media links:\n\n>>> ${mediaUrls.join("\n")}`,
-                full: true
-            }),
+            mediaConversionChannel.send(`${interaction.user} Your media links: ${storedMediaLog.url}\n\n>>> ${mediaURLs.join("\n")}`),
             interaction.reply({
-                content: `${success} Successfully stored \`${mediaUrls.length}\` attachments from ${targetMessage.author}`,
+                content: `${success} Successfully stored \`${mediaURLs.length}\` attachments from ${targetMessage.author}`,
                 ephemeral: true
             })
         ]);

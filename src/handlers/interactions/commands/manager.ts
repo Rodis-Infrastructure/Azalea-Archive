@@ -14,39 +14,63 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 import ClientManager from "../../../client";
+import Config from "../../../utils/config";
 
 export default class CommandHandler {
-    list: Collection<string, Command>;
+    global: Collection<string, Command>;
+    guild: Collection<string, Command>;
 
     constructor() {
-        this.list = new Collection();
+        this.global = new Collection();
+        this.guild = new Collection();
     }
 
-    public async load() {
+    async loadGlobalCommands() {
         const files = await readdir(join(__dirname, "../../../interactions/commands"));
 
         for (const file of files) {
             const command = (await import(join(__dirname, "../../../interactions/commands", file))).default;
-            this.register(new command());
+            this.registerGlobalCommand(new command());
         }
     }
 
-    public register(command: Command) {
-        this.list.set(`${command.data.name}_${command.data.type}`, command);
+    async loadGuildCommands(config: Config) {
+        const files = await readdir(join(__dirname, "../../../interactions/guild_commands"));
+
+        for (const file of files) {
+            const command = (await import(join(__dirname, "../../../interactions/guild_commands", file))).default;
+            this.registerGuildCommand(config.guildId, new command(config));
+        }
     }
 
-    public async publish() {
-        const commandData = ClientManager.commands.list.map(command => command.build());
+    async publishGlobalCommands() {
+        const commandData = ClientManager.commands.global.map(command => command.build());
 
         try {
             await ClientManager.client.application?.commands.set(commandData);
-            console.log(`Successfully loaded ${ClientManager.commands.list.size} commands!`);
+            console.log(`Successfully loaded ${ClientManager.commands.global.size} commands!`);
         } catch (err) {
             console.error(err);
         }
     }
 
-    public async handle(interaction: CommandInteraction) {
+    async publishGuildCommands(config: Config) {
+        const commandData = ClientManager.commands.guild
+            .filter((_, name) => name.includes(config.guildId))
+            .map(command => command.build());
+
+        try {
+            const guild = await ClientManager.client.guilds.fetch(config.guildId).catch(() => null);
+            if (!guild) return;
+
+            await guild.commands.set(commandData);
+            console.log(`Successfully loaded ${commandData.length} guild commands! (${guild.id})`);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async handle(interaction: CommandInteraction) {
         const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {
@@ -57,7 +81,8 @@ export default class CommandHandler {
             return;
         }
 
-        const command = this.list.get(`${interaction.commandName}_${interaction.commandType}`);
+        const command = this.global.get(`${interaction.commandName}_${interaction.commandType}`)
+            || this.guild.get(`${interaction.commandName}_${interaction.commandType}_${interaction.guildId}`);
 
         if (!command) {
             await interaction.reply({
@@ -76,6 +101,7 @@ export default class CommandHandler {
         });
 
         let subcommand = "";
+
         if (
             interaction.isChatInputCommand() &&
             interaction.options.data.some(option => option.type === ApplicationCommandOptionType.Subcommand)
@@ -124,5 +150,13 @@ export default class CommandHandler {
                 }]
             }
         });
+    }
+
+    private registerGlobalCommand(command: Command) {
+        this.global.set(`${command.data.name}_${command.data.type}`, command);
+    }
+
+    private registerGuildCommand(guildId: string, command: Command) {
+        this.guild.set(`${command.data.name}_${command.data.type}_${guildId}`, command);
     }
 }

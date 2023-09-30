@@ -221,18 +221,24 @@ export default class InfractionCommand extends ChatInputCommand {
 
 export async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config, ephemeral: boolean) {
     let filter: InfractionFilter | null = null;
-    let member: GuildMember | null = null;
-    let user!: User;
+    let targetMember: GuildMember | null = null;
+    let targetUser!: User;
 
     if (interaction.isChatInputCommand()) {
-        user = interaction.options.getUser("user", true);
-        member = interaction.options.getMember("user") as GuildMember | null;
+        targetUser = interaction.options.getUser("user", true);
+        targetMember = interaction.options.getMember("user") as GuildMember | null;
         filter = interaction.options.getString("filter_by") as InfractionFilter | null;
     } else {
-        user = await ClientManager.client.users.fetch(interaction.customId.split("-")[2]);
+        targetUser = await ClientManager.client.users.fetch(interaction.customId.split("-")[2]);
     }
 
-    if (member && config.isGuildStaff(member)) {
+    const targetIsStaff = targetMember && config.isGuildStaff(targetMember);
+    const executorCanViewModerationActivity = config.actionAllowed(interaction.member as GuildMember, {
+        permission: "viewModerationActivity",
+        requiredValue: true
+    });
+
+    if (targetIsStaff && !executorCanViewModerationActivity) {
         await interaction.reply({
             content: `${config.emojis.error} You can't view the infractions of a staff member.`,
             ephemeral
@@ -240,27 +246,51 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
         return;
     }
 
-    const infractions = await allQuery<MinimalInfraction>(`
-        SELECT infraction_id,
-               executor_id,
-               created_at,
-               reason,
-               deleted_by,
-               deleted_at,
-               flag,
-               expires_at,
-               action
-        FROM infractions
-        WHERE target_id = ${user.id}
-          AND guild_id = ${interaction.guildId}
-        ORDER BY created_at DESC
-    `);
+    let query: string;
 
+    if (executorCanViewModerationActivity && targetIsStaff) {
+        query = `
+            SELECT infraction_id,
+                   executor_id,
+                   created_at,
+                   reason,
+                   deleted_by,
+                   deleted_at,
+                   flag,
+                   expires_at,
+                   action
+            FROM infractions
+            WHERE executor_id = ${interaction.user.id}
+              AND guild_id = ${interaction.guildId}
+            ORDER BY created_at DESC
+            LIMIT 100;
+        `;
+    } else {
+        query = `
+            SELECT infraction_id,
+                   executor_id,
+                   created_at,
+                   reason,
+                   deleted_by,
+                   deleted_at,
+                   flag,
+                   expires_at,
+                   action
+            FROM infractions
+            WHERE target_id = ${targetUser.id}
+              AND guild_id = ${interaction.guildId}
+            ORDER BY created_at DESC
+            LIMIT 100;
+        `;
+    }
+
+    const infractions = await allQuery<MinimalInfraction>(query);
     const components: ActionRowBuilder<ButtonBuilder>[] = [];
+    const searchContext = targetIsStaff && executorCanViewModerationActivity ? "by" : "of";
     const embed = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
-        .setAuthor({ name: `Infractions of ${user.tag}`, iconURL: user.displayAvatarURL() })
-        .setFooter({ text: `ID: ${user.id}` });
+        .setAuthor({ name: `Infractions ${searchContext} ${targetUser.tag}`, iconURL: targetUser.displayAvatarURL() })
+        .setFooter({ text: `ID: ${targetUser.id}` });
 
     if (filter) embed.setTitle(`Filter: ${filter}`);
 
@@ -276,7 +306,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
         if (fields.length) embed.setFields(fields);
         if (maxPageCount > 1) {
             const nextBtn = new ButtonBuilder()
-                .setCustomId(`inf-page-next-${user.id}`)
+                .setCustomId(`inf-page-next-${targetUser.id}`)
                 .setLabel("\u2192")
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(infractions.length <= 5);
@@ -288,7 +318,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
                 .setDisabled(true);
 
             const previousBtn = new ButtonBuilder()
-                .setCustomId(`inf-page-back-${user.id}`)
+                .setCustomId(`inf-page-back-${targetUser.id}`)
                 .setLabel("\u2190")
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(true);
@@ -301,7 +331,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     await interaction.reply({
         embeds: [embed],
         components,
-        ephemeral
+        ephemeral: (targetIsStaff && executorCanViewModerationActivity) || ephemeral
     });
 }
 

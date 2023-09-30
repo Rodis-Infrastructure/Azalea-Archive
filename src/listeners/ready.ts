@@ -20,27 +20,34 @@ export default class ReadyEventListener extends EventListener {
     }
 
     async execute(): Promise<void> {
-        console.log(`${ClientManager.client.user?.tag} is online!`);
+        const { client, selections, buttons, modals, commands } = ClientManager;
+        console.log(`${client.user?.tag} is online!`);
+
         const configFiles = await readdir("config/guilds/");
 
         for (const file of configFiles) {
             const guildId = file.split(".")[0];
             if (!guildId.match(/^\d{17,19}$/g)) continue;
 
-            const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            new Config(config).bind(guildId);
+            const configData: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
+            const config = new Config(guildId, configData).bind();
+
+            setBanRequestNoticeInterval(configData, guildId);
+            setMuteRequestNoticeInterval(configData, guildId);
 
             await setGuildCronJobs(config);
+            await commands.loadGuildCommands(config);
+            await commands.publishGuildCommands(config);
         }
 
         await Promise.all([
-            ClientManager.selections.load(),
-            ClientManager.buttons.load(),
-            ClientManager.modals.load(),
-            ClientManager.commands.load()
+            selections.load(),
+            buttons.load(),
+            modals.load(),
+            commands.loadGlobalCommands()
         ]);
 
-        await ClientManager.commands.publish();
+        await commands.publishGlobalCommands();
 
         // Store cached messages every 10 minutes
         new CronJob("*/10 * * * *", processCachedMessages).start();

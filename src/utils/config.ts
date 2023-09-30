@@ -1,6 +1,8 @@
 import {
     AnySelectMenuInteraction,
+    APIEmbed,
     ButtonInteraction,
+    Collection,
     GuildMember,
     GuildTextBasedChannel,
     MessageMentionTypes,
@@ -18,7 +20,7 @@ import ClientManager from "../client";
 export default class Config {
     // @formatter:off
     // eslint-disable-next-line no-empty-function
-    constructor(public readonly data: ConfigData) {}
+    constructor(public readonly guildId: string, public readonly data: ConfigData) {}
 
     get allowedProofChannelIds() {
         return this.data.allowedProofChannelIds ?? [];
@@ -52,6 +54,17 @@ export default class Config {
         return this.data.muteRequestNotices ?? {};
     }
 
+    get customCommandChoices() {
+        return this.data.commands?.map(({ name, value }) => ({ name, value })) || [];
+    }
+
+    get customCommandResponses() {
+        const commands = this.data.commands || [];
+        const responses = commands.map(({ value, embed }) => [value, embed]);
+
+        return new Collection(responses as [string, APIEmbed][]);
+    }
+
     private get autoReactions() {
         return this.data.autoReactions ?? [];
     }
@@ -73,12 +86,13 @@ export default class Config {
     }
 
     private get confirmationChannel() {
-        return this.data.confirmationChannel;
+        return this.data.channels?.confirmations;
     }
 
-    bind(guildId: string) {
-        ClientManager.configs.set(guildId, this);
-        console.log(`Bound configuration to guild (${guildId})`);
+    bind(): this {
+        ClientManager.configs.set(this.guildId, this);
+        console.log(`Bound configuration to guild (${this.guildId})`);
+        return this;
     }
 
     getAutoReactions(channelId: string): string[] {

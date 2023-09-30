@@ -1,5 +1,4 @@
 deleteMessageSecondsOnBan: 0
-confirmationChannel: "channel-id"
 
 ephemeralResponses:
   enabled: true
@@ -12,6 +11,18 @@ userFlags:
   - name: "flag-name"
     roleIds:
       - "role-id"
+
+commands:
+  - name: "Some command"
+    value: "some-command"
+    embed:
+      color: 0xff0000
+      title: "Some title"
+      description: "Some description"
+      fields:
+        - name: "Some field"
+          value: "Some value"
+          inline: true
 
 banRequestNotices:
   enabled: true
@@ -28,6 +39,12 @@ muteRequestNotices:
   interval: 3_600_000 # 1 hour
   mentionedRoles:
     - "role-id"
+
+channels:
+  banRequestQueue: "channel-id"
+  muteRequestQueue: "channel-id"
+  confirmations: "channel-id"
+  mediaConversion: "channel-id"
 
 groups:
   - guildStaff: false

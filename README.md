@@ -47,7 +47,25 @@ channels:
   banRequestQueue: "channel-id"
   muteRequestQueue: "channel-id"
   mediaConversion: "channel-id"
+  confirmations: "channel-id"
 ```
+
+### Custom Commands
+
+The `commands` section allows you to configure custom commands that can be used by the bot.
+
+```yaml
+commands:
+  - name: "command-name"
+    value: "command-value" # Cannot have whitespace
+    embed:
+      title: "embed-title"
+      description: "embed-description"
+      color: 0x000000 # Optional
+```
+
+For more information on what embed attributes can be passed,
+see [Discord documentation](https://discord.com/developers/docs/resources/channel#embed-object).
 
 ### Request Notices
 
@@ -104,15 +122,6 @@ ephemeralResponses:
   enabled: true
   excludedCategories: []
   excludedChannels: []
-```
-
-### Confirmation Messages
-
-When specified, confirmation messages will be sent in the specified channel whenever a moderation action is carried out
-outside said channel.
-
-```yaml
-confirmationChannel: "channel-id"
 ```
 
 ### User Flags

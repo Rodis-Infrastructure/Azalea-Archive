@@ -1,5 +1,5 @@
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
-import { serializeMessageToDatabaseModel } from "../utils";
+import { formatMediaURL, serializeMessageToDatabaseModel } from "../utils";
 import { Events, GuildMember, Message } from "discord.js";
 import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
@@ -43,10 +43,10 @@ export default class MessageCreateEventListener extends EventListener {
                 }
             }) as Message<true>;
 
-            const mediaURLs = mediaStorageLog.attachments.map(({ url }) => `<${url}>`);
+            const mediaURLs = mediaStorageLog.attachments.map(({ url }) => formatMediaURL(url));
             await Promise.all([
                 fetchedMessage.delete().catch(() => null),
-                fetchedMessage.channel.send(`${fetchedMessage.author} Your media links:\n\n>>> ${mediaURLs.join("\n")}`)
+                fetchedMessage.channel.send(`${fetchedMessage.author} Your media links: ${mediaStorageLog.url}\n\n>>> ${mediaURLs.join("\n")}`)
             ]);
         }
 

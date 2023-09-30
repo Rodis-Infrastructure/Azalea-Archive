@@ -24,7 +24,7 @@ export default class SelectMenuHandler {
         this.list = new Collection();
     }
 
-    public async load() {
+    async load() {
         const files = await readdir(join(__dirname, "../../../interactions/select_menus"));
 
         for (const file of files) {
@@ -33,11 +33,11 @@ export default class SelectMenuHandler {
         }
     }
 
-    public register(selectMenu: SelectMenu) {
+    register(selectMenu: SelectMenu) {
         this.list.set(selectMenu.data.name, selectMenu);
     }
 
-    public async handle(interaction: AnySelectMenuInteraction) {
+    async handle(interaction: AnySelectMenuInteraction) {
         const config = ClientManager.config(interaction.guildId!);
 
         if (!config) {

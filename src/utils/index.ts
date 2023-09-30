@@ -112,6 +112,11 @@ export function formatReason(reason: string | null | undefined): string {
     return reason ? ` (\`${reason.replaceAll("`", "")}\`)` : "";
 }
 
+export function formatMediaURL(url: string, embed = false): string {
+    const [formattedURL] = url.split("?");
+    return embed ? formattedURL : `<${formattedURL}>`;
+}
+
 export function serializeMessageToDatabaseModel(message: Message<true>, deleted = false): MessageModel {
     if (deleted) {
         const cachedMessage = ClientManager.cache.messages.store.get(message.id);
