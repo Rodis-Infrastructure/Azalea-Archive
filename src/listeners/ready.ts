@@ -32,9 +32,6 @@ export default class ReadyEventListener extends EventListener {
             const configData: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
             const config = new Config(guildId, configData).bind();
 
-            setBanRequestNoticeInterval(configData, guildId);
-            setMuteRequestNoticeInterval(configData, guildId);
-
             await setGuildCronJobs(config);
             await commands.loadGuildCommands(config);
             await commands.publishGuildCommands(config);
@@ -63,9 +60,9 @@ export default class ReadyEventListener extends EventListener {
     }
 }
 
-async function setGuildCronJobs(config: ConfigData) {
+async function setGuildCronJobs(config: Config) {
     const { client, cache } = ClientManager;
-    const { scheduledMessages, channels, muteRequestNotices, banRequestNotices } = config;
+    const { scheduledMessages, channels, muteRequestNotices, banRequestNotices } = config.data;
 
     // Scheduled messages
     for (const data of scheduledMessages || []) {

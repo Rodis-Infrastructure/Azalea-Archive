@@ -1,4 +1,9 @@
-import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
+import {
+    ApplicationCommandOptionType,
+    ApplicationCommandType,
+    ChatInputCommandInteraction,
+    EmbedBuilder
+} from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
@@ -42,9 +47,20 @@ export default class FaqCommand extends ChatInputCommand {
             return;
         }
 
+        const footer = response.footer?.text
+            ? ` - ${response.footer.text}`
+            : "";
+
+        const embed = new EmbedBuilder(response)
+            .setFooter({
+                text: `Posted by ${interaction.user.displayName}${footer}`,
+                iconURL: interaction.user.displayAvatarURL()
+            })
+            .setTimestamp();
+
         await interaction.reply({
             content: mention ? `${mention}` : undefined,
-            embeds: [response]
+            embeds: [embed]
         });
     }
 }
