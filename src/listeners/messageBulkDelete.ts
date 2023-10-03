@@ -5,7 +5,7 @@ import {
     GuildTextBasedChannel,
     hyperlink,
     Message,
-    userMention
+    Snowflake
 } from "discord.js";
 
 import { processBulkDeletedMessages } from "../utils/cache";
@@ -27,9 +27,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
         const content: string[] = [];
         const partialMessageIds: string[] = [];
         const messages: MessageModel[] = [];
-
-        let lastAuthorId = "";
-        let oneAuthor = false;
+        const authorIds = new Set<Snowflake>();
 
         for (const message of deletedMessages.values()) {
             if (message.partial) {
@@ -37,9 +35,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             } else {
                 content.push(`[${message.createdAt.toLocaleString("en-GB")}] ${message.author.id} — ${message.content}`);
                 messages.push(serializeMessageToDatabaseModel(message, true));
-
-                if (lastAuthorId && message.author.id !== lastAuthorId) oneAuthor = false;
-                lastAuthorId = message.author.id;
+                authorIds.add(message.author.id);
             }
         }
 
@@ -48,9 +44,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
 
             content.push(`[${msCreatedAt.toLocaleString("en-GB")}] ${message.author_id} — ${message.content}`);
             messages.push(message);
-
-            if (lastAuthorId && message.author_id !== lastAuthorId) oneAuthor = false;
-            lastAuthorId = message.author_id;
+            authorIds.add(message.author_id);
         }
 
         if (!content.length) return;
@@ -59,15 +53,17 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             .setName(`messages.txt`)
             .setDescription("Purged messages");
 
-        // Mention the author if all messages were sent by the same user
-        const author = oneAuthor && lastAuthorId ? ` by ${userMention(lastAuthorId)}` : "";
+        const authors = authorIds.size
+            ? ` by <@${Array.from(authorIds).join(">, <@")}>`
+            : "";
+
         const log = await sendLog({
             event: LoggingEvent.Message,
             channelId: channel.id,
             categoryId: channel.parentId,
             guildId: channel.guildId,
             options: {
-                content: `Purged \`${content.length}\` messages${author} in ${channel} (\`#${channel.name}\`)`,
+                content: `Purged \`${content.length}\` messages${authors} in ${channel} (\`#${channel.name}\`)`,
                 allowedMentions: { parse: [] },
                 files: [file]
             }
