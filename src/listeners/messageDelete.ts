@@ -1,4 +1,13 @@
-import { AttachmentPayload, channelMention, Colors, EmbedBuilder, Events, Message, userMention } from "discord.js";
+import {
+    AttachmentPayload,
+    channelMention,
+    Colors,
+    EmbedBuilder,
+    Events,
+    GuildTextBasedChannel,
+    Message,
+    userMention
+} from "discord.js";
 
 import { createReferenceLog, formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
 import { processPartialDeletedMessage } from "../utils/cache";
@@ -68,12 +77,13 @@ export default class MessageDeleteEventListener extends EventListener {
             files.push(file);
         }
 
+        const channel = await ClientManager.client.channels.fetch(message.channel_id) as GuildTextBasedChannel;
+        if (!channel) return;
+
         const log = await sendLog({
             event: LoggingEvent.Message,
             options: { embeds, files },
-            channelId: message.channel_id,
-            categoryId: message.category_id,
-            guildId: message.guild_id
+            channel
         });
 
         if (!log) return;

@@ -59,9 +59,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
 
         const log = await sendLog({
             event: LoggingEvent.Message,
-            channelId: channel.id,
-            categoryId: channel.parentId,
-            guildId: channel.guildId,
+            channel,
             options: {
                 content: `Purged \`${content.length}\` messages${authors} in ${channel} (\`#${channel.name}\`)`,
                 allowedMentions: { parse: [] },

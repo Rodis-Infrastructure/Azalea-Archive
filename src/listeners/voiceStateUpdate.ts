@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder, Events, VoiceState } from "discord.js";
+import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, VoiceState } from "discord.js";
 import { LoggingEvent } from "../types/config";
 import { sendLog } from "../utils/logging";
 
@@ -51,9 +51,7 @@ export default class VoiceStateUpdateEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Voice,
-            channelId: (newState.channelId || oldState.channelId) as string,
-            categoryId: (newState.channel?.parentId || oldState.channel?.parentId) as string,
-            guildId: newState.guild.id,
+            channel: (newState.channel || oldState.channel) as GuildTextBasedChannel,
             options: {
                 embeds: [log],
                 files: [{

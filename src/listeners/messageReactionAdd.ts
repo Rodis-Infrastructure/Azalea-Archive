@@ -74,9 +74,7 @@ export default class MessageReactionAddEventListener extends EventListener {
 
             await sendLog({
                 event: LoggingEvent.Message,
-                channelId: message.channelId,
-                categoryId: message.channel.parentId,
-                guildId: message.guildId,
+                channel: message.channel as GuildTextBasedChannel,
                 options: {
                     embeds: [embed],
                     files: [{

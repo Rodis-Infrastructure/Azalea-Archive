@@ -11,6 +11,8 @@ export default class ThreadUpdateEventListener extends EventListener {
     }
 
     async execute(oldThread: ThreadChannel, newThread: ThreadChannel): Promise<void> {
+        if (!newThread.parent) return;
+
         const propertiesToCheck: (keyof ThreadChannel)[] = ["name", "archived", "locked"];
         const changes = [];
 
@@ -48,9 +50,7 @@ export default class ThreadUpdateEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Thread,
-            channelId: parent.id,
-            categoryId: parent.parentId,
-            guildId: parent.guildId,
+            channel: parent,
             options: {
                 embeds: [embed],
                 files: [{

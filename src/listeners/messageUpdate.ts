@@ -98,9 +98,7 @@ async function handleMessageEditLog(message: Message<true>, oldContent: string) 
     await sendLog({
         event: LoggingEvent.Message,
         options: { embeds, files },
-        channelId: message.channelId,
-        categoryId: message.channel.parentId,
-        guildId: message.guildId
+        channel: message.channel
     });
 }
 

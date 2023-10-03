@@ -139,9 +139,7 @@ export default class CommandHandler {
 
         await sendLog({
             event: LoggingEvent.Interaction,
-            categoryId: usageChannel.parentId,
-            channelId: usageChannel.id,
-            guildId: interaction.guildId!,
+            channel: usageChannel,
             options: {
                 embeds: [log],
                 files: [{

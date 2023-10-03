@@ -1,5 +1,6 @@
 import {
     AttachmentPayload,
+    ChannelType,
     codeBlock,
     Colors,
     EmbedBuilder,
@@ -16,17 +17,34 @@ import { LogData } from "../types/utils";
 import ClientManager from "../client";
 
 export async function sendLog(data: LogData): Promise<Message<true> | void> {
-    const { event, channelId, guildId, options, categoryId } = data;
-
-    const config = ClientManager.config(guildId)!;
-    if (channelId && !config?.loggingAllowed(event, channelId, categoryId || undefined)) return;
+    const { event, channel, guildId, options } = data;
+    const config = ClientManager.config(channel?.guildId || guildId!);
 
     const loggingChannelId = config?.loggingChannel(event);
     if (!loggingChannelId) throw `Channel ID for event ${event} not configured.`;
 
     const loggingChannel = await ClientManager.client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
-
     if (!loggingChannel) throw `Logging channel for event ${event} not found.`;
+
+    if (channel) {
+        let channelId = channel.id;
+        let categoryId = channel.parentId;
+
+        const isThread = channel.type === ChannelType.PublicThread
+            || channel.type === ChannelType.PrivateThread
+            || channel.type === ChannelType.AnnouncementThread;
+
+        if (isThread) {
+            const parent = channel.parent;
+            if (!parent) throw `Thread ${channelId} has no parent.`;
+
+            channelId = parent.id;
+            categoryId = parent.parentId;
+        }
+
+        if (!config?.loggingAllowed(event, channelId, categoryId || undefined)) return;
+    }
+
     return loggingChannel.send(options);
 }
 
@@ -79,7 +97,10 @@ export function formatLogContent(content: string | null): string {
 
 export function createReferenceLog(reference: MessageModel, options: {
     referenceDeleted: boolean
-}): { embed: EmbedBuilder, file: AttachmentPayload } {
+}): {
+        embed: EmbedBuilder,
+        file: AttachmentPayload
+    } {
     const referenceURL = `https://discord.com/channels/${reference.guild_id}/${reference.channel_id}/${reference.message_id}`;
     const referenceLog = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
