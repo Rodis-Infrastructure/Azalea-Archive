@@ -1,7 +1,6 @@
-import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
-import { InfractionFlag, InfractionType } from "../types/db";
+import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, time, User } from "discord.js";
+import { InfractionFlag, PunishmentType } from "../types/db";
 import { resolveInfraction } from "../utils/moderation";
-import { discordTimestamp } from "../utils";
 import { client } from "../client";
 
 import EventListener from "../handlers/listeners/eventListener";
@@ -19,7 +18,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         if (!executor || !target) return;
         if (executor.id === client.user?.id) return;
 
-        let punishment: InfractionType | undefined;
+        let punishment: PunishmentType | undefined;
         let muteReply!: Partial<string>;
         let action!: string;
 
@@ -27,17 +26,17 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
         switch (log.action) {
             case AuditLogEvent.MemberKick:
-                punishment = InfractionType.Kick;
+                punishment = PunishmentType.Kick;
                 action = "kicked";
                 break;
 
             case AuditLogEvent.MemberBanAdd:
-                punishment = InfractionType.Ban;
+                punishment = PunishmentType.Ban;
                 action = "banned";
                 break;
 
             case AuditLogEvent.MemberBanRemove:
-                punishment = InfractionType.Unban;
+                punishment = PunishmentType.Unban;
                 action = "unbanned";
                 break;
 
@@ -46,14 +45,14 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
                 if (muteDurationDiff) {
                     if (!muteDurationDiff.old && muteDurationDiff.new) {
-                        punishment = InfractionType.Mute;
+                        punishment = PunishmentType.Mute;
                         action = "muted";
 
                         const msDuration = Date.parse(muteDurationDiff.new as string);
                         const expiresAt = Math.floor(msDuration / 1000);
                         const duration = msDuration - Date.now();
 
-                        muteReply = `muted until ${discordTimestamp(expiresAt, "F")} | Expires ${discordTimestamp(expiresAt, "R")}`;
+                        muteReply = `muted until ${time(expiresAt, "F")} | Expires ${time(expiresAt, "R")}`;
 
                         try {
                             await resolveInfraction({
@@ -74,7 +73,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
                     }
 
                     if (muteDurationDiff.old && !muteDurationDiff.new) {
-                        punishment = InfractionType.Unmute;
+                        punishment = PunishmentType.Unmute;
                         action = "unmuted";
                     }
                 }
@@ -84,7 +83,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         }
 
         if (punishment) {
-            if (punishment !== InfractionType.Mute) {
+            if (punishment !== PunishmentType.Mute) {
                 await resolveInfraction({
                     executor: executor,
                     targetId: (target as User).id,
@@ -96,7 +95,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
             }
 
             const config = Config.get(guild.id)!;
-            await config.sendConfirmation({
+            await config.sendActionConfirmation({
                 message: `${action} **${(target as User).tag}** ${muteReply || ""}`,
                 authorId: executor.id,
                 reason

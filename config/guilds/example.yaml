@@ -12,21 +12,21 @@ userFlags:
     roleIds:
       - "role-id"
 
-banRequestNotices:
-  enabled: true
-  channelId: "channel-id"
-  threshold: 25
-  interval: 3_600_000 # 1 hour
-  mentionedRoles:
-    - "role-id"
-
-muteRequestNotices:
-  enabled: true
-  channelId: "channel-id"
-  threshold: 25
-  interval: 3_600_000 # 1 hour
-  mentionedRoles:
-    - "role-id"
+notices:
+  banRequests:
+    enabled: true
+    channelId: "channel-id"
+    threshold: 25
+    interval: 3_600_000 # 1 hour
+    mentionedRoles:
+      - "role-id"
+  muteRequests:
+    enabled: true
+    channelId: "channel-id"
+    threshold: 25
+    interval: 3_600_000 # 1 hour
+    mentionedRoles:
+      - "role-id"
 
 channels:
   banRequestQueue: "channel-id"
@@ -34,7 +34,7 @@ channels:
   confirmations: "channel-id"
   mediaConversion: "channel-id"
 
-groups:
+permissions:
   - guildStaff: false
     manageInfractions: false
     viewModerationActivity: false
@@ -52,24 +52,6 @@ groups:
       - "interaction-name"
     reactions:
       - "emoji-name"
-
-roles:
-  - id: "role-id"
-    guildStaff: false
-    manageInfractions: false
-    viewModerationActivity: false
-    manageBanRequests: false
-    manageMuteRequests: false
-    autoMuteBanRequests: false
-
-    selectMenus:
-      - "interaction-name"
-    buttons:
-      - "interaction-name"
-    modals:
-      - "interaction-name"
-    reactions:
-      - "emoji-type"
 
 emojis:
   success: "👌"

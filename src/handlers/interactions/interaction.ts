@@ -1,17 +1,17 @@
-import { AnyComponentInteraction, InteractionCustomIdFilter, InteractionResponseType } from "../../types/interactions";
 import { ApplicationCommandData, ApplicationCommandType, CommandInteraction, PermissionFlagsBits } from "discord.js";
+import { AnyComponentInteraction, ComponentCustomId, InteractionResponseType } from "../../types/interactions";
 
 import Config from "../../utils/config";
 
 export abstract class Command {
     // @formatter:off
-    // eslint-disable-next-line no-empty-function
-    protected constructor(public data: CustomCommandProperties) {}
+    protected constructor(public data: CommandData) {}
     abstract execute(interaction: CommandInteraction, ephemeral: boolean, config: Config): Promise<void>;
 
     build(): ApplicationCommandData {
         const { data } = this;
 
+        // Command is a slash command
         if (data.type === ApplicationCommandType.ChatInput) {
             return {
                 name: data.name,
@@ -23,6 +23,7 @@ export abstract class Command {
             };
         }
 
+        // Command is a context menu command
         return {
             name: data.name,
             type: data.type,
@@ -32,21 +33,20 @@ export abstract class Command {
     }
 }
 
-export abstract class ComponentInteraction<T extends AnyComponentInteraction> {
+export abstract class Component<T extends AnyComponentInteraction> {
     // @formatter:off
-    // eslint-disable-next-line no-empty-function
-    protected constructor(public data: CustomComponentProperties) {}
+    protected constructor(public data: ComponentData) {}
     abstract execute(interaction: T, ephemeral: boolean, config: Config): Promise<void>;
 }
 
-interface CustomComponentProperties {
-    name: InteractionCustomIdFilter;
+interface ComponentData {
+    name: ComponentCustomId;
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
     ephemeral?: boolean;
 }
 
-type CustomCommandProperties = ApplicationCommandData & {
+type CommandData = ApplicationCommandData & {
     skipInternalUsageCheck: boolean;
     defer: InteractionResponseType;
     type: ApplicationCommandType;

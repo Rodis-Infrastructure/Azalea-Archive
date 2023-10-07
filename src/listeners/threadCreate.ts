@@ -1,6 +1,5 @@
 import { Colors, EmbedBuilder, Events, ThreadChannel, userMention } from "discord.js";
 import { LoggingEvent } from "../types/config";
-import { sendLog } from "../utils/logging";
 
 import EventListener from "../handlers/listeners/eventListener";
 
@@ -31,7 +30,7 @@ export default class ThreadCreateEventListener extends EventListener {
             ])
             .setTimestamp();
 
-        await sendLog({
+        await log({
             event: LoggingEvent.Thread,
             channelId: thread.parentId,
             guildId: thread.guildId,

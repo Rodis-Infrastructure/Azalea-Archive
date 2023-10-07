@@ -1,6 +1,5 @@
 import { Colors, EmbedBuilder, Events, VoiceState } from "discord.js";
 import { LoggingEvent } from "../types/config";
-import { sendLog } from "../utils/logging";
 
 import EventListener from "../handlers/listeners/eventListener";
 
@@ -49,7 +48,7 @@ export default class VoiceStateUpdateEventListener extends EventListener {
 
         log.data.author!.icon_url = `attachment://${icon}`;
 
-        await sendLog({
+        await log({
             event: LoggingEvent.Voice,
             channelId: (newState.channelId || oldState.channelId) as string,
             categoryId: (newState.channel?.parentId || oldState.channel?.parentId) as string,

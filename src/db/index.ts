@@ -1,56 +1,61 @@
-import { Infraction, InfractionFlag, InfractionType, MessageModel } from "../types/db";
+import { InfractionFlag, InfractionModel, MessageModel, PunishmentType } from "../types/db";
 import { sanitizeString } from "../utils";
-import { Database } from "sqlite3";
 import { Message } from "discord.js";
+import { Database } from "sqlite3";
 
 import * as process from "process";
 import Cache from "../utils/cache";
 
-if (!process.env.DB_PATH) throw new Error("No database path provided");
-const conn = new Database(process.env.DB_PATH);
+if (!process.env.DB_PATH) throw new Error("No database path provided (DB_PATH)");
+const connection = new Database(process.env.DB_PATH);
 
+/** Runs a query that doesn't return anything */
 export function runQuery(query: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        conn.run(query, err => {
+        connection.run(query, err => {
             if (err) reject(err);
             resolve();
         });
     });
 }
 
-export function getQuery<T, N extends boolean = false>(query: string): Promise<N extends true ? T : T | null> {
+/** Runs a query that returns a single row */
+export function getQuery<Result, Nullable = true>(query: string): Promise<Nullable extends false ? Result : Result | null> {
     return new Promise((resolve, reject) => {
-        conn.get(query, (err, row: T) => {
+        connection.get(query, (err, row: Result) => {
             if (err) reject(err);
             resolve(row);
         });
     });
 }
 
-export function allQuery<T>(query: string): Promise<T[]> {
+/** Runs a query that returns multiple rows */
+export function allQuery<Result>(query: string): Promise<Result[]> {
     return new Promise((resolve, reject) => {
-        conn.all(query, (err, rows: T[]) => {
+        connection.all(query, (err, rows: Result[]) => {
             if (err) reject(err);
             resolve(rows);
         });
     });
 }
 
+/** Stores an infraction in the database
+ * @returns The infraction ID if successful, null otherwise
+ */
 export async function storeInfraction(data: {
     executorId: string;
     targetId: string;
-    action: InfractionType;
+    action: PunishmentType;
     guildId: string;
     requestAuthorId?: string;
     expiresAt?: number | null;
     flag?: InfractionFlag;
     reason?: string | null;
-}) {
+}): Promise<number | null> {
     const { guildId, executorId, targetId, action, requestAuthorId, expiresAt, flag, reason } = data;
 
     // @formatter:off
-    // Stringified parameters are optional
-    const infraction = await getQuery<Pick<Infraction, "infraction_id" | "created_at">>(`
+    const infraction = await getQuery<Pick<InfractionModel, "infraction_id">>(`
         INSERT INTO infractions (
             guild_id,
             executor_id,
@@ -71,8 +76,11 @@ export async function storeInfraction(data: {
             ${flag || null},
             ${sanitizeString(reason)}
         )
-        RETURNING infraction_id, created_at;
-    `);
+        RETURNING infraction_id;
+    `).catch(err => {
+        console.error(`Failed to store infraction for ${targetId} in ${guildId}: ${err}`);
+        return null;
+    });
 
     return infraction?.infraction_id || null;
 }

@@ -1,5 +1,5 @@
 import { AttachmentPayload, Colors, EmbedBuilder, Events, GuildMember, hyperlink, Message } from "discord.js";
-import { createReferenceLog, formatLogContent, sendLog } from "../utils/logging";
+import { formatLogContent, referenceEmbed } from "../utils/logging";
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
 import { handleReasonChange } from "../interactions/commands/infraction";
 import { LoggingEvent } from "../types/config";
@@ -35,10 +35,10 @@ export default class MessageUpdateEventListener extends EventListener {
         const cache = Cache.get(fetchedMessage.guildId);
 
         if (!fetchedMessage.author?.bot && fetchedMessage.content !== oldMessage.content) {
-            await cache.handleMessageEdit(newMessage.id, fetchedMessage.content);
+            await cache.handleEditedMessage(newMessage.id, fetchedMessage.content);
 
             const serializedOldMessage = oldMessage.partial
-                ? await cache.getMessage(oldMessage.id)
+                ? await cache.fetchMessage(oldMessage.id)
                 : serializeMessage(oldMessage);
 
             if (serializedOldMessage?.content) await handleMessageEditLog(fetchedMessage, serializedOldMessage.content);
@@ -86,11 +86,11 @@ async function handleMessageEditLog(message: Message<true>, oldContent: string) 
         const cache = Cache.get(message.guildId);
         const serializedReference = fetchedReference
             ? serializeMessage(fetchedReference)
-            : await cache.getMessage(message.reference.messageId);
+            : await cache.fetchMessage(message.reference.messageId);
 
         if (serializedReference) {
-            const { embed, file } = createReferenceLog(serializedReference, {
-                referenceDeleted: !fetchedReference
+            const { embed, file } = referenceEmbed(serializedReference, {
+                deleted: !fetchedReference
             });
 
             embeds.unshift(embed);
@@ -98,7 +98,7 @@ async function handleMessageEditLog(message: Message<true>, oldContent: string) 
         }
     }
 
-    await sendLog({
+    await log({
         event: LoggingEvent.Message,
         options: { embeds, files },
         channelId: message.channelId,
@@ -118,16 +118,16 @@ async function handleRequestEdit(message: Message<true>, config: Config) {
         : RequestType.Ban;
 
     const isAutoMuteEnabled = requestType === RequestType.Ban
-        && config.actionAllowed(message.member as GuildMember, {
+        && config.hasPermission(message.member as GuildMember, {
             permission: "autoMuteBanRequests",
             requiredValue: true
         });
 
     try {
         const { targetMember, reason } = await validateRequest({
-            isAutoMuteEnabled,
+            isBanRequest: isAutoMuteEnabled,
             requestType,
-            message: message,
+            request: message,
             config
         });
 
@@ -143,10 +143,10 @@ async function handleRequestEdit(message: Message<true>, config: Config) {
             });
         } else if (targetMember && isAutoMuteEnabled) {
             await handleBanRequestAutoMute({
-                targetMember,
+                target: targetMember,
                 reason,
                 config,
-                message: message
+                request: message
             });
         }
     } catch (err) {

@@ -8,7 +8,7 @@ import {
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
-import { InfractionType } from "../../types/db";
+import { PunishmentType } from "../../types/db";
 import { formatReason } from "../../utils";
 
 import Config from "../../utils/config";
@@ -49,8 +49,8 @@ export default class NoteCommand extends Command {
         if (member) {
             const notModerateableReason = validateModerationAction({
                 config,
-                moderatorId: interaction.user.id,
-                offender: member
+                executorId: interaction.user.id,
+                target: member
             });
 
             if (notModerateableReason) {
@@ -68,7 +68,7 @@ export default class NoteCommand extends Command {
                 targetId: user.id,
                 guildId: interaction.guildId!,
                 reason: note,
-                punishment: InfractionType.Note
+                punishment: PunishmentType.Note
             });
         } catch (err) {
             console.error(err);
@@ -84,10 +84,10 @@ export default class NoteCommand extends Command {
                 content: `${success} Successfully added a note to **${user.tag}**${formatReason(note)}`,
                 ephemeral
             }),
-            config.sendConfirmation({
+            config.sendActionConfirmation({
                 authorId: interaction.user.id,
                 message: `added a note to **${user.tag}**`,
-                channelId: interaction.channelId,
+                sourceChannelId: interaction.channelId,
                 reason: note
             })
         ]);

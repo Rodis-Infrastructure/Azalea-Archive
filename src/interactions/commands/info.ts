@@ -11,7 +11,7 @@ import {
     inlineCode
 } from "discord.js";
 
-import { InfractionCount, InfractionType } from "../../types/db";
+import { InfractionCount, PunishmentType } from "../../types/db";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { mapInfractionCount } from "../../utils/infractions";
@@ -96,7 +96,7 @@ export default class InfoCommand extends Command {
                     FROM infractions
                     WHERE target_id = ${user.id}
                       AND guild_id = ${interaction.guildId!}
-                      AND action = ${InfractionType.Ban}
+                      AND action = ${PunishmentType.Ban}
                     ORDER BY infraction_id DESC
                     LIMIT 1;
                 `);
@@ -111,10 +111,10 @@ export default class InfoCommand extends Command {
         /* Only allows staff to view member infractions, but not the infractions of other staff */
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member as GuildMember)) {
             const infractionCount = await getQuery<InfractionCount, true>(`
-                SELECT SUM(action = ${InfractionType.Note}) AS note,
-                       SUM(action = ${InfractionType.Mute}) AS mute,
-                       SUM(action = ${InfractionType.Kick}) AS kick,
-                       SUM(action = ${InfractionType.Ban})  AS ban
+                SELECT SUM(action = ${PunishmentType.Note}) AS note,
+                       SUM(action = ${PunishmentType.Mute}) AS mute,
+                       SUM(action = ${PunishmentType.Kick}) AS kick,
+                       SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
                 WHERE target_id = ${user.id}
                   AND guild_id = ${interaction.guildId!};
@@ -138,17 +138,17 @@ export default class InfoCommand extends Command {
 
         if (
             flags.includes("Staff") &&
-            config.actionAllowed(interaction.member as GuildMember, {
+            config.hasPermission(interaction.member as GuildMember, {
                 permission: "viewModerationActivity",
                 requiredValue: true
             })
         ) {
             ephemeral = true;
             const dealtInfCount = await getQuery<InfractionCount>(`
-                SELECT SUM(action = ${InfractionType.Note}) AS note,
-                       SUM(action = ${InfractionType.Mute}) AS mute,
-                       SUM(action = ${InfractionType.Kick}) AS kick,
-                       SUM(action = ${InfractionType.Ban})  AS ban
+                SELECT SUM(action = ${PunishmentType.Note}) AS note,
+                       SUM(action = ${PunishmentType.Mute}) AS mute,
+                       SUM(action = ${PunishmentType.Kick}) AS kick,
+                       SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
                 WHERE (target_id = ${user.id} OR request_author_id = ${user.id})
                   AND guild_id = ${interaction.guildId!};

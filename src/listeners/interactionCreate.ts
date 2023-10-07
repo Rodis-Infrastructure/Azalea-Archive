@@ -1,6 +1,5 @@
 import { Colors, EmbedBuilder, Events, GuildMember, GuildTextBasedChannel, Interaction } from "discord.js";
-import { LoggingEvent, RolePermission } from "../types/config";
-import { sendLog } from "../utils/logging";
+import { LoggingEvent } from "../types/config";
 import { getCustomId } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
@@ -27,7 +26,7 @@ export default class InteractionCreateEventListener extends EventListener {
 
         const cachedInteraction = interaction.isCommand()
             ? Cache.commands.get(`${interaction.commandName}_${interaction.commandType}`)
-            : Cache.getComponentInteraction(interaction.customId);
+            : Cache.getComponent(interaction.customId);
 
         if (!cachedInteraction) {
             await interaction.reply({
@@ -40,8 +39,8 @@ export default class InteractionCreateEventListener extends EventListener {
         const { data } = cachedInteraction;
         const customId = getCustomId(data.name);
 
-        if (!interaction.isCommand() && !config.actionAllowed(interaction.member as GuildMember, {
-            permission: RolePermission.Button,
+        if (!interaction.isCommand() && !config.hasPermission(interaction.member as GuildMember, {
+            permission: "buttons",
             requiredValue: customId
         })) {
             await interaction.reply({
@@ -64,7 +63,7 @@ export default class InteractionCreateEventListener extends EventListener {
             // @ts-ignore
             await cachedInteraction.execute(interaction, ephemeral, config);
         } catch (err) {
-            console.log(`Failed to execute button: ${customId}`);
+            console.log(`Failed to execute interaction: ${customId}`);
             console.error(err);
             return;
         }
@@ -72,14 +71,14 @@ export default class InteractionCreateEventListener extends EventListener {
         const log = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
             .setAuthor({ name: "Interaction Used", iconURL: "attachment://interaction.png" })
-            .setDescription(`Button \`${customId}\` used by ${interaction.user}`)
+            .setDescription(`Interaction \`${customId}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Used In",
                 value: `${usageChannel} (\`#${usageChannel.name}\`)`
             }])
             .setTimestamp();
 
-        await sendLog({
+        await log({
             event: LoggingEvent.Interaction,
             channelId: usageChannel.id,
             categoryId: usageChannel.parentId,

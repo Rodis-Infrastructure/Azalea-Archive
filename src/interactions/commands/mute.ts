@@ -58,7 +58,7 @@ export default class MuteCommand extends Command {
         const duration = interaction.options.getString("duration") ?? "28d";
         const [res] = await muteMember(member, {
             config,
-            moderator: interaction.user,
+            executor: interaction.user,
             duration,
             reason
         });
@@ -71,10 +71,10 @@ export default class MuteCommand extends Command {
                     content: `${success} Successfully ${reply}${formatReason(reason)}`,
                     ephemeral
                 }),
-                config.sendConfirmation({
+                config.sendActionConfirmation({
                     authorId: interaction.user.id,
                     message: reply,
-                    channelId: interaction.channelId,
+                    sourceChannelId: interaction.channelId,
                     reason
                 })
             ]);

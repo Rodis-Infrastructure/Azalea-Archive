@@ -10,6 +10,6 @@ export default class GuildCreateEventListener extends EventListener {
 
     execute(guild: Guild) {
         const config = Config.get(guild.id);
-        if (!config) new Config({ guildId: guild.id }).bind(guild.id);
+        if (!config) new Config({ guildId: guild.id }).create(guild.id);
     }
 }

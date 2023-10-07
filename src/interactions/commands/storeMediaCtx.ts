@@ -9,7 +9,6 @@ import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { LoggingEvent } from "../../types/config";
 import { sendLog } from "../../utils/logging";
-import { formatMediaURL } from "../../utils";
 
 import Config from "../../utils/config";
 
@@ -45,7 +44,6 @@ export default class StoreMediaCtxCommand extends Command {
             return;
         }
 
-        const mediaURLs = [];
         const storedMediaLog = await sendLog({
             event: LoggingEvent.Media,
             guildId: interaction.guildId!,
@@ -56,11 +54,9 @@ export default class StoreMediaCtxCommand extends Command {
             }
         }) as Message<true>;
 
-        for (const attachment of storedMediaLog.attachments.values()) {
-            mediaURLs.push(formatMediaURL(attachment.url));
-        }
-
+        const mediaURLs = Array.from(storedMediaLog.attachments.values()).map(({ url }) => url);
         const mediaConversionChannel = await interaction.guild!.channels.fetch(config.channels.mediaConversion) as GuildTextBasedChannel;
+
         await Promise.all([
             mediaConversionChannel.send(`${interaction.user} Your media links: ${storedMediaLog.url}\n\n>>> ${mediaURLs.join("\n")}`),
             interaction.reply({

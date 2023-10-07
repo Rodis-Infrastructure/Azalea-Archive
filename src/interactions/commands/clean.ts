@@ -70,8 +70,8 @@ export default class CleanCommand extends Command {
         if (member) {
             const notModerateableReason = validateModerationAction({
                 config,
-                moderatorId: interaction.user.id,
-                offender: member
+                executorId: interaction.user.id,
+                target: member
             });
 
             if (notModerateableReason) {
@@ -87,8 +87,8 @@ export default class CleanCommand extends Command {
             const purgedMessages = await purgeMessages({
                 channel: interaction.channel as GuildTextBasedChannel,
                 amount,
-                authorId: user?.id,
-                moderatorId: interaction.user.id
+                targetId: user?.id,
+                executorId: interaction.user.id
             });
 
             if (!purgedMessages) {

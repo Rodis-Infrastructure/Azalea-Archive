@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandI
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { resolveInfraction } from "../../utils/moderation";
-import { InfractionType } from "../../types/db";
+import { PunishmentType } from "../../types/db";
 import { formatReason } from "../../utils";
 
 import Config from "../../utils/config";
@@ -52,7 +52,7 @@ export default class UnbanCommand extends Command {
         try {
             await interaction.guild!.members.unban(offender, reason);
             await resolveInfraction({
-                punishment: InfractionType.Unban,
+                punishment: PunishmentType.Unban,
                 executor: interaction.user,
                 targetId: offender.id,
                 guildId: interaction.guildId!,
@@ -72,10 +72,10 @@ export default class UnbanCommand extends Command {
                 content: `${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendConfirmation({
+            config.sendActionConfirmation({
                 message: `unbanned **${offender.tag}**`,
                 authorId: interaction.user.id,
-                channelId: interaction.channelId,
+                sourceChannelId: interaction.channelId,
                 reason
             })
         ]);

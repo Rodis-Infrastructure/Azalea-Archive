@@ -8,7 +8,7 @@ import {
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
-import { InfractionType } from "../../types/db";
+import { PunishmentType } from "../../types/db";
 import { formatReason } from "../../utils";
 
 import Config from "../../utils/config";
@@ -52,11 +52,11 @@ export default class KickCommand extends Command {
 
         const notModerateableReason = validateModerationAction({
             config,
-            moderatorId: interaction.user.id,
-            offender: member,
+            executorId: interaction.user.id,
+            target: member,
             additionalValidation: [{
                 condition: !member.kickable,
-                reason: "I do not have permission to kick this member."
+                failResponse: "I do not have permission to kick this member."
             }]
         });
 
@@ -73,7 +73,7 @@ export default class KickCommand extends Command {
         try {
             await member.kick(reason);
             await resolveInfraction({
-                punishment: InfractionType.Kick,
+                punishment: PunishmentType.Kick,
                 executor: interaction.user,
                 targetId: member.id,
                 guildId: interaction.guildId!,
@@ -93,10 +93,10 @@ export default class KickCommand extends Command {
                 content: `${success} Successfully kicked **${member.user.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendConfirmation({
+            config.sendActionConfirmation({
                 authorId: interaction.user.id,
                 message: `kicked **${member.user.tag}**`,
-                channelId: interaction.channelId,
+                sourceChannelId: interaction.channelId,
                 reason
             })
         ]);

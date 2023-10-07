@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandI
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
-import { InfractionType } from "../../types/db";
+import { PunishmentType } from "../../types/db";
 import { formatReason } from "../../utils";
 
 import Config from "../../utils/config";
@@ -44,11 +44,11 @@ export default class BanCommand extends Command {
         if (member) {
             const notModerateableReason = validateModerationAction({
                 config,
-                moderatorId: interaction.user.id,
-                offender: member,
+                executorId: interaction.user.id,
+                target: member,
                 additionalValidation: [{
                     condition: !member.bannable,
-                    reason: "I do not have permission to ban this member."
+                    failResponse: "I do not have permission to ban this member."
                 }]
             });
 
@@ -90,14 +90,14 @@ export default class BanCommand extends Command {
                 content: `${success} Successfully banned **${user.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendConfirmation({
+            config.sendActionConfirmation({
                 authorId: interaction.user.id,
                 message: `banned **${user.tag}**`,
-                channelId: interaction.channelId,
+                sourceChannelId: interaction.channelId,
                 reason
             }),
             resolveInfraction({
-                punishment: InfractionType.Ban,
+                punishment: PunishmentType.Ban,
                 executor: interaction.user,
                 targetId: user.id,
                 guildId: interaction.guildId!,

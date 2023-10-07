@@ -1,8 +1,8 @@
-import { ComponentInteraction } from "../../handlers/interactions/interaction";
+import { Component } from "../../handlers/interactions/interaction";
 import { InteractionResponseType } from "../../types/interactions";
 import { StringSelectMenuInteraction } from "discord.js";
 
-export default class SampleSelectMenu extends ComponentInteraction<StringSelectMenuInteraction> {
+export default class SampleSelectMenu extends Component<StringSelectMenuInteraction> {
     constructor() {
         super({
             name: "sample-select-menu",

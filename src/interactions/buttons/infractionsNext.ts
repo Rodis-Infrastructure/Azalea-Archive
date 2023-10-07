@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, EmbedBuilder } from "discord.js";
-import { ComponentInteraction } from "../../handlers/interactions/interaction";
+import { Component } from "../../handlers/interactions/interaction";
 import { InteractionResponseType } from "../../types/interactions";
 import { InfractionFilter } from "../../types/utils";
 import { MinimalInfraction } from "../../types/db";
@@ -8,7 +8,7 @@ import { allQuery } from "../../db";
 import Config from "../../utils/config";
 import { mapInfractionsToFields } from "../../utils/infractions";
 
-export default class InfractionsNextButton extends ComponentInteraction<ButtonInteraction> {
+export default class InfractionsNextButton extends Component<ButtonInteraction> {
     constructor() {
         super({
             name: { startsWith: "inf-page" },

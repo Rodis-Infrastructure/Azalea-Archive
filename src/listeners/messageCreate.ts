@@ -3,7 +3,6 @@ import { Events, GuildMember, Message } from "discord.js";
 import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
 import { sendLog } from "../utils/logging";
-import { formatMediaURL } from "../utils";
 import { serializeMessage } from "../db";
 
 import EventListener from "../handlers/listeners/eventListener";
@@ -46,7 +45,7 @@ export default class MessageCreateEventListener extends EventListener {
                 }
             }) as Message<true>;
 
-            const mediaURLs = mediaStorageLog.attachments.map(({ url }) => formatMediaURL(url));
+            const mediaURLs = mediaStorageLog.attachments.map(({ url }) => url);
             await Promise.all([
                 fetchedMessage.delete().catch(() => null),
                 fetchedMessage.channel.send(`${fetchedMessage.author} Your media links: ${mediaStorageLog.url}\n\n>>> ${mediaURLs.join("\n")}`)
@@ -64,24 +63,24 @@ export default class MessageCreateEventListener extends EventListener {
 
             try {
                 const isAutoMuteEnabled = requestType === RequestType.Ban
-                    && config.actionAllowed(fetchedMessage.member as GuildMember, {
+                    && config.hasPermission(fetchedMessage.member as GuildMember, {
                         permission: "autoMuteBanRequests",
                         requiredValue: true
                     });
 
                 const { targetMember, reason } = await validateRequest({
-                    isAutoMuteEnabled,
+                    isBanRequest: isAutoMuteEnabled,
                     requestType,
-                    message: fetchedMessage,
+                    request: fetchedMessage,
                     config
                 });
 
                 if (targetMember && isAutoMuteEnabled) {
                     await handleBanRequestAutoMute({
-                        targetMember,
+                        target: targetMember,
                         reason,
                         config,
-                        message: fetchedMessage
+                        request: fetchedMessage
                     });
                 }
             } catch (err) {

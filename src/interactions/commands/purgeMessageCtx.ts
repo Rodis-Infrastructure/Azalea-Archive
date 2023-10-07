@@ -22,8 +22,8 @@ export default class PurgeMessageCtxCommand extends Command {
         if (member) {
             const notModerateableReason = validateModerationAction({
                 config,
-                moderatorId: interaction.user.id,
-                offender: member
+                executorId: interaction.user.id,
+                target: member
             });
 
             if (notModerateableReason) {
@@ -39,8 +39,8 @@ export default class PurgeMessageCtxCommand extends Command {
             const purgedMessages = await purgeMessages({
                 channel: interaction.channel as GuildTextBasedChannel,
                 amount: 100,
-                authorId: author.id,
-                moderatorId: interaction.user.id
+                targetId: author.id,
+                executorId: interaction.user.id
             });
 
             if (!purgedMessages) {

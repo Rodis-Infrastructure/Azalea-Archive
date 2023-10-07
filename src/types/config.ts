@@ -1,13 +1,9 @@
-export enum RolePermission {
-    Button = "buttons",
-    Modal = "modals",
-    SelectMenu = "selections",
-    Reaction = "reactions",
-}
+import { Snowflake } from "discord.js";
+import { CustomId } from "./utils";
 
 interface UserFlag {
     name: string;
-    roleIds: string[];
+    roleIds: Snowflake[];
 }
 
 export enum LoggingEvent {
@@ -19,22 +15,45 @@ export enum LoggingEvent {
     Thread = "threads",
 }
 
-export interface PermissionData extends Partial<Record<RolePermission, string[]>> {
-    guildStaff?: boolean
-    manageInfractions?: boolean
-    viewModerationActivity?: boolean
-    manageBanRequests?: boolean
-    manageMuteRequests?: boolean
-    autoMuteBanRequests?: boolean
+export enum RolePermission {
+    GuildStaff = "guildStaff",
+    ManageInfractions = "manageInfractions",
+    ViewModerationHistory = "viewModerationHistory",
+    ManageBanRequests = "manageBanRequests",
+    ManageMuteRequests = "manageMuteRequests",
+    AutoMuteBanRequests = "autoMuteBanRequests"
 }
 
-interface ToggleableProperty {
+export enum RoleInteraction {
+    Button = "buttons",
+    Modal = "modals",
+    SelectMenu = "selectMenus",
+    Reaction = "reactions"
+}
+
+export type RolePermissions =
+    Record<RoleInteraction, CustomId[] | undefined>
+    & Record<RolePermission, boolean | undefined>
+    & Record<"roleIds", Snowflake[]>
+
+export interface ToggleableProperty {
     enabled: boolean
-    excludedChannels?: string[]
-    excludedCategories?: string[]
+    excludedChannels?: Snowflake[]
+    excludedCategories?: Snowflake[]
 }
 
-interface EmojiData {
+export interface NotificationOptions {
+    allowMentions?: boolean,
+    sourceChannelId?: Snowflake
+}
+
+export interface ConfirmationOptions {
+    executorId: Snowflake,
+    success: boolean,
+    reason?: string
+}
+
+export interface EmojiConfig {
     success: string
     error: string
     quickMute30?: string
@@ -44,42 +63,49 @@ interface EmojiData {
     denyRequest?: string
 }
 
-interface RequestNoticeData {
+export interface NoticeConfig {
     enabled: boolean
-    channelId: string
+    channelId: Snowflake
+    /** The number of unreviewed requests to trigger a notice */
     threshold: number
+    /** The number of milliseconds between notices */
     interval: number
-    mentionedRoles?: string[]
+    mentionedRoles?: Snowflake[]
 }
 
-interface ChannelData {
-    banRequestQueue?: string
-    muteRequestQueue?: string
-    mediaConversion?: string
-    confirmations?: string
+export interface ChannelConfig {
+    banRequestQueue?: Snowflake
+    muteRequestQueue?: Snowflake
+    mediaConversion?: Snowflake
+    notifications?: Snowflake
 }
 
-type LoggingData =
-    ToggleableProperty
-    & Record<LoggingEvent, ToggleableProperty & Record<"channelId", string> | undefined>
+export type LoggingConfig = ToggleableProperty & {
+    [event in LoggingEvent]?: ToggleableProperty & {
+        channelId: Snowflake
+    }
+};
 
-export interface AutoReactionData {
-    channelId: string
+export interface AutoReactionConfig {
+    channelId: Snowflake
     reactions: string[]
 }
 
+export interface Notices {
+    banRequests?: NoticeConfig
+    muteRequests?: NoticeConfig
+}
+
 export interface ConfigData {
-    autoReactions?: AutoReactionData[]
+    autoReactions?: AutoReactionConfig[]
     deleteMessageSecondsOnBan?: number
-    allowedProofChannelIds?: string[]
-    banRequestNotices?: RequestNoticeData
-    muteRequestNotices?: RequestNoticeData
+    proofChannelIds?: Snowflake[]
+    notices?: Notices
     ephemeralResponses?: ToggleableProperty
-    roles?: Array<PermissionData & Record<"id", string>>
-    groups?: Array<PermissionData & Record<"roleIds", string[]>>
-    logging?: LoggingData
-    emojis?: EmojiData
+    permissions?: RolePermissions[]
+    logging?: LoggingConfig
+    emojis?: EmojiConfig
     userFlags?: UserFlag[]
-    channels?: ChannelData
-    guildId: string
+    channels?: ChannelConfig
+    guildId: Snowflake
 }

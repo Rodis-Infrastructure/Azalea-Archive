@@ -1,18 +1,25 @@
-import { readdir } from "node:fs/promises";
 import { client } from "../../client";
-import { join } from "node:path";
+import { glob } from "fast-glob";
+
+import path from "node:path";
 
 export async function loadListeners() {
-    const files = await readdir(join(__dirname, "../../listeners"));
+    const listenerPaths = glob.sync("./src/listeners/*");
 
-    for (const file of files) {
-        const EventListener = (await import(join(__dirname, "../../listeners", file))).default;
-        const listener = new EventListener();
+    for (const listenerPath of listenerPaths) {
+        try {
+            const listenerModule = await import(path.resolve(listenerPath));
+            const listenerClass = listenerModule.default;
+            const listener = new listenerClass();
 
-        if (listener.data?.once) {
-            client.once(listener.name, (...args) => listener.execute(...args));
-        } else {
+            if (listener.data?.once) {
+                client.once(listener.name, (...args) => listener.execute(...args));
+                continue;
+            }
+
             client.on(listener.name, (...args) => listener.execute(...args));
+        } catch (err) {
+            console.error(`Failed to load listener ${listenerPath}: ${err}`);
         }
     }
 }

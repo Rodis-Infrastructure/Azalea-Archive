@@ -1,78 +1,93 @@
 import {
-    AttachmentPayload,
     codeBlock,
     Colors,
     EmbedBuilder,
     GuildTextBasedChannel,
     hyperlink,
     Message,
+    messageLink,
+    Snowflake,
     userMention
 } from "discord.js";
 
+import { LogData, ReferenceLogData } from "../types/utils";
 import { elipsify, pluralize } from "./index";
 import { MessageModel } from "../types/db";
-import { LogData } from "../types/utils";
 import { client } from "../client";
 
-import Cache from "./cache";
 import Config from "./config";
+import Cache from "./cache";
 
 export async function sendLog(data: LogData): Promise<Message<true> | void> {
-    const { event, channelId, guildId, options, categoryId } = data;
+    const { event, sourceChannel, guildId, options } = data;
+    const config = Config.get(sourceChannel?.guildId || guildId!);
 
-    const config = Config.get(guildId)!;
-    if (channelId && !config?.loggingAllowed(event, channelId, categoryId || undefined)) return;
+    if (sourceChannel && !config?.isLoggingAllowed(event, sourceChannel)) return;
 
-    const loggingChannelId = config?.loggingChannel(event);
-    if (!loggingChannelId) throw `Channel ID for event ${event} not configured.`;
+    const loggingChannelId = config?.getLoggingChannel(event);
+    if (!loggingChannelId) throw new Error(`Channel ID for event ${event} not configured.`);
 
     const loggingChannel = await client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
+    if (!loggingChannel) throw new Error(`Logging channel for event ${event} not found.`);
 
-    if (!loggingChannel) throw `Logging channel for event ${event} not found.`;
     return loggingChannel.send(options);
 }
 
+/**
+ * @param {Snowflake|MessageModel[]} params.data - ID of a single message or an array of serialized messages
+ * @param {string|void} params.url - Message link of the logged content
+ */
 export async function linkToPurgeLog(params: {
     guildId: string,
-    content: string | MessageModel[],
+    data: Snowflake | MessageModel[],
     url: string | void
-}) {
-    const { url, content, guildId } = params;
+}): Promise<void> {
+    const { url, data, guildId } = params;
 
     const cache = Cache.get(guildId);
     if (!cache.messages.purged) return;
 
-    const { data, moderatorId, targetId } = cache.messages.purged;
+    const { messageIds, executorId, targetId } = cache.messages.purged;
 
-    if (typeof content === "string" && !data.includes(content)) return;
-    if (typeof content !== "string" && !content.some(({ message_id }) => data.includes(message_id))) return;
+    if (typeof data === "string" && !messageIds.includes(data)) return;
+    if (typeof data !== "string" && !data.some(({ message_id }) => messageIds.includes(message_id))) return;
 
-    const config = Config.get(guildId)!;
+    const config = Config.get(guildId);
+    if (!config) return;
 
     if (!url) {
-        await config.sendConfirmation({
-            message: `${config.emojis.error} ${userMention(moderatorId)} failed to retrieve the log's URL`,
-            full: true
+        const response = config.formatConfirmation("retrieve the log's URL", {
+            success: false,
+            executorId
         });
 
-        cache.messages.purged = undefined;
+        await config.sendNotification(response, { allowMentions: true });
+        delete cache.messages.purged;
+
         return;
     }
 
-    const amount = typeof content === "string" ? 1 : content.length;
-    const author = targetId
-        ? ` by <@${targetId}> (\`${targetId}\`)`
-        : "";
+    const amountPurged = Number(typeof data === "string") || data.length;
+    let message = `purged \`${amountPurged}\` ${pluralize("message", amountPurged)}`;
 
-    await config.sendConfirmation({
-        message: `purged \`${amount}\` ${pluralize("message", amount)}${author}: ${url}`,
-        authorId: moderatorId,
-        allowMentions: true
+    if (targetId) message += ` by ${userMention(targetId)} (\`${targetId}\`)`;
+
+    const formattedMessage = config.formatConfirmation(message, {
+        success: true,
+        executorId
     });
 
-    cache.messages.purged = undefined;
+    await config.sendNotification(formattedMessage, { allowMentions: true });
+    delete cache.messages.purged;
 }
 
+/**
+ * - Escapes any code block formatting characters
+ * - Wraps the content in a code block
+ * - Crops the content if necessary
+ *
+ * @returns {string} The formatted content or "No message content." if no content is passed
+ */
 export function formatLogContent(content: string | null): string {
     if (!content) return "No message content.";
 
@@ -82,11 +97,9 @@ export function formatLogContent(content: string | null): string {
     return codeBlock(formatted);
 }
 
-export function createReferenceLog(reference: MessageModel, options: {
-    referenceDeleted: boolean
-}): { embed: EmbedBuilder, file: AttachmentPayload } {
-    const referenceURL = `https://discord.com/channels/${reference.guild_id}/${reference.channel_id}/${reference.message_id}`;
-    const referenceLog = new EmbedBuilder()
+export function referenceEmbed(reference: MessageModel, deleted: boolean): ReferenceLogData {
+    const jumpURL = messageLink(reference.channel_id, reference.message_id, reference.guild_id);
+    const embed = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
         .setAuthor({
             name: "Reference",
@@ -103,10 +116,13 @@ export function createReferenceLog(reference: MessageModel, options: {
             }
         ]);
 
-    if (!options.referenceDeleted) referenceLog.setDescription(hyperlink("Jump to message", referenceURL));
+    if (!deleted) embed.setDescription(hyperlink("Jump to message", jumpURL));
 
     return {
-        embed: referenceLog,
-        file: { attachment: "./icons/reply.png", name: "reply.png" }
+        embed,
+        file: {
+            attachment: "./icons/reply.png",
+            name: "reply.png"
+        }
     };
 }

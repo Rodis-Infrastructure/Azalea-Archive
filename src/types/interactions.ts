@@ -7,7 +7,7 @@ import {
     UserContextMenuCommandInteraction
 } from "discord.js";
 
-export type InteractionCustomIdFilter = string | { startsWith: string } | { endsWith: string } | { includes: string };
+export type ComponentCustomId = string | { startsWith: string } | { endsWith: string } | { includes: string };
 
 export enum InfractionSubcommand {
     Info = "info",
@@ -29,7 +29,7 @@ export enum PurgeSubcommand {
 }
 
 export type AnyComponentInteraction = ButtonInteraction | ModalSubmitInteraction | AnySelectMenuInteraction;
-export type CommandInteraction =
+export type AnyCommandInteraction =
     ChatInputCommandInteraction
     | UserContextMenuCommandInteraction
     | MessageContextMenuCommandInteraction;

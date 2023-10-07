@@ -6,31 +6,44 @@ import {
     GuildTextBasedChannel,
     MessageMentionTypes,
     ModalSubmitInteraction,
+    Snowflake,
     userMention
 } from "discord.js";
 
-import { CommandInteraction, InteractionResponseType } from "../types/interactions";
-import { ConfigData, LoggingEvent, PermissionData } from "../types/config";
-import { Infraction } from "../types/db";
-import { formatReason } from "./index";
+import {
+    ChannelConfig,
+    ConfigData,
+    ConfirmationOptions,
+    EmojiConfig,
+    LoggingEvent,
+    NoticeConfig,
+    NotificationOptions,
+    RoleInteraction,
+    RolePermission,
+    RolePermissions
+} from "../types/config";
+
+import { AnyCommandInteraction, InteractionResponseType } from "../types/interactions";
+import { formatReason, isGuildTextBasedChannel } from "./index";
+import { InfractionModel } from "../types/db";
+import { CustomId } from "../types/utils";
 import { client } from "../client";
 
 export default class Config {
-    private static items = new Collection<string, Config>();
+    private static instances = new Collection<string, Config>();
 
     // @formatter:off
-    // eslint-disable-next-line no-empty-function
-    constructor(public readonly data: ConfigData) {}
+    private constructor(public readonly data: ConfigData) {}
 
-    get guildId() {
+    get guildId(): Snowflake {
         return this.data.guildId;
     }
 
-    get allowedProofChannelIds() {
-        return this.data.allowedProofChannelIds ?? [];
+    get proofChannelIds(): Snowflake[] {
+        return this.data.proofChannelIds ?? [];
     }
 
-    get deleteMessageSecondsOnBan() {
+    get deleteMessageSecondsOnBan(): number {
         const val = this.data.deleteMessageSecondsOnBan ?? 0;
 
         if (val < 0) return 0;
@@ -39,197 +52,172 @@ export default class Config {
         return val;
     }
 
-    get emojis() {
+    get emojis(): EmojiConfig {
         return this.data.emojis ?? {
             success: "✅",
             error: "❌"
         };
     }
 
-    get channels() {
+    get channels(): ChannelConfig {
         return this.data.channels ?? {};
     }
 
-    get banRequestNotices() {
-        return this.data.banRequestNotices ?? {};
+    get banRequestNotices(): NoticeConfig | undefined {
+        return this.data.notices?.banRequests;
     }
 
-    get muteRequestNotices() {
-        return this.data.muteRequestNotices ?? {};
+    get muteRequestNotices(): NoticeConfig | undefined {
+        return this.data.notices?.muteRequests;
     }
 
-    private get autoReactions() {
-        return this.data.autoReactions ?? [];
+    private get permissions(): RolePermissions[] {
+        return this.data.permissions ?? [];
     }
 
-    private get logging() {
-        return this.data.logging;
+    static get(guildId: Snowflake): Config | undefined {
+        return this.instances.get(guildId);
     }
 
-    private get ephemeralResponses() {
-        return this.data.ephemeralResponses;
+    static create(guildId: Snowflake, data: ConfigData): Config {
+        const config = new Config(data);
+        Config.instances.set(guildId, config);
+        return config;
     }
 
-    private get roles() {
-        return this.data.roles ?? [];
-    }
-
-    private get groups() {
-        return this.data.groups ?? [];
-    }
-
-    private get confirmationChannel() {
-        return this.data.channels?.confirmations;
-    }
-
-    static get(guildId: string): Config | undefined {
-        return this.items.get(guildId);
-    }
-
-    bind(guildId: string) {
-        Config.items.set(guildId, this);
-        console.log(`Bound configuration to guild (${guildId})`);
-    }
-
-    getAutoReactions(channelId: string): string[] {
-        return this.autoReactions
+    getAutoReactions(channelId: Snowflake): string[] {
+        const autoReactions = this.data.autoReactions ?? [];
+        return autoReactions
             .filter(property => property.channelId === channelId)
             .flatMap(({ reactions }) => reactions);
     }
 
-    loggingChannel(event: LoggingEvent): string | undefined {
-        return this.logging?.[event]?.channelId;
+    getLoggingChannel(event: LoggingEvent): Snowflake | undefined {
+        return this.data.logging?.[event]?.channelId;
     }
 
-    loggingAllowed(eventName: LoggingEvent, channelId: string, categoryId = ""): boolean {
-        if (!this.logging) return false;
+    isLoggingAllowed(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
+        if (!this.data.logging) return false;
 
         const {
             [eventName]: event,
             enabled,
             excludedChannels,
             excludedCategories
-        } = this.logging;
+        } = this.data.logging;
+
+        const categoryId = channel.parentId || "";
 
         return (
-            /* Global logging is enabled and the channel/category is not excluded */
+            // Global logging is enabled and the channel/category is not excluded
             enabled &&
-            !excludedChannels?.includes(channelId) &&
+            !excludedChannels?.includes(channel.id) &&
             !excludedCategories?.includes(categoryId) &&
 
-            /* The event's logging is enabled and the channel/category is not excluded */
+            // The event's logging is enabled and the channel/category is not excluded
             event?.enabled &&
             event.channelId &&
-            !event.excludedChannels?.includes(channelId) &&
+            !event.excludedChannels?.includes(channel.id) &&
             !event.excludedCategories?.includes(categoryId)
         ) as boolean;
     }
 
+    /** Whether interaction responses in the specified channel must be ephemeral */
     ephemeralResponseIn(channel: GuildTextBasedChannel): boolean {
-        if (!this.ephemeralResponses) return false;
+        if (!this.data.ephemeralResponses) return false;
 
-        const { enabled, excludedChannels, excludedCategories } = this.ephemeralResponses;
+        const { enabled, excludedChannels, excludedCategories } = this.data.ephemeralResponses;
         const categoryId = channel.parentId ?? "";
 
         return (
-            /* Ephemeral responses are enabled and the channel/category is not excluded */
+            // Ephemeral responses are enabled and the channel/category is not excluded
             enabled &&
             !excludedChannels?.includes(channel.id) &&
             !excludedCategories?.includes(categoryId)
         ) as boolean;
     }
 
-    actionAllowed(member: GuildMember, data: { permission: keyof PermissionData, requiredValue: string | boolean }): boolean {
-        if (!this.roles.length && !this.groups.length) return false;
-        const { permission, requiredValue } = data;
+    hasPermission(member: GuildMember, permission: RolePermission): boolean {
+        for (const data of this.permissions) {
+            const hasRole = data.roleIds.some(roleId => member.roles.cache.has(roleId));
+            const isPermitted = data[permission];
 
-        for (const role of this.roles) {
-            const permissionValue = role[permission];
-
-            if (
-                /* Permission value is a boolean */
-                (!Array.isArray(permissionValue) && permissionValue === requiredValue) ||
-                /* Permission value is an array of strings */
-                (Array.isArray(permissionValue) && permissionValue?.includes(requiredValue as string))
-            ) {
-                if (member.roles.cache.has(role.id)) {
-                    return true;
-                }
-            }
-        }
-
-        for (const group of this.groups) {
-            const permissionValue = group[permission];
-
-            if (
-                /* Permission value is a boolean */
-                (!Array.isArray(permissionValue) && permissionValue === requiredValue) ||
-                /* Permission value is an array of strings */
-                (Array.isArray(permissionValue) && permissionValue?.includes(requiredValue as string))
-            ) {
-                if (group.roleIds.some(roleId => member.roles.cache.has(roleId))) {
-                    return true;
-                }
-            }
+            if (hasRole && isPermitted) return true;
         }
 
         return false;
     }
 
-    guildStaffRoles(): string[] {
-        const roles = this.roles.filter(role => role.guildStaff).map(role => role.id);
-        const groups = this.groups.filter(group => group.guildStaff).flatMap(group => group.roleIds);
+    canPerformAction(member: GuildMember, interactionType: RoleInteraction, customId: CustomId): boolean {
+        for (const data of this.permissions) {
+            const hasRole = data.roleIds.some(roleId => member.roles.cache.has(roleId));
+            const isPermitted = data[interactionType]?.includes(customId);
 
-        return [...new Set([...roles, ...groups])];
+            if (isPermitted && hasRole) return true;
+        }
+
+        return false;
+    }
+
+    guildStaffRoles(): Snowflake[] {
+        const roleIds = this.permissions
+            .filter(data => data.guildStaff)
+            .flatMap(group => group.roleIds);
+
+        // Remove duplicate values using a set
+        return [...new Set(roleIds)];
     }
 
     isGuildStaff(member: GuildMember): boolean {
         return this.guildStaffRoles().some(roleId => member.roles.cache.has(roleId));
     }
 
-    async sendConfirmation(data: {
-        authorId?: string,
-        message: string,
-        reason?: string | null,
-        full?: boolean,
-        channelId?: string,
-        allowMentions?: boolean
-    }) {
-        const { authorId, message, reason, full, channelId, allowMentions } = data;
+    formatConfirmation(message: string, options: ConfirmationOptions): string {
+        const { executorId, reason, success } = options;
 
-        if (!this.confirmationChannel) return;
-        if (channelId && channelId === this.confirmationChannel) return;
+        return success
+            ? `${this.emojis.success} ${userMention(executorId)} has successfully ${message}${formatReason(reason)}`
+            : `${this.emojis.error} ${userMention(executorId)} failed to ${message}`;
+    }
 
-        const confirmationChannelId = this.confirmationChannel;
-        if (!confirmationChannelId) return;
+    async sendNotification(message: string, options?: NotificationOptions): Promise<void> {
+        if (!this.channels.notifications) return;
+        if (options?.sourceChannelId && options.sourceChannelId === this.channels.notifications) return;
 
-        const confirmationChannel = await client.channels.fetch(confirmationChannelId) as GuildTextBasedChannel;
-        if (!confirmationChannel) return;
+        const notificationChannel = await client.channels
+            .fetch(this.channels.notifications)
+            .catch(err => {
+                throw new Error(`Failed to fetch notification channel: ${err}`);
+            });
 
-        const parsedMentions: MessageMentionTypes[] = allowMentions ? ["users"] : [];
-        confirmationChannel.send({
-            content: full ? message : `${this.emojis.success} ${userMention(authorId!)} has successfully ${message}${formatReason(reason)}`,
+        if (!notificationChannel) return;
+        if (!isGuildTextBasedChannel(notificationChannel)) {
+            throw new Error(`The notification channel must be a guild text based channel`);
+        }
+
+        const parsedMentions: MessageMentionTypes[] = [];
+        if (options?.allowMentions) parsedMentions.push("users");
+
+        await notificationChannel.send({
+            content: message,
             allowedMentions: { parse: parsedMentions }
         });
     }
 
-    canManageInfraction(infraction: Infraction, member: GuildMember): void {
-        const canManage = this.actionAllowed(member, {
-            permission: "manageInfractions",
-            requiredValue: true
-        });
+    canManageInfraction(infraction: InfractionModel, member: GuildMember): boolean {
+        const isInfractionDeleted = infraction.deleted_at && infraction.deleted_by;
+        const isInfractionExecutor = infraction.executor_id !== member.id;
+        const canManageInfractions = this.hasPermission(member, RolePermission.ManageInfractions);
 
-        if (!infraction) throw "Infraction not found";
-        if (!canManage && infraction.executor_id !== member.id) throw "You do not have permission to manage this infraction";
-        if (infraction.deleted_at && infraction.deleted_by) throw "This infraction has been deleted and cannot be changed";
+        return !isInfractionDeleted && (canManageInfractions || isInfractionExecutor);
     }
 
     async applyDeferralState(data: {
-        interaction: ModalSubmitInteraction | ButtonInteraction | AnySelectMenuInteraction | CommandInteraction,
+        interaction: ModalSubmitInteraction | ButtonInteraction | AnySelectMenuInteraction | AnyCommandInteraction,
         state: InteractionResponseType,
         skipInternalUsageCheck: boolean
         ephemeral?: boolean
-    }) {
+    }): Promise<boolean> {
         const { interaction, state, skipInternalUsageCheck } = data;
         const ephemeral = (!skipInternalUsageCheck && this.ephemeralResponseIn(interaction.channel as GuildTextBasedChannel))
             || data.ephemeral
@@ -242,7 +230,7 @@ export default class Config {
             }
 
             case InteractionResponseType.DeferUpdate: {
-                if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) throw "Cannot defer update on a slash/context menu command";
+                if (interaction.isCommand()) throw `Cannot defer update on a slash/context menu command (${interaction.commandName})`;
                 await interaction.deferUpdate();
             }
         }
@@ -251,7 +239,7 @@ export default class Config {
     }
 
     userFlags(member: GuildMember): string[] {
-        const flags = [];
+        const flags: string[] = [];
 
         for (const flag of this.data.userFlags || []) {
             if (member.roles.cache.some(role => flag.roleIds.includes(role.id))) {

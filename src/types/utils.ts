@@ -1,5 +1,17 @@
-import { MessageCreateOptions, MessagePayload, User } from "discord.js";
-import { InfractionFlag, InfractionType } from "./db";
+import {
+    AttachmentPayload,
+    ColorResolvable,
+    EmbedAuthorOptions,
+    EmbedBuilder,
+    GuildMember,
+    GuildTextBasedChannel,
+    MessageCreateOptions,
+    MessagePayload,
+    Snowflake,
+    User
+} from "discord.js";
+
+import { InfractionFlag, PunishmentType } from "./db";
 import { LoggingEvent } from "./config";
 
 export enum RequestType {
@@ -13,32 +25,51 @@ export enum InfractionFilter {
     Deleted = "Deleted",
 }
 
-export type InfractionData = {
+export type CustomId = string;
+
+export interface ReferenceLogData {
+    embed: EmbedBuilder,
+    file: AttachmentPayload
+}
+
+export interface MemberMuteResult {
+    expiresAt: number,
+    infractionId: number | null
+}
+
+export interface RequestValidationResult {
+    target: GuildMember | null,
+    reason: string
+}
+
+export interface InfractionLogData {
+    color: ColorResolvable,
+    author: EmbedAuthorOptions,
+    file: AttachmentPayload
+}
+
+export type InfractionResolveOptions = {
     executor: User,
-    targetId: string,
-    guildId: string,
-    requestAuthor?: User,
+    targetId: Snowflake,
+    guildId: Snowflake,
+    requestAuthorId?: Snowflake,
     flag?: InfractionFlag,
     reason?: string | null
-} & (
-    {
-        punishment: InfractionType.Mute,
-        duration: number
-    } |
-    {
-        punishment: Exclude<InfractionType, InfractionType.Mute>,
-        duration?: never
-    }
-);
+} & ({
+    punishment: PunishmentType.Mute,
+    duration: number
+} | {
+    punishment: Exclude<PunishmentType, PunishmentType.Mute>,
+    duration?: never
+});
 
 export type LogData = {
     event: LoggingEvent,
-    options: string | MessagePayload | MessageCreateOptions,
-    guildId: string
+    options: string | MessagePayload | MessageCreateOptions
 } & ({
-    channelId: string,
-    categoryId?: string | null
+    sourceChannel: GuildTextBasedChannel,
+    guildId?: never
 } | {
-    channelId?: never,
-    categoryId?: never
+    sourceChannel?: never,
+    guildId: string
 })

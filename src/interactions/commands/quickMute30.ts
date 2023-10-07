@@ -31,7 +31,7 @@ export default class QuickMute30Command extends Command {
         const reason = message.content;
         const [res] = await muteMember(message.member, {
             quick: true,
-            moderator: interaction.user,
+            executor: interaction.user,
             duration: "30m",
             config,
             reason
@@ -45,17 +45,17 @@ export default class QuickMute30Command extends Command {
                 purgeMessages({
                     channel: message.channel as GuildTextBasedChannel,
                     amount: 100,
-                    moderatorId: interaction.user.id,
-                    authorId: message.author.id
+                    executorId: interaction.user.id,
+                    targetId: message.author.id
                 }),
                 interaction.reply({
                     content: `${success} Successfully ${reply}`,
                     ephemeral: true
                 }),
-                config.sendConfirmation({
+                config.sendActionConfirmation({
                     message: reply,
                     authorId: message.author.id,
-                    channelId: message.channel.id,
+                    sourceChannelId: message.channel.id,
                     reason
                 })
             ]);

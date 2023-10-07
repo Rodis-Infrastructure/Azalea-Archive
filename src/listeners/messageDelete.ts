@@ -1,5 +1,5 @@
 import { AttachmentPayload, channelMention, Colors, EmbedBuilder, Events, Message, userMention } from "discord.js";
-import { createReferenceLog, formatLogContent, linkToPurgeLog, sendLog } from "../utils/logging";
+import { formatLogContent, linkToPurgeLog, referenceEmbed } from "../utils/logging";
 import { LoggingEvent } from "../types/config";
 import { serializeMessage } from "../db";
 
@@ -57,15 +57,15 @@ export default class MessageDeleteEventListener extends EventListener {
 
         // Message is a reply
         if (reference) {
-            const { embed, file } = createReferenceLog(reference, {
-                referenceDeleted: !fetchedReference
+            const { embed, file } = referenceEmbed(reference, {
+                deleted: !fetchedReference
             });
 
             embeds.unshift(embed);
             files.push(file);
         }
 
-        const log = await sendLog({
+        const log = await log({
             event: LoggingEvent.Message,
             options: { embeds, files },
             channelId: message.channel_id,
@@ -76,7 +76,7 @@ export default class MessageDeleteEventListener extends EventListener {
         if (!log) return;
 
         await linkToPurgeLog({
-            content: message.message_id,
+            data: message.message_id,
             guildId: message.guild_id,
             url: log.url
         });

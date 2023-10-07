@@ -2,6 +2,7 @@ import {
     EmbedBuilder,
     Events,
     GuildTextBasedChannel,
+    hideLinkEmbed,
     hyperlink,
     Message,
     MessageReaction,
@@ -10,10 +11,10 @@ import {
 } from "discord.js";
 
 import { muteMember, purgeMessages, resolveInfraction, validateModerationAction } from "../utils/moderation";
-import { capitalize, discordTimestamp, formatMediaURL, RegexPatterns } from "../utils";
 import { LoggingEvent, RolePermission } from "../types/config";
 import { formatLogContent, sendLog } from "../utils/logging";
-import { InfractionType } from "../types/db";
+import { capitalize, RegexPatterns } from "../utils";
+import { PunishmentType } from "../types/db";
 import { RequestType } from "../types/utils";
 
 import EventListener from "../handlers/listeners/eventListener";
@@ -101,14 +102,14 @@ export default class MessageReactionAddEventListener extends EventListener {
                 emojiName = "quickMute60";
             }
 
-            if (!config.actionAllowed(member, {
+            if (!config.hasPermission(member, {
                 permission: RolePermission.Reaction,
                 requiredValue: emojiName
             })) return;
 
             const reason = message.content;
             const [res] = await muteMember(message.member, {
-                moderator: user,
+                executor: user,
                 duration: muteDuration,
                 config,
                 reason
@@ -120,10 +121,10 @@ export default class MessageReactionAddEventListener extends EventListener {
                     purgeMessages({
                         channel: message.channel as GuildTextBasedChannel,
                         amount: 100,
-                        moderatorId: user.id,
-                        authorId: message.member.id
+                        executorId: user.id,
+                        targetId: message.member.id
                     }),
-                    config.sendConfirmation({
+                    config.sendActionConfirmation({
                         message: `quick muted **${message.author?.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`,
                         authorId: user.id,
                         reason
@@ -136,7 +137,7 @@ export default class MessageReactionAddEventListener extends EventListener {
             /* The result is an error message */
             await Promise.all([
                 reaction.remove(),
-                config.sendConfirmation({
+                config.sendActionConfirmation({
                     message: `${emojis.error} ${user} ${res}`,
                     allowMentions: true,
                     full: true
@@ -147,7 +148,7 @@ export default class MessageReactionAddEventListener extends EventListener {
         }
 
         if (emojis.purgeMessages?.includes(emojiId)) {
-            if (!config.actionAllowed(member, {
+            if (!config.hasPermission(member, {
                 permission: RolePermission.Reaction,
                 requiredValue: "purgeMessages"
             })) return;
@@ -155,12 +156,12 @@ export default class MessageReactionAddEventListener extends EventListener {
             if (message.member) {
                 const notModerateableReason = validateModerationAction({
                     config,
-                    moderatorId: user.id,
-                    offender: message.member
+                    executorId: user.id,
+                    target: message.member
                 });
 
                 if (notModerateableReason) {
-                    await config.sendConfirmation({
+                    await config.sendActionConfirmation({
                         message: `${emojis.error} ${user} ${notModerateableReason}`,
                         allowMentions: true,
                         full: true
@@ -175,8 +176,8 @@ export default class MessageReactionAddEventListener extends EventListener {
                 purgeMessages({
                     channel: reaction.message.channel as GuildTextBasedChannel,
                     amount: 100,
-                    authorId: reaction.message.author?.id,
-                    moderatorId: user.id
+                    targetId: reaction.message.author?.id,
+                    executorId: user.id
                 })
             ]).catch(() => null);
         }
@@ -189,7 +190,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                 ? RequestType.Ban
                 : RequestType.Mute;
 
-            if (!config.actionAllowed(member, {
+            if (!config.hasPermission(member, {
                 permission: `manage${capitalize(requestType) as "Ban" | "Mute"}Requests`,
                 requiredValue: true
             })) return;
@@ -198,7 +199,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                 const [targetId] = message.content.split(" ");
                 const jumpUrl = hyperlink(`${requestType} request`, `https://discord.com/channels/${message.guildId}/${message.channelId}/${message.id}`);
 
-                await config.sendConfirmation({
+                await config.sendActionConfirmation({
                     message: `${emojis.denyRequest} ${message.author} Your ${jumpUrl} against ${userMention(targetId)} has been **denied** by ${user}`,
                     allowMentions: true,
                     full: true
@@ -226,7 +227,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                     }) as Message<true>;
 
                     for (const attachment of storedMediaLog.attachments.values()) {
-                        formattedReason += ` ${formatMediaURL(attachment.url, true)}`;
+                        formattedReason += ` ${hideLinkEmbed(attachment.url)}`;
                     }
                 }
 
@@ -241,14 +242,14 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                         await Promise.all([
                             resolveInfraction({
-                                punishment: InfractionType.Ban,
-                                requestAuthor: message.author,
+                                punishment: PunishmentType.Ban,
+                                requestAuthorId: message.author,
                                 executor: user,
                                 guildId: message.guildId,
                                 reason: formattedReason,
                                 targetId
                             }),
-                            config.sendConfirmation({
+                            config.sendActionConfirmation({
                                 authorId: user.id,
                                 message: `banned ${userMention(targetId)}`,
                                 reason: formattedReason
@@ -262,7 +263,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                     const targetMember = await message.guild.members.fetch(targetId).catch(() => null);
 
                     if (!targetMember) {
-                        await config.sendConfirmation({
+                        await config.sendActionConfirmation({
                             message: `${emojis.error} ${message.author} Failed to ${requestType} ${userMention(targetId)}, user may no longer be in the server`,
                             allowMentions: true,
                             full: true
@@ -273,14 +274,14 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                     const [res] = await muteMember(targetMember, {
                         config,
-                        moderator: user,
+                        executor: user,
                         duration: duration || "28d",
                         reason: formattedReason,
                         requestAuthor: message.author
                     });
 
                     if (typeof res === "string") {
-                        await config.sendConfirmation({
+                        await config.sendActionConfirmation({
                             message: `${emojis.error} ${message.author} ${res}`,
                             allowMentions: true,
                             full: true
@@ -289,7 +290,7 @@ export default class MessageReactionAddEventListener extends EventListener {
                         return;
                     }
 
-                    await config.sendConfirmation({
+                    await config.sendActionConfirmation({
                         authorId: user.id,
                         message: `muted **${member.user.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`,
                         reason: formattedReason
@@ -297,7 +298,7 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                     cache.requests.delete(message.id);
                 } catch {
-                    await config.sendConfirmation({
+                    await config.sendActionConfirmation({
                         message: `${emojis.error} ${message.author} Failed to ${requestType} ${userMention(targetId)}`,
                         allowMentions: true,
                         full: true

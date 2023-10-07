@@ -1,37 +1,36 @@
-import { AnyComponentInteraction, InteractionCustomIdFilter } from "../types/interactions";
+import { AnyComponentInteraction, ComponentCustomId } from "../types/interactions";
+import { Command, Component } from "../handlers/interactions/interaction";
 import { CachedRequest, MessageCache } from "../types/cache";
 import { allQuery, getQuery, runQuery } from "../db";
+import { Collection, Snowflake } from "discord.js";
 import { MessageModel } from "../types/db";
+import { CustomId } from "../types/utils";
 import { sanitizeString } from "./index";
-import { Collection } from "discord.js";
-import { Command, ComponentInteraction } from "../handlers/interactions/interaction";
 
 export default class Cache {
-    static interactions = new Collection<InteractionCustomIdFilter, ComponentInteraction<AnyComponentInteraction>>();
-    static commands = new Collection<string, Command>();
-    private static items = new Collection<string, Cache>();
-    requests: Collection<string, CachedRequest>;
+    static components = new Collection<ComponentCustomId, Component<AnyComponentInteraction>>();
+    static commands = new Collection<CustomId, Command>();
+    private static instances = new Collection<Snowflake, Cache>();
+    requests: Collection<Snowflake, CachedRequest>;
     messages: MessageCache;
 
-    constructor() {
-        this.requests = new Collection<string, CachedRequest>();
-        this.messages = {
-            store: new Collection<string, MessageModel>()
-        };
+    private constructor() {
+        this.requests = new Collection();
+        this.messages = { store: new Collection() };
     }
 
-    static get(guildId: string): Cache {
-        return this.items.get(guildId) || Cache.create(guildId);
+    static get(guildId: Snowflake): Cache {
+        return this.instances.get(guildId) || Cache.create(guildId);
     }
 
-    static create(guildId: string): Cache {
+    static create(guildId: Snowflake): Cache {
         const cache = new Cache();
-        this.items.set(guildId, cache);
+        this.instances.set(guildId, cache);
         return cache;
     }
 
-    static getComponentInteraction(customId: string): ComponentInteraction<AnyComponentInteraction> | undefined {
-        return this.interactions.find(item => {
+    static getComponent(customId: CustomId): Component<AnyComponentInteraction> | undefined {
+        return this.components.find(item => {
             const { name } = item.data;
 
             if (typeof name === "string") return name === customId;
@@ -43,8 +42,9 @@ export default class Cache {
         });
     }
 
+    /** Stores cached messages in the database */
     static async storeMessages(): Promise<void> {
-        const messages = this.items.flatMap(cache => cache.messages.store);
+        const messages = this.instances.flatMap(cache => cache.messages.store);
         const messagesToInsert = messages.map((data, messageId) => `(
             ${messageId}, 
             ${data.author_id}, 
@@ -52,11 +52,12 @@ export default class Cache {
             ${data.guild_id}, 
             ${data.created_at},
             ${sanitizeString(data.content)},
-            ${data.reference_id || null},
-            ${data.category_id || null},
-            ${data.deleted ? 1 : 0}
+            ${data.reference_id},
+            ${data.category_id},
+            ${data.deleted}
         )`).join(",");
 
+        // If any changes need to be made, make sure the field names and values are in the exact same order
         if (messagesToInsert) {
             // @formatter:off
             await runQuery(`
@@ -76,11 +77,12 @@ export default class Cache {
         }
     }
 
+    /** @returns IDs of the cached messages sorted by their creation dates */
     getMessageIds(data: {
-        authorId?: string,
-        channelId: string,
+        authorId?: Snowflake,
+        channelId: Snowflake,
         limit: number
-    }): string[] {
+    }): Snowflake[] {
         const { authorId, channelId, limit } = data;
         return this.messages.store
             .filter(message =>
@@ -93,7 +95,8 @@ export default class Cache {
             .slice(0, limit);
     }
 
-    async handleMessageEdit(messageId: string, updatedContent: string): Promise<void> {
+    /** Set the content of the cached/stored message to the new message content */
+    async handleEditedMessage(messageId: Snowflake, updatedContent: string): Promise<void> {
         const message = this.messages.store.get(messageId);
 
         if (message) {
@@ -107,7 +110,11 @@ export default class Cache {
         }
     }
 
-    async handleDeletedMessage(messageId: string, fetchReference: boolean): Promise<Record<"message" | "reference", MessageModel | null>> {
+    /**
+     * Set the `deleted` field of the cached/stored message to `true`
+     * @returns The cached/stored message and its reference (if `true` is passed to `fetchReference`)
+     */
+    async handleDeletedMessage(messageId: Snowflake, fetchReference: boolean): Promise<Record<"message" | "reference", MessageModel | null>> {
         let message = this.messages.store.get(messageId) || null;
         let reference: MessageModel | null = null;
 
@@ -123,13 +130,13 @@ export default class Cache {
         }
 
         if (fetchReference && message?.reference_id) {
-            reference = await this.getMessage(message.reference_id);
+            reference = await this.fetchMessage(message.reference_id);
         }
 
         return { message, reference };
     }
 
-    getMessage(messageId: string): Promise<MessageModel | null> {
+    fetchMessage(messageId: Snowflake): Promise<MessageModel | null> {
         const cachedMessage = this.messages.store.get(messageId);
         if (cachedMessage) return Promise.resolve(cachedMessage);
 
@@ -140,8 +147,12 @@ export default class Cache {
         `);
     }
 
-    async handleBulkDeletedMessages(messageIds: string[]): Promise<MessageModel[]> {
-        const uncachedMessages: string[] = [];
+    /**
+     * Set the `deleted` field of the cached/stored message(s) to `true`
+     * @returns The cached/stored messages
+     */
+    async handleBulkDeletedMessages(messageIds: Snowflake[]): Promise<MessageModel[]> {
+        const uncachedMessages: Snowflake[] = [];
         let messages: MessageModel[] = [];
 
         for (const messageId of messageIds) {
@@ -159,7 +170,7 @@ export default class Cache {
         if (uncachedMessages.length) {
             const storedMessages = await allQuery<MessageModel>(`
                 UPDATE messages
-                SET deleted = 1
+                SET deleted = true
                 WHERE message_id IN (${uncachedMessages.join(",")})
                 RETURNING *;
             `);

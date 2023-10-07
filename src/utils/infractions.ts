@@ -1,34 +1,78 @@
-import { InfractionCount, InfractionFlag, InfractionType, MinimalInfraction } from "../types/db";
-import { currentTimestamp, discordTimestamp, elipsify, msToString, pluralize } from "./index";
-import { InfractionFilter } from "../types/utils";
-import { Colors, userMention } from "discord.js";
+import { InfractionCount, InfractionFlag, MinimalInfraction, PunishmentType } from "../types/db";
+import { capitalize, currentTimestamp, elipsify, msToString, pluralize } from "./index";
+import { ColorResolvable, Colors, time, userMention } from "discord.js";
+import { InfractionFilter, InfractionLogData } from "../types/utils";
+import { TimestampStyles } from "@discordjs/formatters";
+import { APIEmbedField } from "discord-api-types/v10";
 
-export function getInfractionEmbedColor(action: InfractionType) {
-    switch (action) {
-        case InfractionType.Mute:
-            return Colors.Orange;
-        case InfractionType.Kick:
-            return Colors.Red;
-        case InfractionType.Ban:
-            return Colors.Blue;
-        case InfractionType.Note:
-            return Colors.Yellow;
-        case InfractionType.Unban:
-        case InfractionType.Unmute:
-            return Colors.Green;
-        default:
-            return Colors.NotQuiteBlack;
+export function getInfractionEmbedData(punishment: PunishmentType): InfractionLogData {
+    let color: ColorResolvable = Colors.NotQuiteBlack;
+    let action = "Failed to resolve punishment";
+    let icon: string | undefined;
+
+    switch (punishment) {
+        case PunishmentType.Mute: {
+            color = Colors.Orange;
+            action = "Member Muted";
+            break;
+        }
+
+        case PunishmentType.Kick: {
+            color = Colors.Red;
+            action = "Member Kicked";
+            break;
+        }
+
+        case PunishmentType.Ban: {
+            color = Colors.Blue;
+            action = "Member Banned";
+            break;
+        }
+
+        case PunishmentType.Note: {
+            color = Colors.Yellow;
+            action = "Note Added";
+            icon = "note.png";
+            break;
+        }
+
+        case PunishmentType.Unban: {
+            action = "Member Unbanned";
+            icon = "memberCreate.png";
+            break;
+        }
+
+        case PunishmentType.Unmute: {
+            color = Colors.Green;
+            action = "Member Unmuted";
+            icon = "memberCreate.png";
+            break;
+        }
     }
+
+    return {
+        color,
+        author: {
+            name: action,
+            iconURL: `attachment://${icon}`
+        },
+        file: {
+            attachment: `./icons/${icon}`,
+            name: icon
+        }
+    };
 }
 
+/** @returns Updated number of pages at index 0. Mapped fields at index 1 */
 export function mapInfractionsToFields(data: {
     infractions: MinimalInfraction[],
     filter: InfractionFilter | null,
     page: number
-}): [number, { name: string, value: string }[]] {
+}): [number, APIEmbedField[]] {
     const { infractions, filter, page } = data;
     const filteredInfractions = infractions.filter(infraction => {
         switch (filter) {
+            // Automatic infractions are hidden by default
             case InfractionFilter.All:
                 return !infraction.deleted_at && !infraction.deleted_by;
             case InfractionFilter.Automatic:
@@ -45,12 +89,12 @@ export function mapInfractionsToFields(data: {
     const fields = filteredInfractions.slice((page - 1) * 5, page * 5).map(infraction => {
         const flagName = infraction.flag ? `${InfractionFlag[infraction.flag]} ` : "";
 
-        /* Remove all URLs */
+        // Remove all URLs
         const cleanReason = infraction.reason?.replace(/https?:\/\/.+( |$)/gi, "").trim();
         const data = [
             {
                 key: "Created",
-                val: discordTimestamp(infraction.created_at, "R")
+                val: time(infraction.created_at, TimestampStyles.RelativeTime)
             },
             {
                 key: "Moderator",
@@ -63,11 +107,14 @@ export function mapInfractionsToFields(data: {
         ];
 
         if (infraction.expires_at) {
+            // Temporary infraction is still active
             if (infraction.expires_at > currentTimestamp()) {
                 data.splice(1, 0, {
                     key: "Expires",
-                    val: discordTimestamp(infraction.expires_at, "R")
+                    val: time(infraction.expires_at, TimestampStyles.RelativeTime)
                 });
+
+                // Temporary infraction has expired
             } else {
                 data.splice(1, 0, {
                     key: "Duration",
@@ -77,7 +124,7 @@ export function mapInfractionsToFields(data: {
         }
 
         return {
-            name: `${flagName}${InfractionType[infraction.action]} #${infraction.infraction_id}`,
+            name: `${flagName}${PunishmentType[infraction.action]} #${infraction.infraction_id}`,
             value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
         };
     });
@@ -87,6 +134,6 @@ export function mapInfractionsToFields(data: {
 
 export function mapInfractionCount(infractions: InfractionCount) {
     return Object.entries(infractions)
-        .map(([type, count]) => `\`${count ?? 0}\` ${pluralize(type[0].toUpperCase() + type.slice(1), count)}`)
+        .map(([type, count]) => `\`${count ?? 0}\` ${pluralize(capitalize(type), count)}`)
         .join("\n");
 }

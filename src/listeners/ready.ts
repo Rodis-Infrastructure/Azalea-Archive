@@ -1,16 +1,16 @@
-import { readdir, readFile } from "node:fs/promises";
-import { ConfigData } from "../types/config";
-import { parse } from "yaml";
 import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js";
+import { loadInteractions, publishCommands } from "../handlers/interactions";
+import { readdir, readFile } from "node:fs/promises";
+import { RequestType } from "../types/utils";
+import { ConfigData } from "../types/config";
+import { client } from "../client";
 import { runQuery } from "../db";
+import { parse } from "yaml";
 
 import EventListener from "../handlers/listeners/eventListener";
 import Config from "../utils/config";
-import ms from "ms";
-import { RequestType } from "../types/utils";
-import { client } from "../client";
-import { loadInteractions, publishCommands } from "../handlers/interactions";
 import Cache from "../utils/cache";
+import ms from "ms";
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -28,7 +28,7 @@ export default class ReadyEventListener extends EventListener {
             if (!guildId.match(/^\d{17,19}$/g)) continue;
 
             const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            new Config(config).bind(guildId);
+            Config.create(guildId, config);
 
             setBanRequestNoticeInterval(config, guildId);
             setMuteRequestNoticeInterval(config, guildId);
@@ -53,14 +53,16 @@ export default class ReadyEventListener extends EventListener {
 }
 
 function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
-    if (!config.channels?.banRequestQueue || !config.banRequestNotices?.enabled) return;
+    if (!config.channels?.banRequestQueue || !config.notices?.banRequests?.enabled) return;
+
+    const { threshold, channelId, interval } = config.notices.banRequests;
     const cache = Cache.get(guildId);
 
     setInterval(async() => {
         const cachedBanRequests = cache.requests.filter(r => r.requestType === RequestType.Ban);
-        if (cachedBanRequests.size < config.banRequestNotices!.threshold) return;
+        if (cachedBanRequests.size < threshold) return;
 
-        const channel = await client.channels.fetch(config.banRequestNotices!.channelId) as GuildTextBasedChannel;
+        const channel = await client.channels.fetch(channelId) as GuildTextBasedChannel;
         const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedBanRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()
@@ -73,18 +75,20 @@ function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
             content: "@here",
             embeds: [embed]
         });
-    }, config.banRequestNotices.interval);
+    }, interval);
 }
 
 function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
-    if (!config.channels?.muteRequestQueue || !config.muteRequestNotices?.enabled) return;
+    if (!config.channels?.muteRequestQueue || !config.notices?.muteRequests?.enabled) return;
+
+    const { threshold, channelId, interval } = config.notices.muteRequests;
     const cache = Cache.get(guildId);
 
     setInterval(async() => {
         const cachedMuteRequests = cache.requests.filter(r => r.requestType === RequestType.Mute);
-        if (cachedMuteRequests.size < config.muteRequestNotices!.threshold) return;
+        if (cachedMuteRequests.size < threshold) return;
 
-        const channel = await client.channels.fetch(config.muteRequestNotices!.channelId) as GuildTextBasedChannel;
+        const channel = await client.channels.fetch(channelId) as GuildTextBasedChannel;
         const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedMuteRequests.lastKey()}`;
 
         const embed = new EmbedBuilder()
@@ -97,5 +101,5 @@ function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
             content: "@here",
             embeds: [embed]
         });
-    }, config.muteRequestNotices.interval);
+    }, interval);
 }

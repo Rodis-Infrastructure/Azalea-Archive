@@ -1,15 +1,17 @@
-export interface Infraction {
+import { Snowflake } from "discord.js";
+
+export interface InfractionModel {
     infraction_id: number;
-    target_id: string;
-    request_author_id?: string;
-    updated_by?: string;
-    deleted_by?: string;
-    deleted_at?: number;
-    updated_at?: number;
-    executor_id: string;
-    created_at: number;
-    expires_at?: number;
-    action: InfractionType;
+    target_id: Snowflake;
+    request_author_id?: Snowflake;
+    updated_by?: Snowflake;
+    deleted_by?: Snowflake;
+    deleted_at?: EpochTimeStamp;
+    updated_at?: EpochTimeStamp;
+    executor_id: Snowflake;
+    created_at: EpochTimeStamp;
+    expires_at?: EpochTimeStamp;
+    action: PunishmentType;
     flag?: InfractionFlag;
     reason?: string;
 }
@@ -21,7 +23,7 @@ export interface InfractionCount {
     ban: number;
 }
 
-export enum InfractionType {
+export enum PunishmentType {
     Note = 1,
     Mute = 2,
     Kick = 3,
@@ -36,15 +38,15 @@ export enum InfractionFlag {
 }
 
 export interface MessageModel {
-    message_id: string;
-    author_id: string;
-    channel_id: string;
-    guild_id: string;
-    created_at: number;
+    message_id: Snowflake;
+    author_id: Snowflake;
+    channel_id: Snowflake;
+    guild_id: Snowflake;
+    created_at: EpochTimeStamp;
     deleted: boolean;
-    reference_id: string | null;
-    category_id: string | null;
+    reference_id: Snowflake | null;
+    category_id: Snowflake | null;
     content: string | null;
 }
 
-export type MinimalInfraction = Omit<Infraction, "updated_by" | "updated_at" | "request_author_id" | "target_id">
+export type MinimalInfraction = Omit<InfractionModel, "updated_by" | "updated_at" | "request_author_id" | "target_id">

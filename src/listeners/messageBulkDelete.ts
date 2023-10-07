@@ -8,7 +8,7 @@ import {
     userMention
 } from "discord.js";
 
-import { linkToPurgeLog, sendLog } from "../utils/logging";
+import { linkToPurgeLog } from "../utils/logging";
 import { LoggingEvent } from "../types/config";
 import { MessageModel } from "../types/db";
 import { serializeMessage } from "../db";
@@ -63,7 +63,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
 
         // Mention the author if all messages were sent by the same user
         const author = oneAuthor && lastAuthorId ? ` by ${userMention(lastAuthorId)}` : "";
-        const log = await sendLog({
+        const log = await log({
             event: LoggingEvent.Message,
             channelId: channel.id,
             categoryId: channel.parentId,
@@ -84,7 +84,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             log.edit(`${log.content}\n\n${jumpURL}`),
             linkToPurgeLog({
                 guildId: channel.guildId,
-                content: messages,
+                data: messages,
                 url: log.url
             })
         ]);

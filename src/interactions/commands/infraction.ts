@@ -9,22 +9,23 @@ import {
     Colors,
     EmbedBuilder,
     GuildMember,
+    time,
     User
 } from "discord.js";
 
-import { currentTimestamp, discordTimestamp, elipsify, formatReason, msToString, RegexPatterns } from "../../utils";
+import { currentTimestamp, elipsify, formatReason, msToString, RegexPatterns } from "../../utils";
 import { InfractionSubcommand, InteractionResponseType } from "../../types/interactions";
-import { Infraction, InfractionFlag, InfractionType, MinimalInfraction } from "../../types/db";
-import { getInfractionEmbedColor, mapInfractionsToFields } from "../../utils/infractions";
+import { InfractionFlag, InfractionModel, MinimalInfraction, PunishmentType } from "../../types/db";
+import { getInfractionEmbedData, mapInfractionsToFields } from "../../utils/infractions";
 import { Command } from "../../handlers/interactions/interaction";
 import { allQuery, getQuery, runQuery } from "../../db";
 import { InfractionFilter } from "../../types/utils";
 import { LoggingEvent } from "../../types/config";
-import { sendLog } from "../../utils/logging";
 
 import Config from "../../utils/config";
 import ms from "ms";
 import { client } from "../../client";
+import { TimestampStyles } from "@discordjs/formatters";
 
 export default class InfractionCommand extends Command {
     constructor() {
@@ -125,12 +126,12 @@ export default class InfractionCommand extends Command {
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
         const id = interaction.options.getNumber("id") as number;
-        const infraction = await getQuery<Infraction>(`
+        const infraction = await getQuery<InfractionModel>(`
             SELECT *
             FROM infractions
             WHERE infraction_id = ${id}
               AND guild_id = ${interaction.guildId}
-        `) as Infraction;
+        `) as InfractionModel;
 
         const { error, success } = config.emojis;
 
@@ -193,10 +194,10 @@ export default class InfractionCommand extends Command {
                     content: `${success} Successfully ${response}`,
                     ephemeral
                 }),
-                config.sendConfirmation({
+                config.sendActionConfirmation({
                     message: response,
                     authorId: interaction.user.id,
-                    channelId: interaction.channelId
+                    sourceChannelId: interaction.channelId
                 })
             ]);
         } catch (err) {
@@ -222,7 +223,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     }
 
     const targetIsStaff = targetMember && config.isGuildStaff(targetMember);
-    const executorCanViewModerationActivity = config.actionAllowed(interaction.member as GuildMember, {
+    const executorCanViewModerationActivity = config.hasPermission(interaction.member as GuildMember, {
         permission: "viewModerationActivity",
         requiredValue: true
     });
@@ -362,7 +363,7 @@ export async function handleReasonChange(data: {
         .setFooter({ text: `#${infractionId}` })
         .setTimestamp();
 
-    await sendLog({
+    await log({
         event: LoggingEvent.Infraction,
         guildId,
         options: {
@@ -377,14 +378,14 @@ export async function handleReasonChange(data: {
     return `updated the reason of infraction **#${infractionId}**${formatReason(newReason)}`;
 }
 
-async function handleDurationChange(infraction: Infraction, interaction: ChatInputCommandInteraction): Promise<string> {
+async function handleDurationChange(infraction: InfractionModel, interaction: ChatInputCommandInteraction): Promise<string> {
     const strDuration = interaction.options.getString("new_duration", true);
     if (!strDuration.match(RegexPatterns.DurationValidation)) throw "The duration provided is invalid.";
 
     const duration = Math.floor(ms(strDuration) / 1000);
     const now = currentTimestamp();
 
-    if (infraction.action !== InfractionType.Mute) throw "You can only update the duration of mute infractions";
+    if (infraction.action !== PunishmentType.Mute) throw "You can only update the duration of mute infractions";
 
     const offender = await interaction.guild!.members.fetch(infraction.target_id);
     if (!offender.isCommunicationDisabled()) throw "This user does not have an active mute";
@@ -422,7 +423,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
         .setFooter({ text: `#${infraction.infraction_id}` })
         .setTimestamp();
 
-    await sendLog({
+    await log({
         event: LoggingEvent.Infraction,
         guildId: interaction.guildId!,
         options: {
@@ -434,7 +435,7 @@ async function handleDurationChange(infraction: Infraction, interaction: ChatInp
         }
     });
 
-    return `updated the duration of infraction **#${infraction.infraction_id}** to ${discordTimestamp(expiresAt, "F")} | Expires ${discordTimestamp(expiresAt, "R")}`;
+    return `updated the duration of infraction **#${infraction.infraction_id}** to ${time(expiresAt, TimestampStyles.LongDateTime)} | Expires ${time(expiresAt, TimestampStyles.RelativeTime)}`;
 }
 
 async function handleInfractionDeletion(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
@@ -461,7 +462,7 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
         .setFooter({ text: `#${infractionId}` })
         .setTimestamp();
 
-    await sendLog({
+    await log({
         event: LoggingEvent.Infraction,
         guildId: interaction.guildId!,
         options: {
@@ -476,7 +477,7 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
     return `deleted infraction **#${infractionId}**`;
 }
 
-function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
+function handleInfractionInfo(infraction: InfractionModel): EmbedBuilder {
     const {
         infraction_id,
         action,
@@ -522,7 +523,7 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
         if (msExpiresAt > Date.now()) {
             fields.push({
                 name: "Expires",
-                value: discordTimestamp(expires_at, "R"),
+                value: time(expires_at, TimestampStyles.RelativeTime),
                 inline: true
             });
         } else {
@@ -538,8 +539,8 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
     if ((updated_by && updated_at) || (deleted_by && deleted_at)) {
         const changes = [];
 
-        if (deleted_by && deleted_at) changes.push(`- Deleted by <@${deleted_by}> (${discordTimestamp(deleted_at, "R")})`);
-        if (updated_by && updated_at) changes.push(`- Updated by <@${updated_by}> (${discordTimestamp(updated_at, "R")})`);
+        if (deleted_by && deleted_at) changes.push(`- Deleted by <@${deleted_by}> (${time(deleted_at, TimestampStyles.RelativeTime)})`);
+        if (updated_by && updated_at) changes.push(`- Updated by <@${updated_by}> (${time(updated_at, TimestampStyles.RelativeTime)})`);
 
         if (changes.length) {
             fields.push({
@@ -560,8 +561,8 @@ function handleInfractionInfo(infraction: Infraction): EmbedBuilder {
 
     const flagName = flag ? `${InfractionFlag[flag]} ` : "";
     return new EmbedBuilder()
-        .setColor(getInfractionEmbedColor(action))
-        .setTitle(`${flagName}${InfractionType[action]} #${infraction_id}`)
+        .setColor(getInfractionEmbedData(action))
+        .setTitle(`${flagName}${PunishmentType[action]} #${infraction_id}`)
         .setFields(fields)
         .setTimestamp(msCreatedAt);
 }

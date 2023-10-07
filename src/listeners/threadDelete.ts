@@ -1,6 +1,5 @@
 import { Colors, EmbedBuilder, Events, ThreadChannel, userMention } from "discord.js";
 import { LoggingEvent } from "../types/config";
-import { sendLog } from "../utils/logging";
 
 import EventListener from "../handlers/listeners/eventListener";
 
@@ -30,7 +29,7 @@ export default class ThreadDeleteEventListener extends EventListener {
             .setFooter({ text: `Thread ID: ${thread.id}` })
             .setTimestamp();
 
-        await sendLog({
+        await log({
             event: LoggingEvent.Thread,
             channelId: thread.parentId as string,
             guildId: thread.guildId,

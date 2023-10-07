@@ -8,7 +8,7 @@ import {
 import { muteExpirationTimestamp, resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
-import { InfractionType } from "../../types/db";
+import { PunishmentType } from "../../types/db";
 import { formatReason } from "../../utils";
 
 import Config from "../../utils/config";
@@ -51,11 +51,11 @@ export default class UnmuteCommand extends Command {
 
         const notModerateableReason = validateModerationAction({
             config,
-            moderatorId: interaction.user.id,
-            offender,
+            executorId: interaction.user.id,
+            target: offender,
             additionalValidation: [{
                 condition: !offender.moderatable,
-                reason: "I do not have permission to unmute this member."
+                failResponse: "I do not have permission to unmute this member."
             }]
         });
 
@@ -82,7 +82,7 @@ export default class UnmuteCommand extends Command {
             await offender.timeout(null);
             await resolveInfraction({
                 guildId: interaction.guildId!,
-                punishment: InfractionType.Unmute,
+                punishment: PunishmentType.Unmute,
                 targetId: offender.id,
                 executor: interaction.user,
                 reason
@@ -101,9 +101,9 @@ export default class UnmuteCommand extends Command {
                 content: `${success} Successfully unmuted **${offender.user.tag}**${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendConfirmation({
+            config.sendActionConfirmation({
                 message: `unmuted **${offender.user.tag}**`,
-                channelId: interaction.channelId,
+                sourceChannelId: interaction.channelId,
                 authorId: interaction.user.id,
                 reason
             })
