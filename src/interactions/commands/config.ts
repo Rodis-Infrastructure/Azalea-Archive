@@ -1,17 +1,14 @@
 import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
-    ChatInputCommandInteraction,
-    codeBlock,
-    Colors,
-    EmbedBuilder
+    AttachmentBuilder,
+    ChatInputCommandInteraction
 } from "discord.js";
 
 import { InteractionResponseType } from "../../types/interactions";
-import { stringify } from "yaml";
+import { glob } from "fast-glob";
 
 import ChatInputCommand from "../../handlers/interactions/commands/chatInputCommand";
-import ClientManager from "../../client";
 
 export default class ConfigCommand extends ChatInputCommand {
     constructor() {
@@ -31,20 +28,15 @@ export default class ConfigCommand extends ChatInputCommand {
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId!;
-        const config = ClientManager.config(guildId)?.data;
+        const config = glob.sync(`config/guilds/${guildId}.{yml,yaml}`).join("\n");
 
-        const embed = new EmbedBuilder()
-            .setColor(Colors.NotQuiteBlack)
-            .setTitle("Guild Configuration")
-            .setDescription(codeBlock("yaml", stringify(config)))
-            .setFooter({ text: `Guild ID: ${guildId}` })
-            .setAuthor({
-                name: interaction.guild!.name,
-                iconURL: interaction.guild!.iconURL() ?? undefined
-            });
+        const file = new AttachmentBuilder(config)
+            .setName(`${guildId}.yaml`)
+            .setDescription(`Configuration for guild with ID ${guildId}`);
 
         await interaction.reply({
-            embeds: [embed],
+            content: `Configuration for guild with ID \`${guildId}\``,
+            files: [file],
             ephemeral
         });
     }
