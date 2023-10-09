@@ -77,7 +77,7 @@ export function mapInfractionsToFields(data: {
                 return !infraction.archived_at && !infraction.archived_by;
             case InfractionFilter.Automatic:
                 return infraction.flag === InfractionFlag.Automatic;
-            case InfractionFilter.Deleted:
+            case InfractionFilter.Archived:
                 return infraction.archived_at && infraction.archived_by;
             default:
                 return infraction.flag !== InfractionFlag.Automatic

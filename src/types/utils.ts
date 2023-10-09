@@ -21,7 +21,7 @@ export enum RequestType {
 export enum InfractionFilter {
     All = "All",
     Automatic = "Automatic",
-    Deleted = "Deleted",
+    Archived = "Archived",
 }
 
 export type CustomId = string;
