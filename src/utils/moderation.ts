@@ -3,6 +3,7 @@ import {
     GuildMember,
     GuildTextBasedChannel,
     Message,
+    MessageContextMenuCommandInteraction,
     messageLink,
     Snowflake,
     time,
@@ -30,7 +31,7 @@ import ms from "ms";
  */
 export async function resolveInfraction(data: InfractionResolveOptions): Promise<number | null> {
     const {
-        executor,
+        executorId,
         targetId,
         reason,
         guildId,
@@ -46,7 +47,7 @@ export async function resolveInfraction(data: InfractionResolveOptions): Promise
         .setAuthor(author)
         .setFields([
             { name: "Member", value: `${userMention(targetId)} (\`${targetId}\`)` },
-            { name: "Moderator", value: `${executor} (\`${executor.id}\`)` }
+            { name: "Moderator", value: `${userMention(executorId)} (\`${executorId}\`)` }
         ])
         .setTimestamp();
 
@@ -58,9 +59,9 @@ export async function resolveInfraction(data: InfractionResolveOptions): Promise
         storeInfraction({
             guildId: guildId,
             action: punishment,
-            executorId: executor.id,
             expiresAt: expiresAt,
             requestAuthorId,
+            executorId,
             targetId,
             reason,
             flag
@@ -80,18 +81,18 @@ export async function resolveInfraction(data: InfractionResolveOptions): Promise
 
 export async function muteMember(target: GuildMember, data: {
     config: Config,
-    executor: User,
+    executorId: Snowflake,
     duration: string,
     requestAuthorId?: Snowflake,
     reason?: string | null,
     quick?: boolean
 }): Promise<MemberMuteResult> {
-    const { config, executor, duration, reason, quick, requestAuthorId } = data;
+    const { config, executorId, duration, reason, quick, requestAuthorId } = data;
 
     const notModerateableReason = validateModerationAction({
         config,
         target,
-        executorId: executor.id,
+        executorId,
         additionalValidation: [{
             condition: !target.moderatable,
             failResponse: "I do not have permission to mute this member."
@@ -129,8 +130,8 @@ export async function muteMember(target: GuildMember, data: {
         targetId: target.user.id,
         duration: msDuration,
         flag: quick ? InfractionFlag.Quick : undefined,
-        executor: executor,
         requestAuthorId,
+        executorId,
         reason
     });
 
@@ -324,7 +325,7 @@ export async function handleBanRequestAutoMute(data: {
 
     try {
         const res = await muteMember(target, {
-            executor: request.author,
+            executorId: request.author.id,
             duration: ms(MAX_MUTE_DURATION),
             reason,
             config
@@ -368,4 +369,63 @@ export async function handleBanRequestAutoMute(data: {
     if (!requestData) return;
 
     cache.requests.set(request.id, { ...requestData, muteId: infractionId });
+}
+
+export async function handleQuickMute(duration: "30m" | "1h", interaction: MessageContextMenuCommandInteraction, config: Config): Promise<void> {
+    const { targetMessage } = interaction;
+    const { success, error } = config.emojis;
+
+    if (!targetMessage.member) {
+        await interaction.reply({
+            content: `${error} Failed to fetch the message author.`,
+            ephemeral: true
+        });
+        return;
+    }
+
+    const reason = targetMessage.content;
+
+    try {
+        const { expiresAt } = await muteMember(targetMessage.member, {
+            executorId: interaction.user.id,
+            quick: true,
+            duration,
+            config,
+            reason
+        });
+
+        const expiresAtDateTimestamp = time(expiresAt, TimestampStyles.LongDateTime);
+        const expiresAtRelativeTimestamp = time(expiresAt, TimestampStyles.RelativeTime);
+        const response = `quick muted ${targetMessage.author} until ${expiresAtDateTimestamp} | Expires ${expiresAtRelativeTimestamp}`;
+
+        const confirmation = config.formatConfirmation(response, {
+            executorId: interaction.user.id,
+            success: true,
+            reason
+        });
+
+        await Promise.all([
+            purgeMessages({
+                channel: targetMessage.channel as GuildTextBasedChannel,
+                amount: 100,
+                executorId: interaction.user.id,
+                targetId: targetMessage.author.id
+            }),
+            interaction.reply({
+                content: `${success} Successfully ${response}`,
+                ephemeral: true
+            }),
+            config.sendNotification(confirmation, {
+                sourceChannelId: targetMessage.channel.id
+            })
+        ]);
+        return;
+    } catch (_err) {
+        const err = _err as Error;
+
+        await interaction.reply({
+            content: `${error} ${err.message}`,
+            ephemeral: true
+        });
+    }
 }

@@ -109,7 +109,7 @@ export default class MessageReactionAddEventListener extends EventListener {
 
             const reason = message.content;
             const [res] = await muteMember(message.member, {
-                executor: user,
+                executorId: user,
                 duration: muteDuration,
                 config,
                 reason
@@ -274,7 +274,7 @@ export default class MessageReactionAddEventListener extends EventListener {
 
                     const [res] = await muteMember(targetMember, {
                         config,
-                        executor: user,
+                        executorId: user,
                         duration: duration || "28d",
                         reason: formattedReason,
                         requestAuthor: message.author

@@ -33,13 +33,14 @@ export default class UnbanCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const offender = interaction.options.getUser("user", true);
-        const banInfo = await interaction.guild!.bans.fetch(offender.id)
-            .catch(() => null);
+        const target = interaction.options.getUser("user", true);
+        const targetIsBanned = await interaction.guild!.bans.fetch(target.id)
+            .then(() => true)
+            .catch(() => false);
 
         const { success, error } = config.emojis;
 
-        if (!banInfo) {
+        if (!targetIsBanned) {
             await interaction.reply({
                 content: `${error} This user is not banned.`,
                 ephemeral
@@ -50,33 +51,38 @@ export default class UnbanCommand extends Command {
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            await interaction.guild!.members.unban(offender, reason);
+            await interaction.guild!.members.unban(target, reason);
             await resolveInfraction({
                 punishment: PunishmentType.Unban,
-                executor: interaction.user,
-                targetId: offender.id,
+                executorId: interaction.user.id,
+                targetId: target.id,
                 guildId: interaction.guildId!,
                 reason
             });
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} An error has occurred while trying to execute this interaction`,
+                content: `${error} An error has occurred while trying to execute this interaction: ${err.message}`,
                 ephemeral
             });
+
             return;
         }
 
+        const confirmation = config.formatConfirmation(`unbanned ${target}`, {
+            executorId: interaction.user.id,
+            success: true,
+            reason
+        });
+
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully unbanned **${offender.tag}**${formatReason(reason)}`,
+                content: `${success} Successfully unbanned ${target}${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendActionConfirmation({
-                message: `unbanned **${offender.tag}**`,
-                authorId: interaction.user.id,
-                sourceChannelId: interaction.channelId,
-                reason
+            config.sendNotification(confirmation, {
+                sourceChannelId: interaction.channelId
             })
         ]);
     }

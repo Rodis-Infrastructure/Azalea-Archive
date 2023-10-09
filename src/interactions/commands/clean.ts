@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 
 import { purgeMessages, validateModerationAction } from "../../utils/moderation";
-import { InteractionResponseType, PurgeSubcommand } from "../../types/interactions";
+import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { pluralize } from "../../utils";
 
@@ -23,7 +23,7 @@ export default class CleanCommand extends Command {
             skipInternalUsageCheck: false,
             options: [
                 {
-                    name: PurgeSubcommand.All,
+                    name: "all",
                     description: "Purge all messages in the channel.",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [{
@@ -36,7 +36,7 @@ export default class CleanCommand extends Command {
                     }]
                 },
                 {
-                    name: PurgeSubcommand.User,
+                    name: "user",
                     description: "Purge messages from a user in the channel.",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [
@@ -60,18 +60,17 @@ export default class CleanCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const action = interaction.options.getSubcommand(true);
         const amount = interaction.options.getInteger("amount") ?? 100;
-        const user = interaction.options.getUser("user");
-        const member = interaction.options.getMember("user") as GuildMember;
+        const targetUser = interaction.options.getUser("user");
+        const targetMember = interaction.options.getMember("user") as GuildMember | null;
 
         const { success, error } = config.emojis;
 
-        if (member) {
+        if (targetMember) {
             const notModerateableReason = validateModerationAction({
                 config,
                 executorId: interaction.user.id,
-                target: member
+                target: targetMember
             });
 
             if (notModerateableReason) {
@@ -84,14 +83,14 @@ export default class CleanCommand extends Command {
         }
 
         try {
-            const purgedMessages = await purgeMessages({
+            const purgedMessageCount = await purgeMessages({
                 channel: interaction.channel as GuildTextBasedChannel,
-                amount,
-                targetId: user?.id,
-                executorId: interaction.user.id
+                executorId: interaction.user.id,
+                targetId: targetUser?.id,
+                amount
             });
 
-            if (!purgedMessages) {
+            if (!purgedMessageCount) {
                 await interaction.reply({
                     content: `${error} There are no messages to purge.`,
                     ephemeral
@@ -99,17 +98,15 @@ export default class CleanCommand extends Command {
                 return;
             }
 
-            let messageAuthor = "";
-            if (action === PurgeSubcommand.User) messageAuthor = ` by **${user!.tag}**`;
-
             await interaction.reply({
-                content: `${success} Successfully purged \`${purgedMessages}\` ${pluralize("message", purgedMessages)}${messageAuthor}.`,
+                content: `${success} Successfully purged \`${purgedMessageCount}\` ${pluralize("message", purgedMessageCount)}.`,
                 ephemeral
             });
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} Failed to purge messages.`,
+                content: `${error} Failed to purge messages: ${err.message}`,
                 ephemeral
             });
         }

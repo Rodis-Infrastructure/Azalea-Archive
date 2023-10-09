@@ -1,7 +1,7 @@
 import { AttachmentPayload, Colors, EmbedBuilder, Events, GuildMember, hyperlink, Message } from "discord.js";
 import { formatLogContent, referenceEmbed } from "../utils/logging";
 import { handleBanRequestAutoMute, validateRequest } from "../utils/moderation";
-import { handleReasonChange } from "../interactions/commands/infraction";
+import { handleInfractionReasonChange } from "../interactions/commands/infraction";
 import { LoggingEvent } from "../types/config";
 import { RequestType } from "../types/utils";
 import { serializeMessage } from "../db";
@@ -135,10 +135,10 @@ async function handleRequestEdit(message: Message<true>, config: Config) {
         const request = cache.requests.get(message.id);
 
         if (request && request.muteId) {
-            await handleReasonChange({
+            await handleInfractionReasonChange({
                 infractionId: request.muteId,
                 newReason: reason,
-                updatedBy: message.author,
+                updatedById: message.author,
                 guildId: message.guildId
             });
         } else if (targetMember && isAutoMuteEnabled) {

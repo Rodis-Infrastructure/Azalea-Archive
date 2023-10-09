@@ -18,7 +18,7 @@ export enum LoggingEvent {
 export enum RolePermission {
     GuildStaff = "guildStaff",
     ManageInfractions = "manageInfractions",
-    ViewModerationHistory = "viewModerationHistory",
+    ViewModerationActivity = "viewModerationActivity",
     ManageBanRequests = "manageBanRequests",
     ManageMuteRequests = "manageMuteRequests",
     AutoMuteBanRequests = "autoMuteBanRequests"

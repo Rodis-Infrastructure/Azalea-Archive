@@ -33,21 +33,22 @@ export default class BanCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const user = interaction.options.getUser("user", true);
-        const [member, isBanned] = await Promise.all([
-            interaction.guild!.members.fetch(user.id),
-            interaction.guild!.bans.fetch(user.id)
+        const targetUser = interaction.options.getUser("user", true);
+
+        const [targetMember, isBanned] = await Promise.all([
+            interaction.guild!.members.fetch(targetUser.id),
+            interaction.guild!.bans.fetch(targetUser.id)
         ]).catch(() => []);
 
         const { success, error } = config.emojis;
 
-        if (member) {
+        if (targetMember) {
             const notModerateableReason = validateModerationAction({
                 config,
                 executorId: interaction.user.id,
-                target: member,
+                target: targetMember,
                 additionalValidation: [{
-                    condition: !member.bannable,
+                    condition: !targetMember.bannable,
                     failResponse: "I do not have permission to ban this member."
                 }]
             });
@@ -72,34 +73,38 @@ export default class BanCommand extends Command {
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            await interaction.guild!.members.ban(user, {
+            await interaction.guild!.members.ban(targetUser, {
                 deleteMessageSeconds: config.deleteMessageSecondsOnBan,
                 reason
             });
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} An error has occurred while trying to ban this user.`,
+                content: `${error} An error has occurred while trying to ban this user: ${err.message}`,
                 ephemeral
             });
             return;
         }
 
+        const confirmation = config.formatConfirmation(`banned ${targetUser}`, {
+            executorId: interaction.user.id,
+            success: true,
+            reason
+        });
+
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully banned **${user.tag}**${formatReason(reason)}`,
+                content: `${success} Successfully banned ${targetUser}${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendActionConfirmation({
-                authorId: interaction.user.id,
-                message: `banned **${user.tag}**`,
-                sourceChannelId: interaction.channelId,
-                reason
+            config.sendNotification(confirmation, {
+                sourceChannelId: interaction.channelId
             }),
             resolveInfraction({
                 punishment: PunishmentType.Ban,
-                executor: interaction.user,
-                targetId: user.id,
+                executorId: interaction.user.id,
+                targetId: targetUser.id,
                 guildId: interaction.guildId!,
                 reason
             })

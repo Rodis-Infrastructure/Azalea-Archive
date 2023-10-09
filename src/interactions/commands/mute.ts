@@ -2,15 +2,18 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChatInputCommandInteraction,
-    GuildMember
+    GuildMember,
+    time
 } from "discord.js";
 
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
-import { discordTimestamp, formatReason } from "../../utils";
+import { formatReason, MAX_MUTE_DURATION } from "../../utils";
+import { TimestampStyles } from "@discordjs/formatters";
 import { muteMember } from "../../utils/moderation";
 
 import Config from "../../utils/config";
+import ms from "ms";
 
 export default class MuteCommand extends Command {
     constructor() {
@@ -43,48 +46,55 @@ export default class MuteCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const member = interaction.options.getMember("member") as GuildMember;
+        const target = interaction.options.getMember("member") as GuildMember | null;
         const { success, error } = config.emojis;
 
-        if (!member) {
+        if (!target) {
             await interaction.reply({
-                content: `${error} The user provided is not a member of the server.`,
+                content: `${error} The user entered is not a member of the server.`,
                 ephemeral
             });
             return;
         }
 
-        const reason = interaction.options.getString("reason");
-        const duration = interaction.options.getString("duration") ?? "28d";
-        const [res] = await muteMember(member, {
-            config,
-            executor: interaction.user,
-            duration,
-            reason
-        });
+        const reason = interaction.options.getString("reason") ?? undefined;
+        const duration = interaction.options.getString("duration") ?? ms(MAX_MUTE_DURATION);
 
-        /* The result is the mute's expiration timestamp */
-        if (typeof res === "number") {
-            const reply = `muted **${member.user.tag}** until ${discordTimestamp(res, "F")} | Expires ${discordTimestamp(res, "R")}`;
+        try {
+            const { expiresAt } = await muteMember(target, {
+                executorId: interaction.user.id,
+                duration,
+                config,
+                reason
+            });
+
+            const expiresAtDateTimestamp = time(expiresAt, TimestampStyles.LongDateTime);
+            const expiresAtRelativeTimestamp = time(expiresAt, TimestampStyles.RelativeTime);
+            const response = `muted ${target} until ${expiresAtDateTimestamp} | Expires ${expiresAtRelativeTimestamp}`;
+
+            const confirmation = config.formatConfirmation(response, {
+                executorId: interaction.user.id,
+                success: true,
+                reason
+            });
+
             await Promise.all([
                 interaction.reply({
-                    content: `${success} Successfully ${reply}${formatReason(reason)}`,
+                    content: `${success} Successfully ${response}${formatReason(reason)}`,
                     ephemeral
                 }),
-                config.sendActionConfirmation({
-                    authorId: interaction.user.id,
-                    message: reply,
-                    sourceChannelId: interaction.channelId,
-                    reason
+                config.sendNotification(confirmation, {
+                    sourceChannelId: interaction.channelId
                 })
             ]);
             return;
-        }
+        } catch (_err) {
+            const err = _err as Error;
 
-        /* The result is an error message */
-        await interaction.reply({
-            content: `${error} ${res}`,
-            ephemeral
-        });
+            await interaction.reply({
+                content: `${error} ${err.message}`,
+                ephemeral
+            });
+        }
     }
 }

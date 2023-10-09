@@ -8,14 +8,16 @@ import {
     Colors,
     EmbedBuilder,
     GuildMember,
-    inlineCode
+    inlineCode,
+    time
 } from "discord.js";
 
 import { InfractionCount, PunishmentType } from "../../types/db";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { mapInfractionCount } from "../../utils/infractions";
-import { discordTimestamp } from "../../utils";
+import { TimestampStyles } from "@discordjs/formatters";
+import { RolePermission } from "../../types/config";
 import { getQuery } from "../../db";
 
 import Config from "../../utils/config";
@@ -37,44 +39,49 @@ export default class InfoCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const user = interaction.options.getUser("user") || interaction.user;
+        const targetUser = interaction.options.getUser("user") || interaction.user;
         const components = [];
         const flags = [];
 
-        let member = interaction.options.getMember("user") as GuildMember;
+        let targetMember = interaction.options.getMember("user") as GuildMember | null;
 
-        if (user.bot) flags.push("Bot");
-        if (!member && user.id === interaction.user.id) member = interaction.member as GuildMember;
+        if (targetUser.bot) flags.push("Bot");
+        if (!targetMember && targetUser.id === interaction.user.id) targetMember = interaction.member as GuildMember;
 
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
             .setAuthor({
-                name: user.tag,
-                iconURL: user.displayAvatarURL(),
-                url: user.displayAvatarURL()
+                name: targetUser.tag,
+                iconURL: targetUser.displayAvatarURL(),
+                url: targetUser.displayAvatarURL()
             })
-            .setFooter({ text: `ID: ${user.id}` });
+            .setFooter({ text: `ID: ${targetUser.id}` });
 
-        if (member) {
-            flags.push(...config.userFlags(member));
+        const relativeCreatedTimestamp = time(targetUser.createdAt.getTime(), TimestampStyles.RelativeTime);
 
-            if (config.isGuildStaff(member)) flags.push("Staff");
-            if (member.isCommunicationDisabled()) flags.push("Muted");
+        if (targetMember) {
+            flags.push(...config.userFlags(targetMember));
+
+            if (config.isGuildStaff(targetMember)) flags.push("Staff");
+            if (targetMember.isCommunicationDisabled()) flags.push("Muted");
+
+            const relativeJoinedTimestamp = time(targetMember.joinedAt!.getTime(), TimestampStyles.RelativeTime);
 
             embed.addFields([
                 {
-                    name: member.nickname ? "Nickname" : "Display Name",
-                    value: member.nickname || member.displayName,
+                    name: targetMember.nickname ? "Nickname" : "Display Name",
+                    // Server nickname OR Global display name OR Username
+                    value: targetMember.nickname || targetMember.displayName,
                     inline: true
                 },
                 {
                     name: "Created",
-                    value: discordTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
+                    value: relativeCreatedTimestamp,
                     inline: true
                 },
                 {
                     name: "Joined",
-                    value: discordTimestamp(Math.floor(member.joinedTimestamp as number / 1000), "R"),
+                    value: relativeJoinedTimestamp,
                     inline: true
                 }
             ]);
@@ -82,19 +89,19 @@ export default class InfoCommand extends Command {
             embed.setColor(Colors.Red);
             embed.setFields({
                 name: "Created",
-                value: discordTimestamp(Math.floor(user.createdTimestamp / 1000), "R"),
+                value: relativeCreatedTimestamp,
                 inline: true
             });
 
-            const ban = await interaction.guild!.bans.fetch(user.id)
+            const targetIsBanned = await interaction.guild!.bans.fetch(targetUser.id)
                 .then(() => true)
                 .catch(() => false);
 
-            if (ban) {
-                const banData = await getQuery<{ reason: string }>(`
+            if (targetIsBanned) {
+                const ban = await getQuery<{ reason: string }>(`
                     SELECT reason
                     FROM infractions
-                    WHERE target_id = ${user.id}
+                    WHERE target_id = ${targetUser.id}
                       AND guild_id = ${interaction.guildId!}
                       AND action = ${PunishmentType.Ban}
                     ORDER BY infraction_id DESC
@@ -102,21 +109,21 @@ export default class InfoCommand extends Command {
                 `);
 
                 embed.setTitle("Banned");
-                embed.setDescription(banData?.reason || "No reason provided.");
+                embed.setDescription(ban?.reason || "No reason provided.");
             } else {
                 embed.setDescription("This user is not a member of the server.");
             }
         }
 
-        /* Only allows staff to view member infractions, but not the infractions of other staff */
+        // Only allows staff to view member infractions, but not the infractions of other staff
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member as GuildMember)) {
-            const infractionCount = await getQuery<InfractionCount, true>(`
+            const infractionCount = await getQuery<InfractionCount, false>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE target_id = ${user.id}
+                WHERE target_id = ${targetUser.id}
                   AND guild_id = ${interaction.guildId!};
 
             `);
@@ -129,7 +136,7 @@ export default class InfoCommand extends Command {
 
             const infractionsBtn = new ButtonBuilder()
                 .setLabel("Infractions")
-                .setCustomId(`inf-search-${user.id}`)
+                .setCustomId(`inf-search-${targetUser.id}`)
                 .setStyle(ButtonStyle.Secondary);
 
             const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(infractionsBtn);
@@ -138,27 +145,24 @@ export default class InfoCommand extends Command {
 
         if (
             flags.includes("Staff") &&
-            config.hasPermission(interaction.member as GuildMember, {
-                permission: "viewModerationActivity",
-                requiredValue: true
-            })
+            config.hasPermission(interaction.member as GuildMember, RolePermission.ViewModerationActivity)
         ) {
             ephemeral = true;
-            const dealtInfCount = await getQuery<InfractionCount>(`
+            const dealtInfractionCount = await getQuery<InfractionCount>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE (target_id = ${user.id} OR request_author_id = ${user.id})
+                WHERE (target_id = ${targetUser.id} OR request_author_id = ${targetUser.id})
                   AND guild_id = ${interaction.guildId!};
 
             `);
 
-            if (dealtInfCount) {
+            if (dealtInfractionCount) {
                 embed.addFields({
                     name: "Infractions Dealt",
-                    value: mapInfractionCount(dealtInfCount),
+                    value: mapInfractionCount(dealtInfractionCount),
                     inline: true
                 });
             }
@@ -171,6 +175,7 @@ export default class InfoCommand extends Command {
                     value: inlineCode(flags.join("`\n`")),
                     inline: true
                 },
+                // Empty field to improve the layout
                 {
                     name: "\u200b",
                     value: "\u200b",

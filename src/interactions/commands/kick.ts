@@ -39,12 +39,12 @@ export default class KickCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const member = interaction.options.getMember("member") as GuildMember;
+        const target = interaction.options.getMember("member") as GuildMember | null;
         const { success, error } = config.emojis;
 
-        if (!member) {
+        if (!target) {
             await interaction.reply({
-                content: `${error} The user provided is not a member of the server.`,
+                content: `${error} The user entered is not a member of the server.`,
                 ephemeral
             });
             return;
@@ -53,9 +53,9 @@ export default class KickCommand extends Command {
         const notModerateableReason = validateModerationAction({
             config,
             executorId: interaction.user.id,
-            target: member,
+            target: target,
             additionalValidation: [{
-                condition: !member.kickable,
+                condition: !target.kickable,
                 failResponse: "I do not have permission to kick this member."
             }]
         });
@@ -71,33 +71,37 @@ export default class KickCommand extends Command {
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            await member.kick(reason);
+            await target.kick(reason);
             await resolveInfraction({
                 punishment: PunishmentType.Kick,
-                executor: interaction.user,
-                targetId: member.id,
+                executorId: interaction.user.id,
+                targetId: target.id,
                 guildId: interaction.guildId!,
                 reason
             });
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} An error has occurred while trying to execute this interaction.`,
+                content: `${error} An error has occurred while trying to execute this interaction: ${err.message}`,
                 ephemeral
             });
             return;
         }
 
+        const confirmation = config.formatConfirmation(`kicked ${target}`, {
+            executorId: interaction.user.id,
+            success: true,
+            reason
+        });
+
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully kicked **${member.user.tag}**${formatReason(reason)}`,
+                content: `${success} Successfully kicked ${target}${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendActionConfirmation({
-                authorId: interaction.user.id,
-                message: `kicked **${member.user.tag}**`,
-                sourceChannelId: interaction.channelId,
-                reason
+            config.sendNotification(confirmation, {
+                sourceChannelId: interaction.channelId
             })
         ]);
     }

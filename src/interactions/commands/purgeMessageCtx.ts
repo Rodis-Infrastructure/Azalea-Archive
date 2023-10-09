@@ -17,13 +17,15 @@ export default class PurgeMessageCtxCommand extends Command {
 
     async execute(interaction: MessageContextMenuCommandInteraction, _: never, config: Config): Promise<void> {
         const { success, error } = config.emojis;
-        const { author, member } = interaction.targetMessage;
 
-        if (member) {
+        const targetUser = interaction.targetMessage.author;
+        const targetMember = interaction.targetMessage.member;
+
+        if (targetMember) {
             const notModerateableReason = validateModerationAction({
                 config,
                 executorId: interaction.user.id,
-                target: member
+                target: targetMember
             });
 
             if (notModerateableReason) {
@@ -36,14 +38,14 @@ export default class PurgeMessageCtxCommand extends Command {
         }
 
         try {
-            const purgedMessages = await purgeMessages({
+            const purgedMessageCount = await purgeMessages({
                 channel: interaction.channel as GuildTextBasedChannel,
                 amount: 100,
-                targetId: author.id,
+                targetId: targetUser.id,
                 executorId: interaction.user.id
             });
 
-            if (!purgedMessages) {
+            if (!purgedMessageCount) {
                 await interaction.reply({
                     content: `${error} There are no messages to purge.`,
                     ephemeral: true
@@ -52,13 +54,14 @@ export default class PurgeMessageCtxCommand extends Command {
             }
 
             await interaction.reply({
-                content: `${success} Successfully purged \`${purgedMessages}\` messages by **${author.tag}**.`,
+                content: `${success} Successfully purged \`${purgedMessageCount}\` messages by ${targetUser}.`,
                 ephemeral: true
             });
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} Failed to purge messages.`,
+                content: `${error} Failed to purge messages: ${err.message}`,
                 ephemeral: true
             });
         }

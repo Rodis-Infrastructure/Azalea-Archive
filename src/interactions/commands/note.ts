@@ -40,17 +40,17 @@ export default class NoteCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const user = interaction.options.getUser("user", true);
-        const member = interaction.options.getMember("user") as GuildMember;
+        const targetMember = interaction.options.getMember("user") as GuildMember | null;
+        const targetUser = interaction.options.getUser("user", true);
         const note = interaction.options.getString("note", true);
 
         const { error, success } = config.emojis;
 
-        if (member) {
+        if (targetMember) {
             const notModerateableReason = validateModerationAction({
-                config,
                 executorId: interaction.user.id,
-                target: member
+                target: targetMember,
+                config
             });
 
             if (notModerateableReason) {
@@ -64,31 +64,36 @@ export default class NoteCommand extends Command {
 
         try {
             await resolveInfraction({
-                executor: interaction.user,
-                targetId: user.id,
+                executorId: interaction.user.id,
+                targetId: targetUser.id,
                 guildId: interaction.guildId!,
                 reason: note,
                 punishment: PunishmentType.Note
             });
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} An error occurred while trying to execute this interaction`,
+                content: `${error} An error occurred while trying to execute this interaction: ${err.message}`,
                 ephemeral
             });
+
             return;
         }
 
+        const confirmation = config.formatConfirmation(`added a note to ${targetUser}`, {
+            executorId: interaction.user.id,
+            success: true,
+            reason: note
+        });
+
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully added a note to **${user.tag}**${formatReason(note)}`,
+                content: `${success} Successfully added a note to ${targetUser}${formatReason(note)}`,
                 ephemeral
             }),
-            config.sendActionConfirmation({
-                authorId: interaction.user.id,
-                message: `added a note to **${user.tag}**`,
-                sourceChannelId: interaction.channelId,
-                reason: note
+            config.sendNotification(confirmation, {
+                sourceChannelId: interaction.channelId
             })
         ]);
     }

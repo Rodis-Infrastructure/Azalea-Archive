@@ -23,11 +23,6 @@ export enum InteractionResponseType {
     DeferUpdate = 2,
 }
 
-export enum PurgeSubcommand {
-    User = "user",
-    All = "all"
-}
-
 export type AnyComponentInteraction = ButtonInteraction | ModalSubmitInteraction | AnySelectMenuInteraction;
 export type AnyCommandInteraction =
     ChatInputCommandInteraction

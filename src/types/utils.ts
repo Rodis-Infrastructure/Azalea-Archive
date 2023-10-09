@@ -7,8 +7,7 @@ import {
     GuildTextBasedChannel,
     MessageCreateOptions,
     MessagePayload,
-    Snowflake,
-    User
+    Snowflake
 } from "discord.js";
 
 import { InfractionFlag, PunishmentType } from "./db";
@@ -49,7 +48,7 @@ export interface InfractionLogData {
 }
 
 export type InfractionResolveOptions = {
-    executor: User,
+    executorId: Snowflake,
     targetId: Snowflake,
     guildId: Snowflake,
     requestAuthorId?: Snowflake,

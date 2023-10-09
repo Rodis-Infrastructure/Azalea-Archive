@@ -5,7 +5,7 @@ import {
     GuildMember
 } from "discord.js";
 
-import { muteExpirationTimestamp, resolveInfraction, validateModerationAction } from "../../utils/moderation";
+import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { PunishmentType } from "../../types/db";
@@ -38,12 +38,12 @@ export default class UnmuteCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const offender = interaction.options.getMember("member") as GuildMember;
+        const target = interaction.options.getMember("member") as GuildMember | null;
         const { success, error } = config.emojis;
 
-        if (!offender) {
+        if (!target) {
             await interaction.reply({
-                content: `${error} The user provided is not a member of the server.`,
+                content: `${error} The user entered is not a member of the server.`,
                 ephemeral
             });
             return;
@@ -51,12 +51,18 @@ export default class UnmuteCommand extends Command {
 
         const notModerateableReason = validateModerationAction({
             config,
+            target,
             executorId: interaction.user.id,
-            target: offender,
-            additionalValidation: [{
-                condition: !offender.moderatable,
-                failResponse: "I do not have permission to unmute this member."
-            }]
+            additionalValidation: [
+                {
+                    condition: !target.moderatable,
+                    failResponse: "I do not have permission to unmute this member."
+                },
+                {
+                    condition: !target.isCommunicationDisabled(),
+                    failResponse: "This member is not muted."
+                }
+            ]
         });
 
         if (notModerateableReason) {
@@ -67,45 +73,42 @@ export default class UnmuteCommand extends Command {
             return;
         }
 
-        if (!muteExpirationTimestamp(offender)) {
-            await interaction.reply({
-                content: `${error} This member is not muted.`,
-                ephemeral
-            });
-            return;
-        }
-
-        const reason = interaction.options.getString("reason");
+        const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
             /* Clears the timeout */
-            await offender.timeout(null);
+            await target.timeout(null);
             await resolveInfraction({
                 guildId: interaction.guildId!,
                 punishment: PunishmentType.Unmute,
-                targetId: offender.id,
-                executor: interaction.user,
+                targetId: target.id,
+                executorId: interaction.user.id,
                 reason
             });
-        } catch (err) {
-            console.log(err);
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
-                content: `${error} An error has occurred while trying to unmute this member.`,
+                content: `${error} An error has occurred while trying to unmute this member: ${err.message}`,
                 ephemeral
             });
+
             return;
         }
 
+        const confirmation = config.formatConfirmation(`unmuted ${target}`, {
+            executorId: interaction.user.id,
+            success: true,
+            reason
+        });
+
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully unmuted **${offender.user.tag}**${formatReason(reason)}`,
+                content: `${success} Successfully unmuted ${target}${formatReason(reason)}`,
                 ephemeral
             }),
-            config.sendActionConfirmation({
-                message: `unmuted **${offender.user.tag}**`,
-                sourceChannelId: interaction.channelId,
-                authorId: interaction.user.id,
-                reason
+            config.sendNotification(confirmation, {
+                sourceChannelId: interaction.channelId
             })
         ]);
     }

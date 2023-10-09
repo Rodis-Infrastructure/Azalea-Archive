@@ -1,5 +1,5 @@
 import { Component } from "../../handlers/interactions/interaction";
-import { handleUserInfractionSearch } from "../commands/infraction";
+import { handleInfractionSearch } from "../commands/infraction";
 import { InteractionResponseType } from "../../types/interactions";
 import { ButtonInteraction } from "discord.js";
 
@@ -8,6 +8,7 @@ import Config from "../../utils/config";
 export default class InfractionSearchButton extends Component<ButtonInteraction> {
     constructor() {
         super({
+            // Custom ID format: inf-search-{targetId}
             name: { startsWith: "inf-search" },
             defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false
@@ -16,7 +17,7 @@ export default class InfractionSearchButton extends Component<ButtonInteraction>
 
     async execute(interaction: ButtonInteraction, ephemeral: boolean, config: Config): Promise<void> {
         await Promise.all([
-            handleUserInfractionSearch(interaction, config, ephemeral),
+            handleInfractionSearch(interaction, config, ephemeral),
             interaction.message.edit({ components: [] })
         ]);
     }

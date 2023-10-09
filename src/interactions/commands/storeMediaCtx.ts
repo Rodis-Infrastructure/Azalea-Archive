@@ -1,6 +1,7 @@
 import {
     ApplicationCommandType,
     GuildTextBasedChannel,
+    hideLinkEmbed,
     Message,
     MessageContextMenuCommandInteraction
 } from "discord.js";
@@ -31,7 +32,6 @@ export default class StoreMediaCtxCommand extends Command {
                 content: `${error} This guild doesn't have a media conversion channel set up!`,
                 ephemeral: true
             });
-
             return;
         }
 
@@ -40,7 +40,6 @@ export default class StoreMediaCtxCommand extends Command {
                 content: `${error} This message doesn't have any attachments!`,
                 ephemeral: true
             });
-
             return;
         }
 
@@ -54,13 +53,12 @@ export default class StoreMediaCtxCommand extends Command {
             }
         }) as Message<true>;
 
-        const mediaURLs = Array.from(storedMediaLog.attachments.values()).map(({ url }) => url);
         const mediaConversionChannel = await interaction.guild!.channels.fetch(config.channels.mediaConversion) as GuildTextBasedChannel;
 
         await Promise.all([
-            mediaConversionChannel.send(`${interaction.user} Your media links: ${storedMediaLog.url}\n\n>>> ${mediaURLs.join("\n")}`),
+            mediaConversionChannel.send(`${interaction.user} Your media log: ${storedMediaLog.url} (${hideLinkEmbed(storedMediaLog.url)})`),
             interaction.reply({
-                content: `${success} Successfully stored \`${mediaURLs.length}\` attachments from ${targetMessage.author}`,
+                content: `${success} Successfully stored \`${storedMediaLog.attachments.size}\` attachments from ${targetMessage.author}`,
                 ephemeral: true
             })
         ]);

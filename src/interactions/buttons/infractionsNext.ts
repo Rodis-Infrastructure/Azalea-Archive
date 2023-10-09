@@ -1,16 +1,17 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, EmbedBuilder } from "discord.js";
 import { Component } from "../../handlers/interactions/interaction";
 import { InteractionResponseType } from "../../types/interactions";
+import { mapInfractionsToFields } from "../../utils/infractions";
 import { InfractionFilter } from "../../types/utils";
 import { MinimalInfraction } from "../../types/db";
 import { allQuery } from "../../db";
 
 import Config from "../../utils/config";
-import { mapInfractionsToFields } from "../../utils/infractions";
 
 export default class InfractionsNextButton extends Component<ButtonInteraction> {
     constructor() {
         super({
+            // Custom ID format: inf-page-{next|back}-{targetId}
             name: { startsWith: "inf-page" },
             defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false
@@ -18,23 +19,25 @@ export default class InfractionsNextButton extends Component<ButtonInteraction> 
     }
 
     async execute(interaction: ButtonInteraction, _: never, config: Config): Promise<void> {
-        const [direction, offenderId] = interaction.customId.split("-").slice(2);
-        const { error } = config.emojis;
+        const [direction, targetId] = interaction.customId.split("-").slice(2);
+        const searchExecutorId = interaction.message.interaction?.user.id;
 
-        if (interaction.message.interaction?.user.id !== interaction.user.id) {
+        if (searchExecutorId !== interaction.user.id) {
             await interaction.reply({
-                content: `${error} You cannot change pages on an infraction search that you did not initiate.`,
+                content: `${config.emojis.error} You cannot change pages on an infraction search that wasn't initiated by you.`,
                 ephemeral: true
             });
             return;
         }
 
-        const actionRow = new ActionRowBuilder<ButtonBuilder>(interaction.message.components[0].toJSON());
-        const [backBtn, pageCountBtn, nextBtn] = actionRow.components;
-        let pageCount = parseInt(pageCountBtn.data.label!.split(" / ")[0]);
+        const oldActionRow = interaction.message.components[0];
+        const newActionRow = new ActionRowBuilder<ButtonBuilder>(oldActionRow.toJSON());
 
-        if (direction === "next") pageCount++;
-        else if (direction === "back") pageCount--;
+        const [backBtn, pageCountBtn, nextBtn] = newActionRow.components;
+        let currentPage = parseInt(pageCountBtn.data.label!.split(" / ")[0]);
+
+        if (direction === "next") currentPage++;
+        else if (direction === "back") currentPage--;
 
         const infractions = await allQuery<MinimalInfraction>(`
             SELECT infraction_id,
@@ -47,24 +50,25 @@ export default class InfractionsNextButton extends Component<ButtonInteraction> 
                    flag
             FROM infractions
             WHERE guild_id = ${interaction.guildId}
-              AND target_id = ${offenderId}
+              AND target_id = ${targetId}
             ORDER BY created_at DESC
             LIMIT 100;
         `);
 
-        const embedTitle = interaction.message.embeds[0].title;
-        const filter = (embedTitle?.split(" ")[1] as InfractionFilter | undefined) || null;
-        const [maxPageCount, fields] = mapInfractionsToFields({
+        const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+        const filter = embed.data.title?.split(" ")[1] as InfractionFilter | undefined;
+
+        const [pageCount, fields] = mapInfractionsToFields({
             infractions,
-            filter,
-            page: pageCount
+            filter: filter || null,
+            page: currentPage
         });
 
-        pageCountBtn.setLabel(`${pageCount} / ${maxPageCount}`);
-        backBtn.setDisabled(pageCount === 1);
-        nextBtn.setDisabled(pageCount === maxPageCount);
+        pageCountBtn.setLabel(`${currentPage} / ${pageCount}`);
+        backBtn.setDisabled(currentPage === 1);
+        nextBtn.setDisabled(currentPage === pageCount);
+        embed.setFields(fields);
 
-        const embed = new EmbedBuilder(interaction.message.embeds[0].toJSON()).setFields(fields);
-        await interaction.update({ embeds: [embed], components: [actionRow] });
+        await interaction.update({ embeds: [embed], components: [newActionRow] });
     }
 }

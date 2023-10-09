@@ -31,7 +31,7 @@ notices:
 channels:
   banRequestQueue: "channel-id"
   muteRequestQueue: "channel-id"
-  confirmations: "channel-id"
+  notifications: "channel-id"
   mediaConversion: "channel-id"
 
 permissions:
@@ -44,7 +44,7 @@ permissions:
 
     roleIds:
       - "role-id"
-    selections:
+    selectMenus:
       - "interaction-name"
     buttons:
       - "interaction-name"

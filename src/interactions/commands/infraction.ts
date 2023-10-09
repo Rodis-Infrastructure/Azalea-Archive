@@ -9,23 +9,27 @@ import {
     Colors,
     EmbedBuilder,
     GuildMember,
+    Snowflake,
     time,
-    User
+    User,
+    userMention
 } from "discord.js";
 
-import { currentTimestamp, elipsify, formatReason, msToString, RegexPatterns } from "../../utils";
+import { currentTimestamp, elipsify, formatReason, msToString, RegexPatterns, sanitizeString } from "../../utils";
 import { InfractionSubcommand, InteractionResponseType } from "../../types/interactions";
 import { InfractionFlag, InfractionModel, MinimalInfraction, PunishmentType } from "../../types/db";
 import { getInfractionEmbedData, mapInfractionsToFields } from "../../utils/infractions";
 import { Command } from "../../handlers/interactions/interaction";
+import { LoggingEvent, RolePermission } from "../../types/config";
 import { allQuery, getQuery, runQuery } from "../../db";
+import { TimestampStyles } from "@discordjs/formatters";
+import { APIEmbedField } from "discord-api-types/v10";
 import { InfractionFilter } from "../../types/utils";
-import { LoggingEvent } from "../../types/config";
+import { sendLog } from "../../utils/logging";
+import { client } from "../../client";
 
 import Config from "../../utils/config";
 import ms from "ms";
-import { client } from "../../client";
-import { TimestampStyles } from "@discordjs/formatters";
 
 export default class InfractionCommand extends Command {
     constructor() {
@@ -41,7 +45,7 @@ export default class InfractionCommand extends Command {
                     description: "Get information about an infraction",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [{
-                        name: "id",
+                        name: "infraction_id",
                         description: "The ID of the infraction",
                         type: ApplicationCommandOptionType.Number,
                         required: true
@@ -52,7 +56,7 @@ export default class InfractionCommand extends Command {
                     description: "Delete an infraction",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [{
-                        name: "id",
+                        name: "infraction_id",
                         description: "The ID of the infraction",
                         type: ApplicationCommandOptionType.Number,
                         required: true
@@ -64,7 +68,7 @@ export default class InfractionCommand extends Command {
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
-                            name: "id",
+                            name: "infraction_id",
                             description: "The ID of the infraction",
                             type: ApplicationCommandOptionType.Number,
                             required: true
@@ -84,7 +88,7 @@ export default class InfractionCommand extends Command {
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
-                            name: "id",
+                            name: "infraction_id",
                             description: "The ID of the infraction",
                             type: ApplicationCommandOptionType.Number,
                             required: true
@@ -124,14 +128,14 @@ export default class InfractionCommand extends Command {
     }
 
     async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const subcommand = interaction.options.getSubcommand();
-        const id = interaction.options.getNumber("id") as number;
-        const infraction = await getQuery<InfractionModel>(`
+        const subcommand = interaction.options.getSubcommand(true);
+        const infractionId = interaction.options.getNumber("infraction_id") as number;
+        const infraction = await getQuery<InfractionModel, false>(`
             SELECT *
             FROM infractions
-            WHERE infraction_id = ${id}
+            WHERE infraction_id = ${infractionId}
               AND guild_id = ${interaction.guildId}
-        `) as InfractionModel;
+        `);
 
         const { error, success } = config.emojis;
 
@@ -139,11 +143,11 @@ export default class InfractionCommand extends Command {
             case InfractionSubcommand.Delete:
             case InfractionSubcommand.Reason:
             case InfractionSubcommand.Duration: {
-                try {
-                    config.canManageInfraction(infraction, interaction.member as GuildMember);
-                } catch (err) {
+                const canManageInfraction = config.canManageInfraction(infraction, interaction.member as GuildMember);
+
+                if (!canManageInfraction) {
                     await interaction.reply({
-                        content: `${error} ${err}`,
+                        content: `${error} You do not have permission to manage this infraction.`,
                         ephemeral
                     });
                     return;
@@ -155,32 +159,41 @@ export default class InfractionCommand extends Command {
             let response!: string;
 
             switch (subcommand) {
-                case InfractionSubcommand.Reason:
-                    response = await handleReasonChange({
-                        infractionId: id,
+                case InfractionSubcommand.Reason: {
+                    response = await handleInfractionReasonChange(infractionId, {
                         newReason: interaction.options.getString("new_reason", true),
                         guildId: interaction.guildId!,
-                        updatedBy: interaction.user
+                        updatedById: interaction.user.id
                     });
                     break;
-                case InfractionSubcommand.Duration:
-                    response = await handleDurationChange(infraction, interaction);
+                }
+
+                case InfractionSubcommand.Duration: {
+                    response = await handleInfractionDurationChange(infraction, interaction);
                     break;
-                case InfractionSubcommand.Delete:
-                    response = await handleInfractionDeletion(id, interaction);
+                }
+
+                case InfractionSubcommand.Delete: {
+                    response = await handleInfractionArchive(infractionId, interaction);
                     break;
+                }
+
                 case InfractionSubcommand.Search: {
-                    await handleUserInfractionSearch(interaction, config, ephemeral);
+                    await handleInfractionSearch(interaction, config, ephemeral);
                     return;
                 }
+
                 case InfractionSubcommand.Info: {
-                    const embed = handleInfractionInfo(infraction);
+                    const embed = getInfractionInfoEmbed(infraction);
+
                     await interaction.reply({
                         embeds: [embed],
                         ephemeral
                     });
+
                     return;
                 }
+
                 default:
                     await interaction.reply({
                         content: `${error} Unknown subcommand: \`${subcommand}\``,
@@ -189,18 +202,23 @@ export default class InfractionCommand extends Command {
                     return;
             }
 
+            const confirmation = config.formatConfirmation(response, {
+                executorId: interaction.user.id,
+                success: true
+            });
+
             await Promise.all([
                 interaction.reply({
                     content: `${success} Successfully ${response}`,
                     ephemeral
                 }),
-                config.sendActionConfirmation({
-                    message: response,
-                    authorId: interaction.user.id,
+                config.sendNotification(confirmation, {
                     sourceChannelId: interaction.channelId
                 })
             ]);
-        } catch (err) {
+        } catch (_err) {
+            const err = _err as Error;
+
             await interaction.reply({
                 content: `${error} ${err}`,
                 ephemeral
@@ -209,7 +227,7 @@ export default class InfractionCommand extends Command {
     }
 }
 
-export async function handleUserInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config, ephemeral: boolean) {
+export async function handleInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config, ephemeral: boolean): Promise<void> {
     let filter: InfractionFilter | null = null;
     let targetMember: GuildMember | null = null;
     let targetUser!: User;
@@ -223,10 +241,7 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     }
 
     const targetIsStaff = targetMember && config.isGuildStaff(targetMember);
-    const executorCanViewModerationActivity = config.hasPermission(interaction.member as GuildMember, {
-        permission: "viewModerationActivity",
-        requiredValue: true
-    });
+    const executorCanViewModerationActivity = config.hasPermission(interaction.member as GuildMember, RolePermission.ViewModerationActivity);
 
     if (targetIsStaff && !executorCanViewModerationActivity) {
         await interaction.reply({
@@ -325,27 +340,25 @@ export async function handleUserInfractionSearch(interaction: ChatInputCommandIn
     });
 }
 
-export async function handleReasonChange(data: {
-    infractionId: number,
-    updatedBy: User,
-    guildId: string,
+/**
+ * Stores the new reason of an infraction in the database and logs the change
+ * @returns {string} A response confirming the change
+ */
+export async function handleInfractionReasonChange(infractionId: number, data: {
+    updatedById: Snowflake,
+    guildId: Snowflake,
     newReason: string
 }): Promise<string> {
-    const { infractionId, updatedBy, guildId, newReason } = data;
+    const { updatedById, guildId, newReason } = data;
 
-    try {
-        await runQuery(`
-            UPDATE infractions
-            SET reason     = '${newReason}',
-                updated_at = ${currentTimestamp()},
-                updated_by = ${updatedBy.id}
-            WHERE infraction_id = ${infractionId}
-              AND guild_id = ${guildId};
-        `);
-    } catch (err) {
-        console.error(err);
-        throw "An error occurred while updating the reason of the infraction";
-    }
+    await runQuery(`
+        UPDATE infractions
+        SET reason     = ${sanitizeString(newReason)},
+            updated_at = ${currentTimestamp()},
+            updated_by = ${updatedById}
+        WHERE infraction_id = ${infractionId}
+          AND guild_id = ${guildId};
+    `);
 
     const log = new EmbedBuilder()
         .setColor(Colors.Yellow)
@@ -353,7 +366,7 @@ export async function handleReasonChange(data: {
         .setFields([
             {
                 name: "Moderator",
-                value: `${updatedBy}`
+                value: userMention(updatedById)
             },
             {
                 name: "New Reason",
@@ -363,7 +376,7 @@ export async function handleReasonChange(data: {
         .setFooter({ text: `#${infractionId}` })
         .setTimestamp();
 
-    await log({
+    await sendLog({
         event: LoggingEvent.Infraction,
         guildId,
         options: {
@@ -378,33 +391,40 @@ export async function handleReasonChange(data: {
     return `updated the reason of infraction **#${infractionId}**${formatReason(newReason)}`;
 }
 
-async function handleDurationChange(infraction: InfractionModel, interaction: ChatInputCommandInteraction): Promise<string> {
+/**
+ * Overrides the duration of an infraction and logs the change
+ * @returns {string} A response confirming the change
+ */
+async function handleInfractionDurationChange(infraction: InfractionModel, interaction: ChatInputCommandInteraction): Promise<string> {
     const strDuration = interaction.options.getString("new_duration", true);
-    if (!strDuration.match(RegexPatterns.DurationValidation)) throw "The duration provided is invalid.";
 
+    if (!strDuration.match(RegexPatterns.DurationValidation)) throw new Error("The duration provided is invalid.");
+
+    /** New duration in seconds */
     const duration = Math.floor(ms(strDuration) / 1000);
-    const now = currentTimestamp();
 
-    if (infraction.action !== PunishmentType.Mute) throw "You can only update the duration of mute infractions";
+    if (infraction.action !== PunishmentType.Mute) throw new Error("You can only update the duration of temporary infractions");
 
-    const offender = await interaction.guild!.members.fetch(infraction.target_id);
-    if (!offender.isCommunicationDisabled()) throw "This user does not have an active mute";
+    const target = await interaction.guild!.members.fetch(infraction.target_id).catch(() => null);
+
+    if (!target) throw new Error("Unable to change the mute duration of a user who is not in the server");
+    if (!target.isCommunicationDisabled()) throw new Error("This user does not have an active mute");
 
     const expiresAt = duration + infraction.created_at;
 
     try {
-        await offender.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.infraction_id})`);
+        await target.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.infraction_id})`);
         await runQuery(`
             UPDATE infractions
             SET expires_at = ${expiresAt},
-                updated_at = ${now},
+                updated_at = ${currentTimestamp()},
                 updated_by = ${interaction.user.id}
             WHERE infraction_id = ${infraction.infraction_id}
               AND guild_id = ${interaction.guildId};
         `);
     } catch (err) {
         console.error(err);
-        throw "An error occurred while updating the duration of the mute";
+        throw new Error("An error occurred while updating the duration of this infraction");
     }
 
     const log = new EmbedBuilder()
@@ -423,7 +443,7 @@ async function handleDurationChange(infraction: InfractionModel, interaction: Ch
         .setFooter({ text: `#${infraction.infraction_id}` })
         .setTimestamp();
 
-    await log({
+    await sendLog({
         event: LoggingEvent.Infraction,
         guildId: interaction.guildId!,
         options: {
@@ -435,10 +455,17 @@ async function handleDurationChange(infraction: InfractionModel, interaction: Ch
         }
     });
 
-    return `updated the duration of infraction **#${infraction.infraction_id}** to ${time(expiresAt, TimestampStyles.LongDateTime)} | Expires ${time(expiresAt, TimestampStyles.RelativeTime)}`;
+    const expiresAtDateTimestamp = time(expiresAt, TimestampStyles.LongDateTime);
+    const expiresAtRelativeTimestamp = time(expiresAt, TimestampStyles.RelativeTime);
+
+    return `updated the duration of infraction **#${infraction.infraction_id}** to ${expiresAtDateTimestamp} | Expires ${expiresAtRelativeTimestamp}`;
 }
 
-async function handleInfractionDeletion(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
+/**
+ * Archives an infraction and logs the change
+ * @returns {string} A response confirming the change
+ */
+async function handleInfractionArchive(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
     try {
         await runQuery(`
             UPDATE infractions
@@ -449,12 +476,12 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
         `);
     } catch (err) {
         console.error(err);
-        throw "An error occurred while deleting the infraction";
+        throw new Error("An error occurred while archiving the infraction");
     }
 
     const log = new EmbedBuilder()
         .setColor(Colors.Red)
-        .setAuthor({ name: "Infraction Deleted", iconURL: "attachment://infractionDelete.png" })
+        .setAuthor({ name: "Infraction Archived", iconURL: "attachment://infractionDelete.png" })
         .setFields({
             name: "Moderator",
             value: `${interaction.user}`
@@ -462,7 +489,7 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
         .setFooter({ text: `#${infractionId}` })
         .setTimestamp();
 
-    await log({
+    await sendLog({
         event: LoggingEvent.Infraction,
         guildId: interaction.guildId!,
         options: {
@@ -474,10 +501,10 @@ async function handleInfractionDeletion(infractionId: number, interaction: ChatI
         }
     });
 
-    return `deleted infraction **#${infractionId}**`;
+    return `archived infraction **#${infractionId}**`;
 }
 
-function handleInfractionInfo(infraction: InfractionModel): EmbedBuilder {
+function getInfractionInfoEmbed(infraction: InfractionModel): EmbedBuilder {
     const {
         infraction_id,
         action,
@@ -495,15 +522,15 @@ function handleInfractionInfo(infraction: InfractionModel): EmbedBuilder {
     } = infraction;
 
     const msCreatedAt = created_at * 1000;
-    const fields = [
+    const fields: APIEmbedField[] = [
         {
             name: "Offender",
-            value: `<@${target_id}>`,
+            value: userMention(target_id),
             inline: true
         },
         {
             name: "Moderator",
-            value: `<@${executor_id}>`,
+            value: userMention(executor_id),
             inline: true
         }
     ];
@@ -511,12 +538,12 @@ function handleInfractionInfo(infraction: InfractionModel): EmbedBuilder {
     if (request_author_id) {
         fields.push({
             name: "Requested by",
-            value: `<@${request_author_id}>`,
+            value: userMention(request_author_id),
             inline: true
         });
     }
 
-    /* The infraction is temporary */
+    // The infraction is temporary
     if (expires_at) {
         const msExpiresAt = expires_at * 1000;
 
@@ -529,26 +556,23 @@ function handleInfractionInfo(infraction: InfractionModel): EmbedBuilder {
         } else {
             fields.push({
                 name: "Duration",
-                value: `${msToString(msExpiresAt - msCreatedAt)}`,
+                value: msToString(msExpiresAt - msCreatedAt),
                 inline: true
             });
         }
     }
 
-    /* The infraction has either been updated or deleted */
-    if ((updated_by && updated_at) || (deleted_by && deleted_at)) {
-        const changes = [];
+    const recentChanges: string[] = [];
 
-        if (deleted_by && deleted_at) changes.push(`- Deleted by <@${deleted_by}> (${time(deleted_at, TimestampStyles.RelativeTime)})`);
-        if (updated_by && updated_at) changes.push(`- Updated by <@${updated_by}> (${time(updated_at, TimestampStyles.RelativeTime)})`);
+    if (deleted_by && deleted_at) recentChanges.push(`- Deleted by ${userMention(deleted_by)} (${time(deleted_at, TimestampStyles.RelativeTime)})`);
+    if (updated_by && updated_at) recentChanges.push(`- Updated by ${userMention(updated_by)} (${time(updated_at, TimestampStyles.RelativeTime)})`);
 
-        if (changes.length) {
-            fields.push({
-                name: "Recent Changes",
-                value: changes.join("\n"),
-                inline: false
-            });
-        }
+    if (recentChanges.length) {
+        fields.push({
+            name: "Recent Changes",
+            value: recentChanges.join("\n"),
+            inline: false
+        });
     }
 
     if (reason) {
@@ -559,10 +583,17 @@ function handleInfractionInfo(infraction: InfractionModel): EmbedBuilder {
         });
     }
 
-    const flagName = flag ? `${InfractionFlag[flag]} ` : "";
+    const { color } = getInfractionEmbedData(action);
+    const title: string[] = [];
+
+    if (flag) title.push(InfractionFlag[flag]);
+
+    title.push(PunishmentType[action]);
+    title.push(`#${infraction_id}`);
+
     return new EmbedBuilder()
-        .setColor(getInfractionEmbedData(action))
-        .setTitle(`${flagName}${PunishmentType[action]} #${infraction_id}`)
+        .setColor(color)
+        .setTitle(title.join(" "))
         .setFields(fields)
         .setTimestamp(msCreatedAt);
 }
