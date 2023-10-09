@@ -5,8 +5,8 @@ export interface InfractionModel {
     target_id: Snowflake;
     request_author_id?: Snowflake;
     updated_by?: Snowflake;
-    deleted_by?: Snowflake;
-    deleted_at?: EpochTimeStamp;
+    archived_by?: Snowflake;
+    archived_at?: EpochTimeStamp;
     updated_at?: EpochTimeStamp;
     executor_id: Snowflake;
     created_at: EpochTimeStamp;

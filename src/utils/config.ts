@@ -205,7 +205,7 @@ export default class Config {
     }
 
     canManageInfraction(infraction: InfractionModel, member: GuildMember): boolean {
-        const isInfractionDeleted = infraction.deleted_at && infraction.deleted_by;
+        const isInfractionDeleted = infraction.archived_at && infraction.archived_by;
         const isInfractionExecutor = infraction.executor_id !== member.id;
         const canManageInfractions = this.hasPermission(member, RolePermission.ManageInfractions);
 

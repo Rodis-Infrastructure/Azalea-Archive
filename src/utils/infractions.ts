@@ -74,15 +74,15 @@ export function mapInfractionsToFields(data: {
         switch (filter) {
             // Automatic infractions are hidden by default
             case InfractionFilter.All:
-                return !infraction.deleted_at && !infraction.deleted_by;
+                return !infraction.archived_at && !infraction.archived_by;
             case InfractionFilter.Automatic:
                 return infraction.flag === InfractionFlag.Automatic;
             case InfractionFilter.Deleted:
-                return infraction.deleted_at && infraction.deleted_by;
+                return infraction.archived_at && infraction.archived_by;
             default:
                 return infraction.flag !== InfractionFlag.Automatic
-                    && !infraction.deleted_at
-                    && !infraction.deleted_by;
+                    && !infraction.archived_at
+                    && !infraction.archived_by;
         }
     });
 

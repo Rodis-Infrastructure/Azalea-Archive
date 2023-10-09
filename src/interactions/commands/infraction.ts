@@ -52,8 +52,8 @@ export default class InfractionCommand extends Command {
                     }]
                 },
                 {
-                    name: InfractionSubcommand.Delete,
-                    description: "Delete an infraction",
+                    name: InfractionSubcommand.Archive,
+                    description: "Archive an infraction",
                     type: ApplicationCommandOptionType.Subcommand,
                     options: [{
                         name: "infraction_id",
@@ -140,7 +140,7 @@ export default class InfractionCommand extends Command {
         const { error, success } = config.emojis;
 
         switch (subcommand) {
-            case InfractionSubcommand.Delete:
+            case InfractionSubcommand.Archive:
             case InfractionSubcommand.Reason:
             case InfractionSubcommand.Duration: {
                 const canManageInfraction = config.canManageInfraction(infraction, interaction.member as GuildMember);
@@ -173,7 +173,7 @@ export default class InfractionCommand extends Command {
                     break;
                 }
 
-                case InfractionSubcommand.Delete: {
+                case InfractionSubcommand.Archive: {
                     response = await handleInfractionArchive(infractionId, interaction);
                     break;
                 }
@@ -259,8 +259,8 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
                    executor_id,
                    created_at,
                    reason,
-                   deleted_by,
-                   deleted_at,
+                   archivedby,
+                   archivedat,
                    flag,
                    expires_at,
                    action
@@ -276,8 +276,8 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
                    executor_id,
                    created_at,
                    reason,
-                   deleted_by,
-                   deleted_at,
+                   archivedby,
+                   archivedat,
                    flag,
                    expires_at,
                    action
@@ -469,8 +469,8 @@ async function handleInfractionArchive(infractionId: number, interaction: ChatIn
     try {
         await runQuery(`
             UPDATE infractions
-            SET deleted_at = ${currentTimestamp()},
-                deleted_by = ${interaction.user.id}
+            SET archivedat = ${currentTimestamp()},
+                archivedby = ${interaction.user.id}
             WHERE infraction_id = ${infractionId}
               AND guild_id = ${interaction.guildId};
         `);
@@ -514,8 +514,8 @@ function getInfractionInfoEmbed(infraction: InfractionModel): EmbedBuilder {
         expires_at,
         updated_at,
         updated_by,
-        deleted_by,
-        deleted_at,
+        archived_by,
+        archived_at,
         created_at,
         executor_id,
         flag
@@ -564,7 +564,7 @@ function getInfractionInfoEmbed(infraction: InfractionModel): EmbedBuilder {
 
     const recentChanges: string[] = [];
 
-    if (deleted_by && deleted_at) recentChanges.push(`- Deleted by ${userMention(deleted_by)} (${time(deleted_at, TimestampStyles.RelativeTime)})`);
+    if (archived_by && archived_at) recentChanges.push(`- Archived by ${userMention(archived_by)} (${time(archived_at, TimestampStyles.RelativeTime)})`);
     if (updated_by && updated_at) recentChanges.push(`- Updated by ${userMention(updated_by)} (${time(updated_at, TimestampStyles.RelativeTime)})`);
 
     if (recentChanges.length) {

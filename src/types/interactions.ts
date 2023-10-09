@@ -12,7 +12,7 @@ export type ComponentCustomId = string | { startsWith: string } | { endsWith: st
 export enum InfractionSubcommand {
     Info = "info",
     Search = "search",
-    Delete = "delete",
+    Archive = "archive",
     Reason = "reason",
     Duration = "duration",
 }

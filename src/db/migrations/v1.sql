@@ -26,9 +26,9 @@ CREATE TABLE IF NOT EXISTS infractions
     action            TINYINT   NOT NULL,
     request_author_id TEXT,
     updated_by        TEXT,
-    deleted_by        TEXT,
+    archived_by       TEXT,
     expires_at        TIMESTAMP,
-    deleted_at        TIMESTAMP,
+    archived_at       TIMESTAMP,
     updated_at        TIMESTAMP,
     flag              TINYINT,
     reason            TEXT CHECK (length(reason) <= 1024)
