@@ -32,9 +32,9 @@ export default class UnbanCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const target = interaction.options.getUser("user", true);
-        const targetIsBanned = await interaction.guild!.bans.fetch(target.id)
+        const targetIsBanned = await interaction.guild.bans.fetch(target.id)
             .then(() => true)
             .catch(() => false);
 
@@ -51,12 +51,12 @@ export default class UnbanCommand extends Command {
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            await interaction.guild!.members.unban(target, reason);
+            await interaction.guild.members.unban(target, reason);
             await resolveInfraction({
                 punishment: PunishmentType.Unban,
                 executorId: interaction.user.id,
                 targetId: target.id,
-                guildId: interaction.guildId!,
+                guildId: interaction.guildId,
                 reason
             });
         } catch (_err) {

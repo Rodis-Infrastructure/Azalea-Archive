@@ -8,7 +8,7 @@ import { allQuery } from "../../db";
 
 import Config from "../../utils/config";
 
-export default class InfractionsNextButton extends Component<ButtonInteraction> {
+export default class InfractionsNextButton extends Component<ButtonInteraction<"cached">> {
     constructor() {
         super({
             // Custom ID format: inf-page-{next|back}-{targetId}
@@ -18,7 +18,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction> 
         });
     }
 
-    async execute(interaction: ButtonInteraction, _: never, config: Config): Promise<void> {
+    async execute(interaction: ButtonInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
         const [direction, targetId] = interaction.customId.split("-").slice(2);
         const searchExecutorId = interaction.message.interaction?.user.id;
 

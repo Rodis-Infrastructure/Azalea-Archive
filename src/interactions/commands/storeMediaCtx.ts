@@ -1,11 +1,4 @@
-import {
-    ApplicationCommandType,
-    GuildTextBasedChannel,
-    hideLinkEmbed,
-    Message,
-    MessageContextMenuCommandInteraction
-} from "discord.js";
-
+import { ApplicationCommandType, hideLinkEmbed, MessageContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { LoggingEvent } from "../../types/config";
@@ -23,11 +16,11 @@ export default class StoreMediaCtxCommand extends Command {
         });
     }
 
-    async execute(interaction: MessageContextMenuCommandInteraction, _: never, config: Config): Promise<void> {
+    async execute(interaction: MessageContextMenuCommandInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
         const { success, error } = config.emojis;
         const { targetMessage } = interaction;
 
-        if (!config.channels?.mediaConversion) {
+        if (!config.channels.mediaConversion) {
             await interaction.reply({
                 content: `${error} This guild doesn't have a media conversion channel set up!`,
                 ephemeral: true
@@ -45,15 +38,31 @@ export default class StoreMediaCtxCommand extends Command {
 
         const storedMediaLog = await sendLog({
             event: LoggingEvent.Media,
-            guildId: interaction.guildId!,
+            guildId: interaction.guildId,
             options: {
                 content: `Media from ${targetMessage.author}, stored by ${interaction.user}`,
                 files: Array.from(targetMessage.attachments.values()),
                 allowedMentions: { parse: [] }
             }
-        }) as Message<true>;
+        });
 
-        const mediaConversionChannel = await interaction.guild!.channels.fetch(config.channels.mediaConversion) as GuildTextBasedChannel;
+        if (!storedMediaLog) {
+            await interaction.reply({
+                content: `${error} Unable to store media!`,
+                ephemeral: true
+            });
+            return;
+        }
+
+        const mediaConversionChannel = await interaction.guild.channels.fetch(config.channels.mediaConversion);
+
+        if (!mediaConversionChannel || !mediaConversionChannel.isTextBased()) {
+            await interaction.reply({
+                content: `${error} Unable to find the media conversion channel!`,
+                ephemeral: true
+            });
+            return;
+        }
 
         await Promise.all([
             mediaConversionChannel.send(`${interaction.user} Your media log: ${storedMediaLog.url} (${hideLinkEmbed(storedMediaLog.url)})`),

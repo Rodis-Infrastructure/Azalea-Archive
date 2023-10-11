@@ -138,9 +138,14 @@ export async function muteMember(target: GuildMember, data: {
     return { expiresAt, infractionId };
 }
 
-export function muteExpirationTimestamp(member: GuildMember): EpochTimeStamp | void {
+export function muteExpirationTimestamp(member: GuildMember): EpochTimeStamp | null {
     const msExpiresAt = member.communicationDisabledUntilTimestamp;
-    if (msExpiresAt && msExpiresAt >= Date.now()) return Math.floor(msExpiresAt / 1000);
+
+    if (msExpiresAt && msExpiresAt >= Date.now()) {
+        return Math.floor(msExpiresAt / 1000);
+    }
+
+    return null;
 }
 
 /** @returns {string} The reason why the data failed validation */
@@ -152,7 +157,7 @@ export function validateModerationAction(data: {
         condition: boolean,
         failResponse: string
     }[]
-}): string | void {
+}): string | null {
     const { executorId, target, additionalValidation, config } = data;
 
     if (executorId === target.id) return "This action cannot be carried out on yourself.";
@@ -166,6 +171,8 @@ export function validateModerationAction(data: {
     for (const check of additionalValidation ?? []) {
         if (check.condition) return check.failResponse;
     }
+
+    return null;
 }
 
 /** @returns {number} The number of messages that have been purged */
@@ -227,7 +234,10 @@ export async function validateRequest(data: {
     config: Config
 }): Promise<RequestValidationResult> {
     const { requestType, request, config } = data;
-    if (request.attachments.size && !config.getLoggingChannel(LoggingEvent.Media)) throw "You cannot add attachments to the request, please link them instead.";
+
+    if (request.attachments.size && !config.getLoggingChannel(LoggingEvent.Media)) {
+        throw new Error("You cannot add attachments to the request, please link them instead.");
+    }
 
     // Values extracted from the request
     const { targetId, reason } = RegexPatterns.RequestValidation.exec(request.content)?.groups ?? {};
@@ -239,7 +249,7 @@ export async function validateRequest(data: {
     if (config.proofChannelIds.length) {
         const matches = Array.from(reason.matchAll(RegexPatterns.ChannelIdFromURL));
         if (matches.some(match => !config.proofChannelIds.includes(match[0]))) {
-            throw "Your request contains links to non-whitelisted channels.";
+            throw new Error("Your request contains links to non-whitelisted channels.");
         }
     }
 
@@ -252,18 +262,18 @@ export async function validateRequest(data: {
 
     if (duplicateRequestId) {
         const jumpURL = messageLink(request.channelId, duplicateRequestId, request.guildId);
-        throw `A ${requestType} request for ${userMention(targetId)} has already been submitted: ${jumpURL}`;
+        throw new Error(`A ${requestType} request for ${userMention(targetId)} has already been submitted: ${jumpURL}`);
     }
 
     // Reason exceeds 1,024 characters, any media that would be converted to links is accounted for
     if (reason.length + (request.attachments.size * 90) > 1024) {
-        throw "The reason length cannot exceed 1,024 characters, this includes potential media URLs.";
+        throw new Error("The reason length cannot exceed 1,024 characters, this includes potential media URLs.");
     }
 
     const targetMember = await request.guild.members.fetch(targetId).catch(() => null);
     const targetUser = targetMember?.user || await client.users.fetch(targetId).catch(() => null);
 
-    if (!targetUser) throw "The user specified is invalid.";
+    if (!targetUser) throw new Error("The user specified is invalid.");
 
     const nonModerateableReason = validateModerationAction({
         target: targetUser,
@@ -274,11 +284,11 @@ export async function validateRequest(data: {
     if (nonModerateableReason) throw nonModerateableReason;
 
     if (requestType === RequestType.Mute) {
-        if (!targetMember) throw "The member specified is not in the server.";
-        if (targetMember.isCommunicationDisabled()) throw "This member is already muted.";
+        if (!targetMember) throw new Error("The member specified is not in the server.");
+        if (targetMember.isCommunicationDisabled()) throw new Error("This member is already muted.");
     } else {
         const isBanned = await request.guild.bans.fetch(targetId).catch(() => null);
-        if (isBanned) throw "This user is already banned.";
+        if (isBanned) throw new Error("This user is already banned.");
     }
 
     // Remove any reactions added by the bot that indicated a prior issue with the request
@@ -371,8 +381,8 @@ export async function handleBanRequestAutoMute(data: {
     cache.requests.set(request.id, { ...requestData, muteId: infractionId });
 }
 
-export async function handleQuickMute(duration: "30m" | "1h", interaction: MessageContextMenuCommandInteraction, config: Config): Promise<void> {
-    const { targetMessage } = interaction;
+export async function handleQuickMute(duration: "30m" | "1h", interaction: MessageContextMenuCommandInteraction<"cached">, config: Config): Promise<void> {
+    const targetMessage = interaction.targetMessage as Message<true>;
     const { success, error } = config.emojis;
 
     if (!targetMessage.member) {
@@ -406,7 +416,7 @@ export async function handleQuickMute(duration: "30m" | "1h", interaction: Messa
 
         await Promise.all([
             purgeMessages({
-                channel: targetMessage.channel as GuildTextBasedChannel,
+                channel: targetMessage.channel,
                 amount: 100,
                 executorId: interaction.user.id,
                 targetId: targetMessage.author.id

@@ -1,6 +1,9 @@
 import {
     AnySelectMenuInteraction,
+    ApplicationCommandData,
+    ApplicationCommandType,
     ButtonInteraction,
+    CacheType,
     ChatInputCommandInteraction,
     MessageContextMenuCommandInteraction,
     ModalSubmitInteraction,
@@ -23,7 +26,25 @@ export enum InteractionResponseType {
     DeferUpdate = 2,
 }
 
-export type AnyComponentInteraction = ButtonInteraction | ModalSubmitInteraction | AnySelectMenuInteraction;
+export interface ComponentData {
+    name: ComponentCustomId;
+    skipInternalUsageCheck: boolean;
+    defer: InteractionResponseType;
+    ephemeral?: boolean;
+}
+
+export type CommandData = ApplicationCommandData & {
+    skipInternalUsageCheck: boolean;
+    defer: InteractionResponseType;
+    type: ApplicationCommandType;
+    ephemeral?: boolean;
+}
+
+export type AnyComponentInteraction<Cached extends CacheType = CacheType> =
+    ButtonInteraction<Cached>
+    | ModalSubmitInteraction<Cached>
+    | AnySelectMenuInteraction<Cached>;
+
 export type AnyCommandInteraction =
     ChatInputCommandInteraction
     | UserContextMenuCommandInteraction

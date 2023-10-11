@@ -1,11 +1,4 @@
-import {
-    ApplicationCommandOptionType,
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    GuildMember,
-    GuildTextBasedChannel
-} from "discord.js";
-
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { purgeMessages, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
@@ -59,10 +52,12 @@ export default class CleanCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
+        if (!interaction.channel || !interaction.channel.isTextBased()) return;
+
         const amount = interaction.options.getInteger("amount") ?? 100;
         const targetUser = interaction.options.getUser("user");
-        const targetMember = interaction.options.getMember("user") as GuildMember | null;
+        const targetMember = interaction.options.getMember("user");
 
         const { success, error } = config.emojis;
 
@@ -84,7 +79,7 @@ export default class CleanCommand extends Command {
 
         try {
             const purgedMessageCount = await purgeMessages({
-                channel: interaction.channel as GuildTextBasedChannel,
+                channel: interaction.channel,
                 executorId: interaction.user.id,
                 targetId: targetUser?.id,
                 amount

@@ -1,34 +1,27 @@
-import {
-    codeBlock,
-    Colors,
-    EmbedBuilder,
-    GuildTextBasedChannel,
-    hyperlink,
-    Message,
-    messageLink,
-    Snowflake,
-    userMention
-} from "discord.js";
+import { codeBlock, Colors, EmbedBuilder, hyperlink, Message, messageLink, Snowflake, userMention } from "discord.js";
 
+import { elipsify, isGuildTextBasedChannel, pluralize } from "./index";
 import { LogData, ReferenceLogData } from "../types/utils";
-import { elipsify, pluralize } from "./index";
 import { MessageModel } from "../types/db";
 import { client } from "../client";
 
 import Config from "./config";
 import Cache from "./cache";
 
-export async function sendLog(data: LogData): Promise<Message<true> | void> {
+export async function sendLog(data: LogData): Promise<Message<true> | null> {
     const { event, sourceChannel, guildId, options } = data;
     const config = Config.get(sourceChannel?.guildId || guildId!);
 
-    if (sourceChannel && !config?.isLoggingAllowed(event, sourceChannel)) return;
+    if (sourceChannel && !config?.isLoggingAllowed(event, sourceChannel)) return null;
 
     const loggingChannelId = config?.getLoggingChannel(event);
     if (!loggingChannelId) throw new Error(`Channel ID for event ${event} not configured.`);
 
-    const loggingChannel = await client.channels.fetch(loggingChannelId) as GuildTextBasedChannel;
-    if (!loggingChannel) throw new Error(`Logging channel for event ${event} not found.`);
+    const loggingChannel = await client.channels.fetch(loggingChannelId);
+
+    if (!loggingChannel || !isGuildTextBasedChannel(loggingChannel)) {
+        throw new Error(`Logging channel for event ${event} not found.`);
+    }
 
     return loggingChannel.send(options);
 }

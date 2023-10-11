@@ -1,10 +1,11 @@
 import {
     AttachmentPayload,
+    CategoryChannel,
     ColorResolvable,
     EmbedAuthorOptions,
     EmbedBuilder,
+    GuildBasedChannel,
     GuildMember,
-    GuildTextBasedChannel,
     MessageCreateOptions,
     MessagePayload,
     Snowflake
@@ -24,6 +25,7 @@ export enum InfractionFilter {
     Archived = "Archived",
 }
 
+/** Custom ID of an interaction */
 export type CustomId = string;
 
 export interface ReferenceLogData {
@@ -66,7 +68,7 @@ export type LogData = {
     event: LoggingEvent,
     options: string | MessagePayload | MessageCreateOptions
 } & ({
-    sourceChannel: GuildTextBasedChannel,
+    sourceChannel: Exclude<GuildBasedChannel, CategoryChannel>,
     guildId?: never
 } | {
     sourceChannel?: never,

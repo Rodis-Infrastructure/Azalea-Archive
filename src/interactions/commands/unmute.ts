@@ -1,10 +1,4 @@
-import {
-    ApplicationCommandOptionType,
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    GuildMember
-} from "discord.js";
-
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
@@ -37,8 +31,8 @@ export default class UnmuteCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const target = interaction.options.getMember("member") as GuildMember | null;
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
+        const target = interaction.options.getMember("member");
         const { success, error } = config.emojis;
 
         if (!target) {
@@ -76,10 +70,10 @@ export default class UnmuteCommand extends Command {
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            /* Clears the timeout */
+            // Clears the timeout
             await target.timeout(null);
             await resolveInfraction({
-                guildId: interaction.guildId!,
+                guildId: interaction.guildId,
                 punishment: PunishmentType.Unmute,
                 targetId: target.id,
                 executorId: interaction.user.id,

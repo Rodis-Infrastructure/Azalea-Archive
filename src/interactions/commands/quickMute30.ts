@@ -1,7 +1,7 @@
 import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
-import { handleQuickMute } from "../../utils/moderation";
 import { Command } from "../../handlers/interactions/interaction";
+import { handleQuickMute } from "../../utils/moderation";
 
 import Config from "../../utils/config";
 
@@ -15,7 +15,7 @@ export default class QuickMute30Command extends Command {
         });
     }
 
-    async execute(interaction: MessageContextMenuCommandInteraction, _: never, config: Config): Promise<void> {
+    async execute(interaction: MessageContextMenuCommandInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
         await handleQuickMute("30m", interaction, config);
     }
 }

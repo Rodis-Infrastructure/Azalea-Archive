@@ -21,7 +21,7 @@ export const client = new Client({
     ]
 });
 
-(async() => {
+(async(): Promise<void> => {
     await Promise.all([
         loadListeners(),
         client.login(process.env.BOT_TOKEN)

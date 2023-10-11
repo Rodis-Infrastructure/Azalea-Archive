@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, ThreadChannel, userMention } from "discord.js";
+import { Colors, EmbedBuilder, Events, ThreadChannel, userMention } from "discord.js";
 import { LoggingEvent } from "../types/config";
 import { sendLog } from "../utils/logging";
 import { capitalize } from "../utils";
@@ -11,18 +11,23 @@ export default class ThreadUpdateEventListener extends EventListener {
     }
 
     async execute(oldThread: ThreadChannel, newThread: ThreadChannel): Promise<void> {
-        const propertiesToCheck: (keyof ThreadChannel)[] = ["name", "archived", "locked"];
-        const changes = [];
+        if (!newThread.parent) return;
+
+        const propertiesToCompare: (keyof ThreadChannel)[] = ["name", "archived", "locked"];
+        const changes: string[] = [];
 
         // Compare the properties
-        for (const property of propertiesToCheck) {
-            if (oldThread[property] === newThread[property]) continue;
-            changes.push(`${capitalize(property)}: \`${oldThread[property]}\` –> \`${newThread[property]}\``);
+        for (const property of propertiesToCompare) {
+            const oldValue = oldThread[property];
+            const newValue = newThread[property];
+
+            if (oldValue === newValue) continue;
+
+            changes.push(`${capitalize(property)}: \`${oldValue}\` ➔ \`${newValue}\``);
         }
 
         if (!changes.length) return;
 
-        const parent = newThread.parent as GuildTextBasedChannel;
         const embed = new EmbedBuilder()
             .setColor(Colors.Yellow)
             .setAuthor({ name: "Thread Updated", iconURL: "attachment://messageUpdate.png" })
@@ -37,7 +42,7 @@ export default class ThreadUpdateEventListener extends EventListener {
                 },
                 {
                     name: "Parent Channel",
-                    value: `${parent} (\`#${parent.name}\`)`
+                    value: `${newThread.parent} (\`#${newThread.parent.name}\`)`
                 },
                 {
                     name: "Changes",
@@ -48,9 +53,7 @@ export default class ThreadUpdateEventListener extends EventListener {
 
         await sendLog({
             event: LoggingEvent.Thread,
-            channelId: parent.id,
-            categoryId: parent.parentId,
-            guildId: parent.guildId,
+            sourceChannel: newThread.parent,
             options: {
                 embeds: [embed],
                 files: [{

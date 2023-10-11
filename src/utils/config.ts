@@ -1,7 +1,9 @@
 import {
     AnySelectMenuInteraction,
     ButtonInteraction,
+    CategoryChannel,
     Collection,
+    GuildBasedChannel,
     GuildMember,
     GuildTextBasedChannel,
     MessageMentionTypes,
@@ -79,9 +81,15 @@ export default class Config {
         return this.instances.get(guildId);
     }
 
-    static create(guildId: Snowflake, data: ConfigData): Config {
-        const config = new Config(data);
+    static create(guildId: Snowflake, data: Omit<ConfigData, "guildId">): Config {
+        const instance = this.instances.get(guildId);
+        if (instance) return instance;
+
+        const properties = Object.assign(data, { guildId });
+        const config = new Config(properties);
+
         Config.instances.set(guildId, config);
+
         return config;
     }
 
@@ -96,7 +104,7 @@ export default class Config {
         return this.data.logging?.[event]?.channelId;
     }
 
-    isLoggingAllowed(eventName: LoggingEvent, channel: GuildTextBasedChannel): boolean {
+    isLoggingAllowed(eventName: LoggingEvent, channel: Exclude<GuildBasedChannel, CategoryChannel>): boolean {
         if (!this.data.logging) return false;
 
         const {
@@ -106,20 +114,20 @@ export default class Config {
             excludedCategories
         } = this.data.logging;
 
-        const categoryId = channel.parentId || "";
+        const channelId = channel.isThread()
+            ? channel.parentId
+            : channel.id;
 
-        return (
-            // Global logging is enabled and the channel/category is not excluded
-            enabled &&
-            !excludedChannels?.includes(channel.id) &&
-            !excludedCategories?.includes(categoryId) &&
+        const categoryId = channel.isThread()
+            ? channel.parent?.parentId
+            : channel.parentId ?? "";
 
-            // The event's logging is enabled and the channel/category is not excluded
-            event?.enabled &&
-            event.channelId &&
-            !event.excludedChannels?.includes(channel.id) &&
-            !event.excludedCategories?.includes(categoryId)
-        ) as boolean;
+        const isEnabled = enabled && event?.enabled;
+        const isEventChannelConfigured = event?.channelId;
+        const isChannelExcluded = channelId && (excludedChannels?.includes(channelId) || event?.excludedChannels?.includes(channelId));
+        const isCategoryExcluded = categoryId && (excludedCategories?.includes(categoryId) || event?.excludedCategories?.includes(categoryId));
+
+        return Boolean(isEnabled && !isChannelExcluded && !isCategoryExcluded && isEventChannelConfigured);
     }
 
     /** Whether interaction responses in the specified channel must be ephemeral */
@@ -219,7 +227,10 @@ export default class Config {
         ephemeral?: boolean
     }): Promise<boolean> {
         const { interaction, state, skipInternalUsageCheck } = data;
-        const ephemeral = (!skipInternalUsageCheck && this.ephemeralResponseIn(interaction.channel as GuildTextBasedChannel))
+
+        if (!interaction.channel || interaction.channel.isDMBased()) return true;
+
+        const ephemeral = (!skipInternalUsageCheck && this.ephemeralResponseIn(interaction.channel))
             || data.ephemeral
             || false;
 
@@ -230,7 +241,10 @@ export default class Config {
             }
 
             case InteractionResponseType.DeferUpdate: {
-                if (interaction.isCommand()) throw `Cannot defer update on a slash/context menu command (${interaction.commandName})`;
+                if (interaction.isCommand()) {
+                    throw new Error(`Cannot defer update on a slash/context menu command (${interaction.commandName})`);
+                }
+
                 await interaction.deferUpdate();
             }
         }

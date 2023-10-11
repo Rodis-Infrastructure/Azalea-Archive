@@ -1,5 +1,6 @@
-import { Colors, EmbedBuilder, Events, GuildMember, GuildTextBasedChannel, Interaction } from "discord.js";
-import { LoggingEvent } from "../types/config";
+import { Colors, EmbedBuilder, Events, Interaction } from "discord.js";
+import { LoggingEvent, RoleInteraction } from "../types/config";
+import { sendLog } from "../utils/logging";
 import { getCustomId } from "../utils";
 
 import EventListener from "../handlers/listeners/eventListener";
@@ -12,9 +13,9 @@ export default class InteractionCreateEventListener extends EventListener {
     }
 
     async execute(interaction: Interaction): Promise<void> {
-        if (!interaction.inGuild() || interaction.isAutocomplete()) return;
+        if (interaction.isAutocomplete() || !interaction.inCachedGuild() || !interaction.channel) return;
 
-        const config = Config.get(interaction.guildId!);
+        const config = Config.get(interaction.guildId);
 
         if (!config) {
             await interaction.reply({
@@ -39,10 +40,7 @@ export default class InteractionCreateEventListener extends EventListener {
         const { data } = cachedInteraction;
         const customId = getCustomId(data.name);
 
-        if (!interaction.isCommand() && !config.hasPermission(interaction.member as GuildMember, {
-            permission: "buttons",
-            requiredValue: customId
-        })) {
+        if (!interaction.isCommand() && !config.canPerformAction(interaction.member, RoleInteraction.Button, customId)) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
                 ephemeral: true
@@ -50,7 +48,7 @@ export default class InteractionCreateEventListener extends EventListener {
             return;
         }
 
-        const usageChannel = interaction.channel as GuildTextBasedChannel;
+        const sourceChannel = interaction.channel;
         const ephemeral = await config.applyDeferralState({
             interaction,
             state: data.defer,
@@ -74,15 +72,13 @@ export default class InteractionCreateEventListener extends EventListener {
             .setDescription(`Interaction \`${customId}\` used by ${interaction.user}`)
             .setFields([{
                 name: "Used In",
-                value: `${usageChannel} (\`#${usageChannel.name}\`)`
+                value: `${sourceChannel} (\`#${sourceChannel.name}\`)`
             }])
             .setTimestamp();
 
-        await log({
+        await sendLog({
             event: LoggingEvent.Interaction,
-            channelId: usageChannel.id,
-            categoryId: usageChannel.parentId,
-            guildId: usageChannel.guildId,
+            sourceChannel,
             options: {
                 embeds: [log],
                 files: [{

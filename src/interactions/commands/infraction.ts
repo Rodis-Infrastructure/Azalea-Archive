@@ -16,8 +16,8 @@ import {
 } from "discord.js";
 
 import { currentTimestamp, elipsify, formatReason, msToString, RegexPatterns, sanitizeString } from "../../utils";
-import { InfractionSubcommand, InteractionResponseType } from "../../types/interactions";
 import { InfractionFlag, InfractionModel, MinimalInfraction, PunishmentType } from "../../types/db";
+import { InfractionSubcommand, InteractionResponseType } from "../../types/interactions";
 import { getInfractionEmbedData, mapInfractionsToFields } from "../../utils/infractions";
 import { Command } from "../../handlers/interactions/interaction";
 import { LoggingEvent, RolePermission } from "../../types/config";
@@ -127,9 +127,16 @@ export default class InfractionCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand(true);
-        const infractionId = interaction.options.getNumber("infraction_id") as number;
+        const { error, success } = config.emojis;
+
+        if (subcommand === InfractionSubcommand.Search) {
+            await handleInfractionSearch(interaction, config, ephemeral);
+            return;
+        }
+
+        const infractionId = interaction.options.getNumber("infraction_id", true);
         const infraction = await getQuery<InfractionModel, false>(`
             SELECT *
             FROM infractions
@@ -137,22 +144,26 @@ export default class InfractionCommand extends Command {
               AND guild_id = ${interaction.guildId}
         `);
 
-        const { error, success } = config.emojis;
+        if (subcommand === InfractionSubcommand.Info) {
+            const embed = getInfractionInfoEmbed(infraction);
 
-        switch (subcommand) {
-            case InfractionSubcommand.Archive:
-            case InfractionSubcommand.Reason:
-            case InfractionSubcommand.Duration: {
-                const canManageInfraction = config.canManageInfraction(infraction, interaction.member as GuildMember);
+            await interaction.reply({
+                embeds: [embed],
+                ephemeral
+            });
 
-                if (!canManageInfraction) {
-                    await interaction.reply({
-                        content: `${error} You do not have permission to manage this infraction.`,
-                        ephemeral
-                    });
-                    return;
-                }
-            }
+            return;
+        }
+
+        // Only actions that require the management permission reach this point (archive, duration, and reason)
+        const canManageInfraction = config.canManageInfraction(infraction, interaction.member);
+
+        if (!canManageInfraction) {
+            await interaction.reply({
+                content: `${error} You do not have permission to manage this infraction.`,
+                ephemeral
+            });
+            return;
         }
 
         try {
@@ -162,7 +173,7 @@ export default class InfractionCommand extends Command {
                 case InfractionSubcommand.Reason: {
                     response = await handleInfractionReasonChange(infractionId, {
                         newReason: interaction.options.getString("new_reason", true),
-                        guildId: interaction.guildId!,
+                        guildId: interaction.guildId,
                         updatedById: interaction.user.id
                     });
                     break;
@@ -176,22 +187,6 @@ export default class InfractionCommand extends Command {
                 case InfractionSubcommand.Archive: {
                     response = await handleInfractionArchive(infractionId, interaction);
                     break;
-                }
-
-                case InfractionSubcommand.Search: {
-                    await handleInfractionSearch(interaction, config, ephemeral);
-                    return;
-                }
-
-                case InfractionSubcommand.Info: {
-                    const embed = getInfractionInfoEmbed(infraction);
-
-                    await interaction.reply({
-                        embeds: [embed],
-                        ephemeral
-                    });
-
-                    return;
                 }
 
                 default:
@@ -227,21 +222,21 @@ export default class InfractionCommand extends Command {
     }
 }
 
-export async function handleInfractionSearch(interaction: ChatInputCommandInteraction | ButtonInteraction, config: Config, ephemeral: boolean): Promise<void> {
+export async function handleInfractionSearch(interaction: ChatInputCommandInteraction<"cached"> | ButtonInteraction<"cached">, config: Config, ephemeral: boolean): Promise<void> {
     let filter: InfractionFilter | null = null;
     let targetMember: GuildMember | null = null;
     let targetUser!: User;
 
     if (interaction.isChatInputCommand()) {
         targetUser = interaction.options.getUser("user", true);
-        targetMember = interaction.options.getMember("user") as GuildMember | null;
+        targetMember = interaction.options.getMember("user");
         filter = interaction.options.getString("filter_by") as InfractionFilter | null;
     } else {
         targetUser = await client.users.fetch(interaction.customId.split("-")[2]);
     }
 
     const targetIsStaff = targetMember && config.isGuildStaff(targetMember);
-    const executorCanViewModerationActivity = config.hasPermission(interaction.member as GuildMember, RolePermission.ViewModerationActivity);
+    const executorCanViewModerationActivity = config.hasPermission(interaction.member, RolePermission.ViewModerationActivity);
 
     if (targetIsStaff && !executorCanViewModerationActivity) {
         await interaction.reply({
@@ -251,16 +246,16 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         return;
     }
 
-    let query: string;
+    let dbQuery: string;
 
     if (executorCanViewModerationActivity && targetIsStaff) {
-        query = `
+        dbQuery = `
             SELECT infraction_id,
                    executor_id,
                    created_at,
                    reason,
-                   archivedby,
-                   archivedat,
+                   archived_by,
+                   archived_at,
                    flag,
                    expires_at,
                    action
@@ -271,13 +266,13 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
             LIMIT 100;
         `;
     } else {
-        query = `
+        dbQuery = `
             SELECT infraction_id,
                    executor_id,
                    created_at,
                    reason,
-                   archivedby,
-                   archivedat,
+                   archived_by,
+                   archived_at,
                    flag,
                    expires_at,
                    action
@@ -289,7 +284,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         `;
     }
 
-    const infractions = await allQuery<MinimalInfraction>(query);
+    const infractions = await allQuery<MinimalInfraction>(dbQuery);
     const components: ActionRowBuilder<ButtonBuilder>[] = [];
     const searchContext = targetIsStaff && executorCanViewModerationActivity ? "by" : "of";
     const embed = new EmbedBuilder()
@@ -395,7 +390,7 @@ export async function handleInfractionReasonChange(infractionId: number, data: {
  * Overrides the duration of an infraction and logs the change
  * @returns {string} A response confirming the change
  */
-async function handleInfractionDurationChange(infraction: InfractionModel, interaction: ChatInputCommandInteraction): Promise<string> {
+async function handleInfractionDurationChange(infraction: InfractionModel, interaction: ChatInputCommandInteraction<"cached">): Promise<string> {
     const strDuration = interaction.options.getString("new_duration", true);
 
     if (!strDuration.match(RegexPatterns.DurationValidation)) throw new Error("The duration provided is invalid.");
@@ -405,7 +400,7 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
 
     if (infraction.action !== PunishmentType.Mute) throw new Error("You can only update the duration of temporary infractions");
 
-    const target = await interaction.guild!.members.fetch(infraction.target_id).catch(() => null);
+    const target = await interaction.guild.members.fetch(infraction.target_id).catch(() => null);
 
     if (!target) throw new Error("Unable to change the mute duration of a user who is not in the server");
     if (!target.isCommunicationDisabled()) throw new Error("This user does not have an active mute");
@@ -445,7 +440,7 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
 
     await sendLog({
         event: LoggingEvent.Infraction,
-        guildId: interaction.guildId!,
+        guildId: interaction.guildId,
         options: {
             embeds: [log],
             files: [{
@@ -465,12 +460,12 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
  * Archives an infraction and logs the change
  * @returns {string} A response confirming the change
  */
-async function handleInfractionArchive(infractionId: number, interaction: ChatInputCommandInteraction): Promise<string> {
+async function handleInfractionArchive(infractionId: number, interaction: ChatInputCommandInteraction<"cached">): Promise<string> {
     try {
         await runQuery(`
             UPDATE infractions
-            SET archivedat = ${currentTimestamp()},
-                archivedby = ${interaction.user.id}
+            SET archived_at = ${currentTimestamp()},
+                archived_by = ${interaction.user.id}
             WHERE infraction_id = ${infractionId}
               AND guild_id = ${interaction.guildId};
         `);
@@ -491,7 +486,7 @@ async function handleInfractionArchive(infractionId: number, interaction: ChatIn
 
     await sendLog({
         event: LoggingEvent.Infraction,
-        guildId: interaction.guildId!,
+        guildId: interaction.guildId,
         options: {
             embeds: [log],
             files: [{

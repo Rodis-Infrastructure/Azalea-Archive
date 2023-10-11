@@ -5,7 +5,7 @@ import { ButtonInteraction } from "discord.js";
 
 import Config from "../../utils/config";
 
-export default class InfractionSearchButton extends Component<ButtonInteraction> {
+export default class InfractionSearchButton extends Component<ButtonInteraction<"cached">> {
     constructor() {
         super({
             // Custom ID format: inf-search-{targetId}
@@ -15,7 +15,7 @@ export default class InfractionSearchButton extends Component<ButtonInteraction>
         });
     }
 
-    async execute(interaction: ButtonInteraction, ephemeral: boolean, config: Config): Promise<void> {
+    async execute(interaction: ButtonInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         await Promise.all([
             handleInfractionSearch(interaction, config, ephemeral),
             interaction.message.edit({ components: [] })

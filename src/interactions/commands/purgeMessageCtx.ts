@@ -1,4 +1,4 @@
-import { ApplicationCommandType, GuildTextBasedChannel, MessageContextMenuCommandInteraction } from "discord.js";
+import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "discord.js";
 import { purgeMessages, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
@@ -15,7 +15,9 @@ export default class PurgeMessageCtxCommand extends Command {
         });
     }
 
-    async execute(interaction: MessageContextMenuCommandInteraction, _: never, config: Config): Promise<void> {
+    async execute(interaction: MessageContextMenuCommandInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
+        if (!interaction.channel) return;
+
         const { success, error } = config.emojis;
 
         const targetUser = interaction.targetMessage.author;
@@ -39,7 +41,7 @@ export default class PurgeMessageCtxCommand extends Command {
 
         try {
             const purgedMessageCount = await purgeMessages({
-                channel: interaction.channel as GuildTextBasedChannel,
+                channel: interaction.channel,
                 amount: 100,
                 targetId: targetUser.id,
                 executorId: interaction.user.id

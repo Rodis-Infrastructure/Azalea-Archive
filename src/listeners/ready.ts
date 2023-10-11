@@ -1,8 +1,9 @@
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel } from "discord.js";
+import { Colors, EmbedBuilder, Events, messageLink, roleMention } from "discord.js";
 import { loadInteractions, publishCommands } from "../handlers/interactions";
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { RequestType } from "../types/utils";
 import { ConfigData } from "../types/config";
+import { RegexPatterns } from "../utils";
 import { client } from "../client";
 import { runQuery } from "../db";
 import { parse } from "yaml";
@@ -10,6 +11,7 @@ import { parse } from "yaml";
 import EventListener from "../handlers/listeners/eventListener";
 import Config from "../utils/config";
 import Cache from "../utils/cache";
+import glob from "fast-glob";
 import ms from "ms";
 
 export default class ReadyEventListener extends EventListener {
@@ -21,17 +23,23 @@ export default class ReadyEventListener extends EventListener {
 
     async execute(): Promise<void> {
         console.log(`${client.user?.tag} is online!`);
-        const configFiles = await readdir("config/guilds/");
 
-        for (const file of configFiles) {
-            const guildId = file.split(".")[0];
-            if (!guildId.match(/^\d{17,19}$/g)) continue;
+        /** Guild configuration file names */
+        const filenames = glob.sync("config/guilds/*.{yml,yaml}");
 
-            const config: ConfigData = parse(await readFile(`config/guilds/${file}`, "utf-8")) ?? {};
-            Config.create(guildId, config);
+        for (const filename of filenames) {
+            const [guildId] = filename.split(".");
 
-            setBanRequestNoticeInterval(config, guildId);
-            setMuteRequestNoticeInterval(config, guildId);
+            if (!guildId.match(RegexPatterns.Snowflake)) continue;
+
+            const fileContent = await readFile(`config/guilds/${filename}`, "utf-8");
+            const data: ConfigData = parse(fileContent) ?? {};
+            const config = Config.create(guildId, data);
+
+            await Promise.all([
+                setBanRequestNoticeInterval(config, guildId),
+                setMuteRequestNoticeInterval(config, guildId)
+            ]);
         }
 
         await loadInteractions();
@@ -41,7 +49,7 @@ export default class ReadyEventListener extends EventListener {
             await Cache.storeMessages();
         }, ms("10m"));
 
-        // Removes old data from the database
+        // Remove old data from the database (older than 24 hours)
         setInterval(async() => {
             await runQuery(`
                 DELETE
@@ -52,53 +60,65 @@ export default class ReadyEventListener extends EventListener {
     }
 }
 
-function setBanRequestNoticeInterval(config: ConfigData, guildId: string) {
-    if (!config.channels?.banRequestQueue || !config.notices?.banRequests?.enabled) return;
+async function setBanRequestNoticeInterval(config: Config, guildId: string): Promise<void> {
+    if (!config.channels.banRequestQueue || !config.banRequestNotices?.enabled) return;
 
-    const { threshold, channelId, interval } = config.notices.banRequests;
+    const { threshold, channelId, interval, mentionedRoles } = config.banRequestNotices;
+
     const cache = Cache.get(guildId);
+    const channel = await client.channels.fetch(channelId);
+    const mentions = mentionedRoles?.map(roleId => roleMention(roleId));
+
+    if (!channel?.isTextBased() || channel?.isDMBased()) {
+        throw new Error("Invalid ban request queue channel");
+    }
 
     setInterval(async() => {
-        const cachedBanRequests = cache.requests.filter(r => r.requestType === RequestType.Ban);
+        const cachedBanRequests = cache.requests.filter(request => request.requestType === RequestType.Ban);
+
         if (cachedBanRequests.size < threshold) return;
 
-        const channel = await client.channels.fetch(channelId) as GuildTextBasedChannel;
-        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedBanRequests.lastKey()}`;
-
+        const jumpURL = messageLink(config.channels.banRequestQueue!, cachedBanRequests.lastKey()!, guildId);
         const embed = new EmbedBuilder()
             .setColor(Colors.Red)
             .setTitle(`${cachedBanRequests.size} Unhandled Ban Requests`)
-            .setDescription(`There are currently ${cachedBanRequests.size} unhandled ban requests starting from [here](${jumpUrl})`)
+            .setDescription(`There are currently ${cachedBanRequests.size} unhandled ban requests starting from [here](${jumpURL})`)
             .setTimestamp();
 
         await channel.send({
-            content: "@here",
+            content: mentions?.join(" "),
             embeds: [embed]
         });
     }, interval);
 }
 
-function setMuteRequestNoticeInterval(config: ConfigData, guildId: string) {
-    if (!config.channels?.muteRequestQueue || !config.notices?.muteRequests?.enabled) return;
+async function setMuteRequestNoticeInterval(config: Config, guildId: string): Promise<void> {
+    if (!config.channels.muteRequestQueue || !config.muteRequestNotices?.enabled) return;
 
-    const { threshold, channelId, interval } = config.notices.muteRequests;
+    const { threshold, channelId, interval, mentionedRoles } = config.muteRequestNotices;
+
     const cache = Cache.get(guildId);
+    const channel = await client.channels.fetch(channelId);
+    const mentions = mentionedRoles?.map(roleId => roleMention(roleId));
+
+    if (!channel?.isTextBased() || channel?.isDMBased()) {
+        throw new Error("Invalid mute request queue channel");
+    }
 
     setInterval(async() => {
-        const cachedMuteRequests = cache.requests.filter(r => r.requestType === RequestType.Mute);
+        const cachedMuteRequests = cache.requests.filter(request => request.requestType === RequestType.Mute);
+
         if (cachedMuteRequests.size < threshold) return;
 
-        const channel = await client.channels.fetch(channelId) as GuildTextBasedChannel;
-        const jumpUrl = `https://discord.com/channels/${guildId}/${config.channels!.banRequestQueue}/${cachedMuteRequests.lastKey()}`;
-
+        const jumpURL = messageLink(config.channels.muteRequestQueue!, cachedMuteRequests.lastKey()!, guildId);
         const embed = new EmbedBuilder()
             .setColor(Colors.Red)
             .setTitle(`${cachedMuteRequests.size} Unhandled Mute Requests`)
-            .setDescription(`There are currently ${cachedMuteRequests.size} unhandled mute requests starting from [here](${jumpUrl})`)
+            .setDescription(`There are currently ${cachedMuteRequests.size} unhandled mute requests starting from [here](${jumpURL})`)
             .setTimestamp();
 
         await channel.send({
-            content: "@here",
+            content: mentions?.join(" "),
             embeds: [embed]
         });
     }, interval);

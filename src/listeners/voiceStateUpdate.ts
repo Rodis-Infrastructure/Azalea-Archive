@@ -1,5 +1,6 @@
-import { Colors, EmbedBuilder, Events, VoiceState } from "discord.js";
+import { Colors, EmbedBuilder, Events, VoiceBasedChannel, VoiceState } from "discord.js";
 import { LoggingEvent } from "../types/config";
+import { sendLog } from "../utils/logging";
 
 import EventListener from "../handlers/listeners/eventListener";
 
@@ -11,29 +12,37 @@ export default class VoiceStateUpdateEventListener extends EventListener {
     async execute(oldState: VoiceState, newState: VoiceState): Promise<void> {
         if (oldState.channelId === newState.channelId) return;
 
-        let icon!: string;
+        let logAuthorIcon!: string;
+
         const member = newState.member;
         const log = new EmbedBuilder()
             .setFields({ name: "User", value: `${member} (\`${member?.id}\`)` })
             .setTimestamp();
 
+        // User joined a voice channel
         if (!oldState.channelId && newState.channelId) {
-            icon = "voiceJoin.png";
+            logAuthorIcon = "voiceJoin.png";
 
             log.setColor(Colors.Green);
             log.setAuthor({ name: "Voice Join" });
             log.addFields({ name: "Channel", value: `${newState.channel} (\`${newState.channel?.name}\`)` });
-        } else if (oldState.channelId && !newState.channelId) {
-            icon = "voiceLeave.png";
+        }
+
+        // User left a voice channel
+        if (oldState.channelId && !newState.channelId) {
+            logAuthorIcon = "voiceLeave.png";
 
             log.setColor(Colors.Red);
             log.setAuthor({ name: "Voice Leave" });
             log.addFields({ name: "Channel", value: `${oldState.channel} (\`${oldState.channel?.name}\`)` });
-        } else {
-            icon = "voiceMove.png";
+        }
+
+        // User moved from one voice channel to another
+        if (oldState.channelId && newState.channelId) {
+            logAuthorIcon = "voiceMove.png";
 
             log.setColor(Colors.Yellow);
-            log.setAuthor({ name: "Voice Move", iconURL: `attachment://${icon}` });
+            log.setAuthor({ name: "Voice Move" });
             log.addFields([
                 {
                     name: "Old Channel",
@@ -46,18 +55,16 @@ export default class VoiceStateUpdateEventListener extends EventListener {
             ]);
         }
 
-        log.data.author!.icon_url = `attachment://${icon}`;
+        log.data.author!.icon_url = `attachment://${logAuthorIcon}`;
 
-        await log({
+        await sendLog({
             event: LoggingEvent.Voice,
-            channelId: (newState.channelId || oldState.channelId) as string,
-            categoryId: (newState.channel?.parentId || oldState.channel?.parentId) as string,
-            guildId: newState.guild.id,
+            sourceChannel: (newState.channel || oldState.channel) as VoiceBasedChannel,
             options: {
                 embeds: [log],
                 files: [{
-                    attachment: `./icons/${icon}`,
-                    name: icon
+                    attachment: `./icons/${logAuthorIcon}`,
+                    name: logAuthorIcon
                 }]
             }
         });

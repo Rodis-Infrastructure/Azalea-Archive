@@ -1,5 +1,6 @@
 import { Colors, EmbedBuilder, Events, ThreadChannel, userMention } from "discord.js";
 import { LoggingEvent } from "../types/config";
+import { sendLog } from "../utils/logging";
 
 import EventListener from "../handlers/listeners/eventListener";
 
@@ -9,7 +10,7 @@ export default class ThreadCreateEventListener extends EventListener {
     }
 
     async execute(thread: ThreadChannel, newlyCreated: boolean): Promise<void> {
-        if (!newlyCreated || !thread.parentId) return;
+        if (!newlyCreated || !thread.parent || !thread.ownerId) return;
 
         const log = new EmbedBuilder()
             .setColor(Colors.Green)
@@ -17,7 +18,7 @@ export default class ThreadCreateEventListener extends EventListener {
             .setFields([
                 {
                     name: "Owner",
-                    value: `${userMention(thread.ownerId!)} (\`${thread.ownerId}\`)`
+                    value: `${userMention(thread.ownerId)} (\`${thread.ownerId}\`)`
                 },
                 {
                     name: "Thread",
@@ -25,15 +26,14 @@ export default class ThreadCreateEventListener extends EventListener {
                 },
                 {
                     name: "Parent Channel",
-                    value: `${thread.parent} (\`#${thread.parent!.name}\`)`
+                    value: `${thread.parent} (\`#${thread.parent.name}\`)`
                 }
             ])
             .setTimestamp();
 
-        await log({
+        await sendLog({
             event: LoggingEvent.Thread,
-            channelId: thread.parentId,
-            guildId: thread.guildId,
+            sourceChannel: thread.parent,
             options: {
                 embeds: [log],
                 files: [{

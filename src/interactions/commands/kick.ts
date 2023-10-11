@@ -1,10 +1,4 @@
-import {
-    ApplicationCommandOptionType,
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    GuildMember
-} from "discord.js";
-
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
@@ -38,8 +32,8 @@ export default class KickCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const target = interaction.options.getMember("member") as GuildMember | null;
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
+        const target = interaction.options.getMember("member");
         const { success, error } = config.emojis;
 
         if (!target) {
@@ -76,7 +70,7 @@ export default class KickCommand extends Command {
                 punishment: PunishmentType.Kick,
                 executorId: interaction.user.id,
                 targetId: target.id,
-                guildId: interaction.guildId!,
+                guildId: interaction.guildId,
                 reason
             });
         } catch (_err) {

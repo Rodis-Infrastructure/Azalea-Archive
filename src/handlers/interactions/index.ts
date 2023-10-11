@@ -1,9 +1,9 @@
 import { AnyComponentInteraction } from "../../types/interactions";
 import { Command, Component } from "./interaction";
 import { client } from "../../client";
-import { glob } from "fast-glob";
 
 import Cache from "../../utils/cache";
+import glob from "fast-glob";
 import path from "node:path";
 
 export async function loadInteractions(): Promise<void> {
@@ -32,7 +32,7 @@ export async function publishCommands(): Promise<void> {
     }
 }
 
-function registerInteraction(interaction: Command | Component<AnyComponentInteraction>): void {
+function registerInteraction(interaction: Command | Component<AnyComponentInteraction<"cached">>): void {
     if (interaction instanceof Command) {
         Cache.commands.set(`${interaction.data.name}_${interaction.data.type}`, interaction);
         return;

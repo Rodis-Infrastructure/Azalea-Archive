@@ -1,11 +1,4 @@
-import {
-    ApplicationCommandOptionType,
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    GuildMember,
-    time
-} from "discord.js";
-
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, time } from "discord.js";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
 import { formatReason, MAX_MUTE_DURATION } from "../../utils";
@@ -45,8 +38,8 @@ export default class MuteCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const target = interaction.options.getMember("member") as GuildMember | null;
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
+        const target = interaction.options.getMember("member");
         const { success, error } = config.emojis;
 
         if (!target) {

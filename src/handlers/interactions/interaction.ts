@@ -1,12 +1,12 @@
 import { ApplicationCommandData, ApplicationCommandType, CommandInteraction, PermissionFlagsBits } from "discord.js";
-import { AnyComponentInteraction, ComponentCustomId, InteractionResponseType } from "../../types/interactions";
+import { AnyComponentInteraction, CommandData, ComponentData } from "../../types/interactions";
 
 import Config from "../../utils/config";
 
 export abstract class Command {
     // @formatter:off
     protected constructor(public data: CommandData) {}
-    abstract execute(interaction: CommandInteraction, ephemeral: boolean, config: Config): Promise<void>;
+    abstract execute(interaction: CommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void>;
 
     build(): ApplicationCommandData {
         const { data } = this;
@@ -33,22 +33,8 @@ export abstract class Command {
     }
 }
 
-export abstract class Component<T extends AnyComponentInteraction> {
+export abstract class Component<ComponentInteraction extends AnyComponentInteraction<"cached">> {
     // @formatter:off
     protected constructor(public data: ComponentData) {}
-    abstract execute(interaction: T, ephemeral: boolean, config: Config): Promise<void>;
-}
-
-interface ComponentData {
-    name: ComponentCustomId;
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
-    ephemeral?: boolean;
-}
-
-type CommandData = ApplicationCommandData & {
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
-    type: ApplicationCommandType;
-    ephemeral?: boolean;
+    abstract execute(interaction: ComponentInteraction, ephemeral: boolean, config: Config): Promise<void>;
 }

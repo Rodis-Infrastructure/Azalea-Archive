@@ -29,7 +29,7 @@ export default class Cache {
         return cache;
     }
 
-    static getComponent(customId: CustomId): Component<AnyComponentInteraction> | undefined {
+    static getComponent(customId: CustomId): Component<AnyComponentInteraction> | null {
         return this.components.find(item => {
             const { name } = item.data;
 
@@ -39,7 +39,7 @@ export default class Cache {
             if ("includes" in name) return customId.includes(name.includes);
 
             return false;
-        });
+        }) ?? null;
     }
 
     /** Stores cached messages in the database */

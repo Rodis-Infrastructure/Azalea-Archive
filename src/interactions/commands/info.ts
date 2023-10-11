@@ -7,7 +7,6 @@ import {
     ChatInputCommandInteraction,
     Colors,
     EmbedBuilder,
-    GuildMember,
     inlineCode,
     time
 } from "discord.js";
@@ -38,15 +37,15 @@ export default class InfoCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const targetUser = interaction.options.getUser("user") || interaction.user;
-        const components = [];
-        const flags = [];
+        const components: ActionRowBuilder<ButtonBuilder>[] = [];
+        const flags: string[] = [];
 
-        let targetMember = interaction.options.getMember("user") as GuildMember | null;
+        let targetMember = interaction.options.getMember("user");
 
         if (targetUser.bot) flags.push("Bot");
-        if (!targetMember && targetUser.id === interaction.user.id) targetMember = interaction.member as GuildMember;
+        if (!targetMember && targetUser.id === interaction.user.id) targetMember = interaction.member;
 
         const embed = new EmbedBuilder()
             .setColor(Colors.NotQuiteBlack)
@@ -93,7 +92,7 @@ export default class InfoCommand extends Command {
                 inline: true
             });
 
-            const targetIsBanned = await interaction.guild!.bans.fetch(targetUser.id)
+            const targetIsBanned = await interaction.guild.bans.fetch(targetUser.id)
                 .then(() => true)
                 .catch(() => false);
 
@@ -102,7 +101,7 @@ export default class InfoCommand extends Command {
                     SELECT reason
                     FROM infractions
                     WHERE target_id = ${targetUser.id}
-                      AND guild_id = ${interaction.guildId!}
+                      AND guild_id = ${interaction.guildId}
                       AND action = ${PunishmentType.Ban}
                     ORDER BY infraction_id DESC
                     LIMIT 1;
@@ -116,7 +115,7 @@ export default class InfoCommand extends Command {
         }
 
         // Only allows staff to view member infractions, but not the infractions of other staff
-        if (!flags.includes("Staff") && config.isGuildStaff(interaction.member as GuildMember)) {
+        if (!flags.includes("Staff") && config.isGuildStaff(interaction.member)) {
             const infractionCount = await getQuery<InfractionCount, false>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
@@ -124,7 +123,7 @@ export default class InfoCommand extends Command {
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
                 WHERE target_id = ${targetUser.id}
-                  AND guild_id = ${interaction.guildId!};
+                  AND guild_id = ${interaction.guildId};
 
             `);
 
@@ -145,7 +144,7 @@ export default class InfoCommand extends Command {
 
         if (
             flags.includes("Staff") &&
-            config.hasPermission(interaction.member as GuildMember, RolePermission.ViewModerationActivity)
+            config.hasPermission(interaction.member, RolePermission.ViewModerationActivity)
         ) {
             ephemeral = true;
             const dealtInfractionCount = await getQuery<InfractionCount>(`
@@ -155,7 +154,7 @@ export default class InfoCommand extends Command {
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
                 WHERE (target_id = ${targetUser.id} OR request_author_id = ${targetUser.id})
-                  AND guild_id = ${interaction.guildId!};
+                  AND guild_id = ${interaction.guildId};
 
             `);
 

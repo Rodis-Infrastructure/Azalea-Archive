@@ -132,7 +132,7 @@ export function mapInfractionsToFields(data: {
     return [Math.ceil(filteredInfractions.length / 5), fields];
 }
 
-export function mapInfractionCount(infractions: InfractionCount) {
+export function mapInfractionCount(infractions: InfractionCount): string {
     return Object.entries(infractions)
         .map(([type, count]) => `\`${count ?? 0}\` ${pluralize(capitalize(type), count)}`)
         .join("\n");

@@ -32,12 +32,12 @@ export default class BanCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const targetUser = interaction.options.getUser("user", true);
 
         const [targetMember, isBanned] = await Promise.all([
-            interaction.guild!.members.fetch(targetUser.id),
-            interaction.guild!.bans.fetch(targetUser.id)
+            interaction.guild.members.fetch(targetUser.id),
+            interaction.guild.bans.fetch(targetUser.id)
         ]).catch(() => []);
 
         const { success, error } = config.emojis;
@@ -73,7 +73,7 @@ export default class BanCommand extends Command {
         const reason = interaction.options.getString("reason") ?? undefined;
 
         try {
-            await interaction.guild!.members.ban(targetUser, {
+            await interaction.guild.members.ban(targetUser, {
                 deleteMessageSeconds: config.deleteMessageSecondsOnBan,
                 reason
             });
@@ -105,7 +105,7 @@ export default class BanCommand extends Command {
                 punishment: PunishmentType.Ban,
                 executorId: interaction.user.id,
                 targetId: targetUser.id,
-                guildId: interaction.guildId!,
+                guildId: interaction.guildId,
                 reason
             })
         ]);

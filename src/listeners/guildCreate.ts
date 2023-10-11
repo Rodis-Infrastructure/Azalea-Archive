@@ -8,8 +8,7 @@ export default class GuildCreateEventListener extends EventListener {
         super(Events.GuildCreate);
     }
 
-    execute(guild: Guild) {
-        const config = Config.get(guild.id);
-        if (!config) new Config({ guildId: guild.id }).create(guild.id);
+    execute(guild: Guild): void {
+        Config.create(guild.id, {});
     }
 }

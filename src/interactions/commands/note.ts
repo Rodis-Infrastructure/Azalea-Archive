@@ -1,10 +1,4 @@
-import {
-    ApplicationCommandOptionType,
-    ApplicationCommandType,
-    ChatInputCommandInteraction,
-    GuildMember
-} from "discord.js";
-
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { resolveInfraction, validateModerationAction } from "../../utils/moderation";
 import { InteractionResponseType } from "../../types/interactions";
 import { Command } from "../../handlers/interactions/interaction";
@@ -39,8 +33,8 @@ export default class NoteCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction, ephemeral: boolean, config: Config): Promise<void> {
-        const targetMember = interaction.options.getMember("user") as GuildMember | null;
+    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
+        const targetMember = interaction.options.getMember("user");
         const targetUser = interaction.options.getUser("user", true);
         const note = interaction.options.getString("note", true);
 
@@ -66,7 +60,7 @@ export default class NoteCommand extends Command {
             await resolveInfraction({
                 executorId: interaction.user.id,
                 targetId: targetUser.id,
-                guildId: interaction.guildId!,
+                guildId: interaction.guildId,
                 reason: note,
                 punishment: PunishmentType.Note
             });

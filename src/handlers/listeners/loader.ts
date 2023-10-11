@@ -1,9 +1,9 @@
 import { client } from "../../client";
-import { glob } from "fast-glob";
 
+import glob from "fast-glob";
 import path from "node:path";
 
-export async function loadListeners() {
+export async function loadListeners(): Promise<void> {
     const listenerPaths = glob.sync("./src/listeners/*");
 
     for (const listenerPath of listenerPaths) {

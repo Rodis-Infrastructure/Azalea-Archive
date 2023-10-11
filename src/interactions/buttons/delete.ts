@@ -2,7 +2,7 @@ import { InteractionResponseType } from "../../types/interactions";
 import { ButtonInteraction } from "discord.js";
 import { Component } from "../../handlers/interactions/interaction";
 
-export default class DeleteButton extends Component<ButtonInteraction> {
+export default class DeleteButton extends Component<ButtonInteraction<"cached">> {
     constructor() {
         super({
             name: "delete",
@@ -11,7 +11,7 @@ export default class DeleteButton extends Component<ButtonInteraction> {
         });
     }
 
-    async execute(interaction: ButtonInteraction): Promise<void> {
+    async execute(interaction: ButtonInteraction<"cached">): Promise<void> {
         await interaction.message.delete();
     }
 }

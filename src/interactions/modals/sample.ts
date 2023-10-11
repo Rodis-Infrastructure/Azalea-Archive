@@ -2,7 +2,7 @@ import { Component } from "../../handlers/interactions/interaction";
 import { InteractionResponseType } from "../../types/interactions";
 import { ModalSubmitInteraction } from "discord.js";
 
-export default class SampleModal extends Component<ModalSubmitInteraction> {
+export default class SampleModal extends Component<ModalSubmitInteraction<"cached">> {
     constructor() {
         super({
             name: "sample-modal",
@@ -12,7 +12,7 @@ export default class SampleModal extends Component<ModalSubmitInteraction> {
         });
     }
 
-    async execute(interaction: ModalSubmitInteraction): Promise<void> {
+    async execute(interaction: ModalSubmitInteraction<"cached">): Promise<void> {
         await interaction.editReply("This is a sample **MODAL**");
     }
 }

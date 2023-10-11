@@ -38,6 +38,7 @@ export default class MessageReactionAddEventListener extends EventListener {
         const emojiId = emoji.id ?? emoji.name ?? "N/A";
         const { emojis } = config;
 
+        // FIXME: Unknown message error
         const fetchedReaction = await reaction.fetch();
 
         // First to react logs

@@ -95,5 +95,7 @@ export const RegexPatterns = {
      * 111111111111111111 would be extracted from the URL below:
      * https://discord.com/channels/000000000000000000/111111111111111111/222222222222222222/
      */
-    ChannelIdFromURL: /channels\/\d{17,19}\/(\d{17,19})\/\d{17,19}/gmi
+    ChannelIdFromURL: /channels\/\d{17,19}\/(\d{17,19})\/\d{17,19}/gmi,
+    /** The content contains nothing besides a snowflake (number with 17-19 digits) */
+    Snowflake: /^\d{17,19}$/g
 };
