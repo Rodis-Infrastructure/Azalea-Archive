@@ -25,10 +25,9 @@
         "forceConsistentCasingInFileNames": true,
         "removeComments": true,
         "typeRoots": [
-            "node_modules/@types"
+            "node_modules/discord-api-types"
         ],
-        "sourceMap": false,
-        "baseUrl": "./"
+        "sourceMap": false
     },
     "files": [
         "bot/client.ts"
