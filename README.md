@@ -4,7 +4,7 @@ This file serves as documentation for the Roblox Discord's moderation bot.
 
 ## Configuration
 
-For a full example of the configuration, you can view the [`example.yaml`](config/guilds/example.yaml) file in the
+For a full example of the configuration, you can view the [`example.yaml`](config/example.yaml) file in the
 repository
 
 ### Message Deletion on Ban
@@ -47,7 +47,7 @@ channels:
   banRequestQueue: "channel-id"
   muteRequestQueue: "channel-id"
   mediaConversion: "channel-id"
-  confirmations: "channel-id"
+  notifications: "channel-id"
 ```
 
 ### Request Notices
@@ -56,11 +56,13 @@ A reminder/notice will be sent in the specified channel whenever there is a cert
 specified period of time.
 
 ```yaml
-banRequestNotices: # or muteRequestNotices
-  enabled: true
-  channelId: "channel-id"
-  threshold: 25
-  interval: 3_600_000 # 1 hour
+notices:
+  banRequests: # or muteRequests
+      enabled: true
+      channelId: "channel-id"
+      threshold: 25
+      interval: 3_600_000 # 1 hour
+      mentionedRoles: ["role-id"]
 ```
 
 ### Custom Emojis
@@ -116,10 +118,10 @@ modals.
 - `manageMuteRequests` - Allows the user to approve or deny mute requests.
 - `autoMuteBanRequests` - Automatically mutes the user a ban requested was submitted for
 
-#### Role Configuration
+#### Permission Configuration
 
 ```yaml
-roles:
+permissions:
   - id: "role-id"
     guildStaff: false
     manageInfractions: false
@@ -127,23 +129,6 @@ roles:
     manageBanRequests: false
     manageMuteRequests: false
     autoMuteBanRequests: false
-    selections: []
-    buttons: []
-    modals: []
-    reactions: []
-```
-
-#### Role Group Configuration
-
-```yaml
-groups:
-  - guildStaff: false
-    manageInfractions: false
-    viewModerationActivity: false
-    manageBanRequests: false
-    manageMuteRequests: false
-    autoMuteBanRequests: false
-    roleIds: []
     selectMenus: []
     buttons: []
     modals: []
