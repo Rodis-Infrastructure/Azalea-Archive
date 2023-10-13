@@ -17,9 +17,9 @@ import { Command } from "@/handlers/interactions/interaction";
 import { mapInfractionCount } from "@/utils/infractions";
 import { TimestampStyles } from "@discordjs/formatters";
 import { RolePermission } from "@/types/config";
+import { getQuery } from "@database/utils";
 
 import Config from "@/utils/config";
-import { getQuery } from "@database/utils";
 
 export default class InfoCommand extends Command {
     constructor() {
@@ -56,7 +56,7 @@ export default class InfoCommand extends Command {
             })
             .setFooter({ text: `ID: ${targetUser.id}` });
 
-        const relativeCreatedTimestamp = time(targetUser.createdAt.getTime(), TimestampStyles.RelativeTime);
+        const relativeCreatedTimestamp = time(targetUser.createdAt, TimestampStyles.RelativeTime);
 
         if (targetMember) {
             flags.push(...config.userFlags(targetMember));
@@ -64,7 +64,7 @@ export default class InfoCommand extends Command {
             if (config.isGuildStaff(targetMember)) flags.push("Staff");
             if (targetMember.isCommunicationDisabled()) flags.push("Muted");
 
-            const relativeJoinedTimestamp = time(targetMember.joinedAt!.getTime(), TimestampStyles.RelativeTime);
+            const relativeJoinedTimestamp = time(targetMember.joinedAt!, TimestampStyles.RelativeTime);
 
             embed.addFields([
                 {
@@ -153,7 +153,7 @@ export default class InfoCommand extends Command {
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE (target_id = ${targetUser.id} OR request_author_id = ${targetUser.id})
+                WHERE (executor_id = ${targetUser.id} OR request_author_id = ${targetUser.id})
                   AND guild_id = ${interaction.guildId};
 
             `);

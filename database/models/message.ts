@@ -10,4 +10,5 @@ export interface MessageModel {
     reference_id: Snowflake | null;
     category_id: Snowflake | null;
     content: string | null;
+    sticker_id: Snowflake | null;
 }

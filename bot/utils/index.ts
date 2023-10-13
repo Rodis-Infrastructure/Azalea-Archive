@@ -135,6 +135,8 @@ export function serializeMessage(message: Message<true>, deleted = false): Messa
         created_at: message.createdTimestamp,
         reference_id: message.reference?.messageId || null,
         category_id: message.channel.parentId,
+        // There can only be one sticker per message
+        sticker_id: message.stickers.first()?.id || null,
         deleted
     };
 }

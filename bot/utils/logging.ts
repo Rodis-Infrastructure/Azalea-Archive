@@ -1,4 +1,14 @@
-import { codeBlock, Colors, EmbedBuilder, hyperlink, Message, messageLink, Snowflake, userMention } from "discord.js";
+import {
+    codeBlock,
+    Colors,
+    EmbedBuilder,
+    hyperlink,
+    Message,
+    messageLink,
+    Snowflake,
+    StickerFormatType,
+    userMention
+} from "discord.js";
 import { elipsify, isGuildTextBasedChannel, pluralize } from "./index";
 import { LogData, ReferenceLogData } from "@/types/logging";
 import { MessageModel } from "@database/models/message";
@@ -89,7 +99,7 @@ export function formatLogContent(content: string | null): string {
     return codeBlock(formatted);
 }
 
-export function referenceEmbed(reference: MessageModel, deleted: boolean): ReferenceLogData {
+export async function referenceEmbed(reference: MessageModel, deleted: boolean): Promise<ReferenceLogData> {
     const jumpURL = messageLink(reference.channel_id, reference.message_id, reference.guild_id);
     const embed = new EmbedBuilder()
         .setColor(Colors.NotQuiteBlack)
@@ -107,6 +117,18 @@ export function referenceEmbed(reference: MessageModel, deleted: boolean): Refer
                 value: formatLogContent(reference.content)
             }
         ]);
+
+    if (reference.sticker_id) {
+        const sticker = await client.fetchSticker(reference.sticker_id).catch(() => null);
+
+        // Lottie stickers don't have an image URL
+        if (sticker && sticker.format !== StickerFormatType.Lottie) {
+            embed.spliceFields(1, 0, {
+                name: "Sticker",
+                value: `\`${sticker.name}\` (${hyperlink("view", sticker.url)})`
+            });
+        }
+    }
 
     if (!deleted) embed.setDescription(hyperlink("Jump to message", jumpURL));
 

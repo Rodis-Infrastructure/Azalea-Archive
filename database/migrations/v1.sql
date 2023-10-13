@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS messages
     channel_id   TEXT      NOT NULL,
     guild_id     TEXT      NOT NULL,
     created_at   TIMESTAMP NOT NULL,
+    sticker_id   TEXT,
     content      TEXT,
     reference_id TEXT,
     category_id  TEXT,

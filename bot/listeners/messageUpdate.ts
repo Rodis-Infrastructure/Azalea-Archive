@@ -98,7 +98,7 @@ async function handleMessageEditLog(message: Message<true>, oldContent: string):
             : await cache.fetchMessage(message.reference.messageId);
 
         if (serializedReference) {
-            const { embed, file } = referenceEmbed(serializedReference, !reference);
+            const { embed, file } = await referenceEmbed(serializedReference, !reference);
 
             embeds.unshift(embed);
             files.push(file);

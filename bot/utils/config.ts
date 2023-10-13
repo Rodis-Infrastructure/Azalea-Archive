@@ -81,7 +81,6 @@ export default class Config {
     }
 
     static create(guildId: Snowflake, data: Omit<ConfigData, "guildId">): Config {
-        console.log(this.instances);
         const instance = this.instances.get(guildId);
         if (instance) return instance;
 

@@ -4,8 +4,10 @@ import {
     Colors,
     EmbedBuilder,
     Events,
+    hyperlink,
     Message,
     PartialMessage,
+    StickerFormatType,
     userMention
 } from "discord.js";
 
@@ -63,6 +65,18 @@ export default class MessageDeleteEventListener extends EventListener {
             ])
             .setTimestamp();
 
+        if (message.sticker_id) {
+            const sticker = await client.fetchSticker(message.sticker_id).catch(() => null);
+
+            // Lottie stickers don't have an image URL
+            if (sticker && sticker.format !== StickerFormatType.Lottie) {
+                messageDeleteLog.spliceFields(2, 0, {
+                    name: "Sticker",
+                    value: `\`${sticker.name}\` (${hyperlink("view", sticker.url)})`
+                });
+            }
+        }
+
         const embeds = [messageDeleteLog];
         const files: AttachmentPayload[] = [{
             attachment: "./icons/messageDelete.png",
@@ -71,7 +85,7 @@ export default class MessageDeleteEventListener extends EventListener {
 
         // Message is a reply to another message
         if (reference) {
-            const { embed, file } = referenceEmbed(reference, !fetchedReference);
+            const { embed, file } = await referenceEmbed(reference, !fetchedReference);
 
             embeds.unshift(embed);
             files.push(file);

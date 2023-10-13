@@ -94,7 +94,7 @@ export function mapInfractionsToFields(data: {
     });
 
     const fields = filteredInfractions.slice((page - 1) * 5, page * 5).map(infraction => {
-        const flagName = infraction.flag ? `${InfractionFlag[infraction.flag]} ` : "";
+        const flag = infraction.flag ? `${InfractionFlag[infraction.flag]} ` : "";
 
         // Remove all URLs
         const cleanReason = infraction.reason?.replace(/https?:\/\/.+( |$)/gi, "").trim();
@@ -114,15 +114,14 @@ export function mapInfractionsToFields(data: {
         ];
 
         if (infraction.expires_at) {
-            // Temporary infraction is still active
             if (infraction.expires_at > currentTimestamp()) {
+                // Temporary infraction is still active
                 data.splice(1, 0, {
                     key: "Expires",
                     val: time(infraction.expires_at, TimestampStyles.RelativeTime)
                 });
-
-                // Temporary infraction has expired
             } else {
+                // Temporary infraction has expired
                 data.splice(1, 0, {
                     key: "Duration",
                     val: msToString(infraction.expires_at - infraction.created_at)
@@ -131,7 +130,7 @@ export function mapInfractionsToFields(data: {
         }
 
         return {
-            name: `${flagName}${PunishmentType[infraction.action]} #${infraction.infraction_id}`,
+            name: `${flag}${PunishmentType[infraction.action]} #${infraction.infraction_id}`,
             value: `>>> ${data.map(({ key, val }) => `\`${key}\` | ${val}`).join("\n")}`
         };
     });

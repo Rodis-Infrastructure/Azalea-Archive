@@ -4,6 +4,7 @@ import { Command, Component } from "@/handlers/interactions/interaction";
 import { CachedRequest, MessageCache } from "@/types/cache";
 import { MessageModel } from "@database/models/message";
 import { Collection, Snowflake } from "discord.js";
+import { elipsify } from "@/utils/index";
 
 export default class Cache {
     static components = new Collection<ComponentCustomId, Component<AnyComponentInteraction<"cached">>>();
@@ -43,17 +44,22 @@ export default class Cache {
     /** Stores cached messages in the database */
     static async storeMessages(): Promise<void> {
         const messages = this.instances.flatMap(cache => cache.messages.store);
-        const messagesToInsert = messages.map((data, messageId) => `(
-            ${messageId}, 
-            ${data.author_id}, 
-            ${data.channel_id}, 
-            ${data.guild_id}, 
-            ${data.created_at},
-            ${sanitizeString(data.content)},
-            ${data.reference_id},
-            ${data.category_id},
-            ${data.deleted}
-        )`).join(",");
+        const messagesToInsert = messages.map((data, messageId) => {
+            const croppedContent = data.content ? elipsify(data.content, 1024) : null;
+
+            return `(
+                ${messageId}, 
+                ${data.author_id}, 
+                ${data.channel_id}, 
+                ${data.guild_id}, 
+                ${data.created_at},
+                ${sanitizeString(croppedContent)},
+                ${data.reference_id},
+                ${data.category_id},
+                ${data.sticker_id},
+                ${data.deleted}
+            )`;
+        }).join(",");
 
         // If any changes need to be made, make sure the field names and values are in the exact same order
         if (messagesToInsert) {
@@ -68,6 +74,7 @@ export default class Cache {
                     content,
                     reference_id,
                     category_id,
+                    sticker_id,
                     deleted
                 )
                 VALUES ${messagesToInsert};
@@ -96,13 +103,14 @@ export default class Cache {
     /** Set the content of the cached/stored message to the new message content */
     async handleEditedMessage(messageId: Snowflake, updatedContent: string): Promise<void> {
         const message = this.messages.store.get(messageId);
+        const croppedContent = elipsify(updatedContent, 1024);
 
         if (message) {
-            message.content = updatedContent;
+            message.content = croppedContent;
         } else {
             await getQuery<MessageModel>(`
                 UPDATE messages
-                SET content = ${sanitizeString(updatedContent)}
+                SET content = ${sanitizeString(croppedContent)}
                 WHERE message_id = ${messageId};
             `);
         }
