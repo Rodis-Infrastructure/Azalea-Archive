@@ -1,5 +1,5 @@
-import { EmbedBuilder, GuildMember, GuildTextBasedChannel, Snowflake, time, User, userMention } from "discord.js";
 import { currentTimestamp, formatMuteExpirationResponse, MAX_MUTE_DURATION, msToString, RegexPatterns } from "./index";
+import { EmbedBuilder, GuildMember, GuildTextBasedChannel, Snowflake, time, User, userMention } from "discord.js";
 import { InfractionFlag, InfractionResolveOptions, PunishmentType } from "@database/models/infraction";
 import { MemberMuteResult, QuickMuteParams } from "@/types/moderation";
 import { MessageModel } from "@database/models/message";
@@ -100,7 +100,7 @@ export async function muteMember(target: GuildMember, data: {
 
     const msDuration = ms(duration);
 
-    if (!duration.match(RegexPatterns.DurationValidation) || msDuration <= 0) {
+    if (!duration.match(RegexPatterns.DurationValidation.pattern) || msDuration <= 0) {
         throw new Error("The duration provided is invalid.");
     }
 

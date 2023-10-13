@@ -1,6 +1,6 @@
 import { Colors, EmbedBuilder, Events, hyperlink, messageLink, roleMention } from "discord.js";
 import { loadInteractions, publishCommands } from "@/handlers/interactions/loader";
-import { isGuildTextBasedChannel, RegexPatterns } from "@/utils";
+import { extract, isGuildTextBasedChannel, RegexPatterns } from "@/utils";
 import { readFile } from "node:fs/promises";
 import { ConfigData } from "@/types/config";
 import { Requests } from "@/types/requests";
@@ -29,8 +29,7 @@ export default class ReadyEventListener extends EventListener {
 
         for (const filepath of paths) {
             // File name format: <guildId>.yml or <guildId>.yaml
-            const { id } = RegexPatterns.Snowflake.exec(filepath)?.groups ?? {};
-            RegexPatterns.Snowflake.lastIndex = 0;
+            const { id } = extract(filepath, RegexPatterns.Snowflake);
 
             if (!id) continue;
 

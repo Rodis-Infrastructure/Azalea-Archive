@@ -1,5 +1,5 @@
+import { capitalize, extract, formatMuteExpirationResponse, MAX_MUTE_DURATION, RegexPatterns } from "./index";
 import { GuildMember, hyperlink, Message, messageLink, Snowflake, User, userMention } from "discord.js";
-import { capitalize, formatMuteExpirationResponse, MAX_MUTE_DURATION, RegexPatterns } from "./index";
 import { muteMember, resolveInfraction, validateModerationAction } from "./moderation";
 import { Requests, RequestValidationResult } from "@/types/requests";
 import { LoggingEvent, RolePermission } from "@/types/config";
@@ -57,12 +57,11 @@ async function handleRequestApproval(data: {
     requestType: Requests
 }): Promise<void> {
     const { message, executorId, config, requestType } = data;
+    const { targetId, reason, duration } = extract(message.content, RegexPatterns.RequestValidation);
     const { error } = config.emojis;
 
-    const captureGroups = RegexPatterns.RequestValidation.exec(message.content)?.groups ?? {};
-    RegexPatterns.RequestValidation.lastIndex = 0;
+    if (!targetId || !reason) return;
 
-    const { targetId, reason, duration } = captureGroups;
     let formattedReason = reason.trim().replaceAll(/ +/g, " ");
 
     // Convert attachments to URLs
@@ -197,14 +196,13 @@ export async function validateRequest(data: {
     }
 
     // Values extracted from the request
-    const { targetId, reason } = RegexPatterns.RequestValidation.exec(request.content)?.groups ?? {};
-    RegexPatterns.RequestValidation.lastIndex = 0;
+    const { targetId, reason } = extract(request.content, RegexPatterns.RequestValidation);
 
     if (!targetId || !reason) throw new Error(requestFormatReminder(requestType));
 
     // Check if all URLs lead to permitted proof channels
     if (config.proofChannelIds.length) {
-        const matches = Array.from(reason.matchAll(RegexPatterns.ChannelIdFromURL));
+        const matches = Array.from(reason.matchAll(RegexPatterns.ChannelIdFromURL.pattern));
         if (matches.some(match => !config.proofChannelIds.includes(match[0]))) {
             throw new Error("Your request contains links to non-whitelisted channels.");
         }

@@ -1,9 +1,10 @@
 import { Channel, GuildTextBasedChannel, Message, time } from "discord.js";
+import { ExtractFuncResult, RegexPattern } from "@/types/internals";
 import { ComponentCustomId, CustomId } from "@/types/interactions";
 import { MessageModel } from "@database/models/message";
+import { TimestampStyles } from "@discordjs/formatters";
 
 import Cache from "./cache";
-import { TimestampStyles } from "@discordjs/formatters";
 
 export function capitalize(str: string): string {
     return str[0].toUpperCase() + str.slice(1);
@@ -76,7 +77,10 @@ export const RegexPatterns = {
      * - 2 hours, 2 hrs, 2hours, 2hrs, 1 hour, 1 hr, 1hour, 1hr, 1 h, 1h
      * - 2 minutes, 2 mins, 2minutes, 2mins, 1 minute, 1 min, 1 m, 1m
      */
-    DurationValidation: /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi,
+    DurationValidation: {
+        pattern: /^\d+\s*(d(ays?)?|h((ou)?rs?)?|min(ute)?s?|[hm])$/gi,
+        returnedFields: [] as const
+    },
     /**
      * Enforce a specific format for ban/mute requests
      *
@@ -92,7 +96,10 @@ export const RegexPatterns = {
      * - **duration**: 2h
      * - **reason**: Spamming.
      */
-    RequestValidation: /^(?:<@!?)?(?<targetId>\d{17,19})>? ?(?<duration>\d{1,3}[mhd])? (?<reason>(?:.|[\n\r])+)/gmi,
+    RequestValidation: {
+        pattern: /^(?:<@!?)?(?<targetId>\d{17,19})>? ?(?<duration>\d{1,3}[mhd])? (?<reason>(?:.|[\n\r])+)/gmi,
+        returnedFields: ["targetId", "duration", "reason"] as const
+    },
     /**
      * Extract the channel ID from a message link
      *
@@ -100,9 +107,15 @@ export const RegexPatterns = {
      * 111111111111111111 would be extracted from the URL below:
      * https://discord.com/channels/000000000000000000/111111111111111111/222222222222222222/
      */
-    ChannelIdFromURL: /channels\/\d{17,19}\/(\d{17,19})\/\d{17,19}/gmi,
+    ChannelIdFromURL: {
+        pattern: /channels\/\d{17,19}\/(?<channelId>\d{17,19})\/\d{17,19}/gmi,
+        returnedFields: ["channelId"]
+    },
     /** Content contains a snowflake (number with 17-19 digits) */
-    Snowflake: /(?<id>\d{17,19})/g
+    Snowflake: {
+        pattern: /(?<id>\d{17,19})/g,
+        returnedFields: ["id"] as const
+    }
 };
 
 /** Serializes a message to be stored in the database */
@@ -124,4 +137,11 @@ export function serializeMessage(message: Message<true>, deleted = false): Messa
         category_id: message.channel.parentId,
         deleted
     };
+}
+
+export function extract<T extends RegexPattern>(str: string, regex: T): ExtractFuncResult<T> {
+    const res = regex.pattern.exec(str)?.groups ?? {};
+    regex.pattern.lastIndex = 0;
+
+    return res as ExtractFuncResult<T>;
 }

@@ -407,7 +407,7 @@ export async function handleInfractionReasonChange(infractionId: number, data: {
 async function handleInfractionDurationChange(infraction: InfractionModel, interaction: ChatInputCommandInteraction<"cached">): Promise<string> {
     const strDuration = interaction.options.getString("new_duration", true);
 
-    if (!strDuration.match(RegexPatterns.DurationValidation)) throw new Error("The duration provided is invalid.");
+    if (!strDuration.match(RegexPatterns.DurationValidation.pattern)) throw new Error("The duration provided is invalid.");
 
     /** New duration in seconds */
     const duration = Math.floor(ms(strDuration) / 1000);
