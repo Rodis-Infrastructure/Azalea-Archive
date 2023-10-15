@@ -3,7 +3,7 @@ import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
 import { PunishmentType } from "@database/models/infraction";
 import { resolveInfraction } from "@/utils/moderation";
-import { formatReason } from "@/utils";
+import { ensureError, formatReason } from "@/utils";
 
 import Config from "@/utils/config";
 
@@ -38,11 +38,11 @@ export default class UnbanCommand extends Command {
             .then(() => true)
             .catch(() => false);
 
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         if (!targetIsBanned) {
             await interaction.reply({
-                content: `${error} This user is not banned.`,
+                content: `${emojis.error} This user is not banned.`,
                 ephemeral
             });
             return;
@@ -59,11 +59,10 @@ export default class UnbanCommand extends Command {
                 guildId: interaction.guildId,
                 reason
             });
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} An error has occurred while trying to execute this interaction: ${err.message}`,
+                content: `${emojis.error} ${error.message}`,
                 ephemeral
             });
 
@@ -78,7 +77,7 @@ export default class UnbanCommand extends Command {
 
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully unbanned ${target}${formatReason(reason)}`,
+                content: `${emojis.success} Successfully unbanned ${target}${formatReason(reason)}`,
                 ephemeral
             }),
             config.sendNotification(confirmation, {

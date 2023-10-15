@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandI
 import { purgeMessages, validateModerationAction } from "@/utils/moderation";
 import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
-import { pluralize } from "@/utils";
+import { ensureError, pluralize } from "@/utils";
 
 import Config from "@/utils/config";
 
@@ -59,7 +59,7 @@ export default class CleanCommand extends Command {
         const targetUser = interaction.options.getUser("user");
         const targetMember = interaction.options.getMember("user");
 
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         if (targetMember) {
             const notModerateableReason = validateModerationAction({
@@ -70,7 +70,7 @@ export default class CleanCommand extends Command {
 
             if (notModerateableReason) {
                 await interaction.reply({
-                    content: `${error} ${notModerateableReason}`,
+                    content: `${emojis.error} ${notModerateableReason}`,
                     ephemeral
                 });
                 return;
@@ -87,21 +87,20 @@ export default class CleanCommand extends Command {
 
             if (!purgedMessageCount) {
                 await interaction.reply({
-                    content: `${error} There are no messages to purge.`,
+                    content: `${emojis.error} There are no messages to purge.`,
                     ephemeral
                 });
                 return;
             }
 
             await interaction.reply({
-                content: `${success} Successfully purged \`${purgedMessageCount}\` ${pluralize("message", purgedMessageCount)}.`,
+                content: `${emojis.success} Successfully purged \`${purgedMessageCount}\` ${pluralize("message", purgedMessageCount)}.`,
                 ephemeral
             });
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const err = ensureError(_error);
             await interaction.reply({
-                content: `${error} Failed to purge messages: ${err.message}`,
+                content: `${emojis.error} ${err.message}`,
                 ephemeral
             });
         }

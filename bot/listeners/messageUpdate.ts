@@ -15,7 +15,7 @@ import { handleBanRequestAutoMute, validateRequest } from "@/utils/requests";
 import { LoggingEvent, RolePermission } from "@/types/config";
 import { ErrorCause } from "@/types/internals";
 import { Requests } from "@/types/requests";
-import { serializeMessage } from "@/utils";
+import { ensureError, serializeMessage } from "@/utils";
 import { client } from "@/client";
 
 import EventListener from "@/handlers/listeners/eventListener";
@@ -159,7 +159,7 @@ async function handleRequestEdit(message: Message<true>, config: Config): Promis
             });
         }
     } catch (_error) {
-        const error = _error as Error;
+        const error = ensureError(_error);
         const emoji = error.cause === ErrorCause.DuplicateRequest ? "🔄" : "⚠️";
 
         const existingReaction = message.reactions.cache

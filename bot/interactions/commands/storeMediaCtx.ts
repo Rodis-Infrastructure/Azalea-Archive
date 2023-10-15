@@ -17,12 +17,12 @@ export default class StoreMediaCtxCommand extends Command {
     }
 
     async execute(interaction: MessageContextMenuCommandInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
-        const { success, error } = config.emojis;
+        const { emojis } = config;
         const { targetMessage } = interaction;
 
         if (!config.channels.mediaConversion) {
             await interaction.reply({
-                content: `${error} This guild doesn't have a media conversion channel set up!`,
+                content: `${emojis.error} This guild doesn't have a media conversion channel set up!`,
                 ephemeral: true
             });
             return;
@@ -30,7 +30,7 @@ export default class StoreMediaCtxCommand extends Command {
 
         if (!targetMessage.attachments.size) {
             await interaction.reply({
-                content: `${error} This message doesn't have any attachments!`,
+                content: `${emojis.error} This message doesn't have any attachments!`,
                 ephemeral: true
             });
             return;
@@ -48,7 +48,7 @@ export default class StoreMediaCtxCommand extends Command {
 
         if (!log) {
             await interaction.reply({
-                content: `${error} Unable to store media!`,
+                content: `${emojis.error} Unable to store media!`,
                 ephemeral: true
             });
             return;
@@ -58,7 +58,7 @@ export default class StoreMediaCtxCommand extends Command {
 
         if (!mediaConversionChannel || !mediaConversionChannel.isTextBased()) {
             await interaction.reply({
-                content: `${error} Unable to find the media conversion channel!`,
+                content: `${emojis.error} Unable to find the media conversion channel!`,
                 ephemeral: true
             });
             return;
@@ -67,7 +67,7 @@ export default class StoreMediaCtxCommand extends Command {
         await Promise.all([
             mediaConversionChannel.send(`${interaction.user} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`),
             interaction.reply({
-                content: `${success} Successfully stored \`${log.attachments.size}\` attachments from ${targetMessage.author}`,
+                content: `${emojis.success} Successfully stored \`${log.attachments.size}\` attachments from ${targetMessage.author}`,
                 ephemeral: true
             })
         ]);

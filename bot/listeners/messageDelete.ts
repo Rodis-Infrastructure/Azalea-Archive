@@ -1,5 +1,6 @@
 import {
     AttachmentPayload,
+    AuditLogEvent,
     channelMention,
     Colors,
     EmbedBuilder,
@@ -64,6 +65,18 @@ export default class MessageDeleteEventListener extends EventListener {
                 }
             ])
             .setTimestamp();
+
+        const fetchedAuditLogs = await sourceChannel.guild.fetchAuditLogs({
+            type: AuditLogEvent.MessageDelete,
+            after: message.message_id,
+            limit: 1
+        });
+
+        const auditLog = fetchedAuditLogs.entries.first();
+
+        if (auditLog && auditLog.targetId === message.author_id && auditLog.executor) {
+            messageDeleteLog.setFooter({ text: `Deleted by: ${auditLog.executor.tag} • ${auditLog.executor.id}` });
+        }
 
         if (message.sticker_id) {
             const sticker = await client.fetchSticker(message.sticker_id).catch(() => null);

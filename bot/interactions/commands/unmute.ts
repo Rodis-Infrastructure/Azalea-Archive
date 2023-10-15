@@ -3,7 +3,7 @@ import { resolveInfraction, validateModerationAction } from "@/utils/moderation"
 import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
 import { PunishmentType } from "@database/models/infraction";
-import { formatReason } from "@/utils";
+import { ensureError, formatReason } from "@/utils";
 
 import Config from "@/utils/config";
 
@@ -33,11 +33,11 @@ export default class UnmuteCommand extends Command {
 
     async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const target = interaction.options.getMember("member");
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         if (!target) {
             await interaction.reply({
-                content: `${error} The user entered is not a member of the server.`,
+                content: `${emojis.error} The user entered is not a member of the server.`,
                 ephemeral
             });
             return;
@@ -61,7 +61,7 @@ export default class UnmuteCommand extends Command {
 
         if (notModerateableReason) {
             await interaction.reply({
-                content: `${error} ${notModerateableReason}`,
+                content: `${emojis.error} ${notModerateableReason}`,
                 ephemeral
             });
             return;
@@ -79,11 +79,10 @@ export default class UnmuteCommand extends Command {
                 executorId: interaction.user.id,
                 reason
             });
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} An error has occurred while trying to unmute this member: ${err.message}`,
+                content: `${emojis.error} An error has occurred while trying to unmute this member: ${error.message}`,
                 ephemeral
             });
 
@@ -98,7 +97,7 @@ export default class UnmuteCommand extends Command {
 
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully unmuted ${target}${formatReason(reason)}`,
+                content: `${emojis.success} Successfully unmuted ${target}${formatReason(reason)}`,
                 ephemeral
             }),
             config.sendNotification(confirmation, {

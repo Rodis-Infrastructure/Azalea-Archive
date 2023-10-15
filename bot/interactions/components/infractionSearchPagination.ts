@@ -10,7 +10,7 @@ import Config from "@/utils/config";
 export default class InfractionsNextButton extends Component<ButtonInteraction<"cached">> {
     constructor() {
         super({
-            // Custom ID format: inf-page-{next|back}-{targetId}
+            // Custom ID format: inf-page-{next|back}-{executorId}
             name: { startsWith: "inf-page" },
             defer: InteractionResponseType.Default,
             skipInternalUsageCheck: false
@@ -18,8 +18,19 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
     }
 
     async execute(interaction: ButtonInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
-        const [direction, targetId] = interaction.customId.split("-").slice(2);
-        const searchExecutorId = interaction.message.interaction?.user.id;
+        const [direction, searchExecutorId] = interaction.customId.split("-").slice(2);
+
+        const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+        const targetId = embed.data.footer?.text.replace(/\D/g, "");
+        const filter = embed.data.title?.split(" ")[1] as InfractionFilter | undefined;
+
+        if (!targetId) {
+            await interaction.reply({
+                content: `${config.emojis.error} Failed to fetch the target user's ID.`,
+                ephemeral: true
+            });
+            return;
+        }
 
         if (searchExecutorId !== interaction.user.id) {
             await interaction.reply({
@@ -29,7 +40,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
             return;
         }
 
-        const oldActionRow = interaction.message.components[0];
+        const [oldActionRow] = interaction.message.components;
         const newActionRow = new ActionRowBuilder<ButtonBuilder>(oldActionRow.toJSON());
 
         const [backBtn, pageCountBtn, nextBtn] = newActionRow.components;
@@ -53,9 +64,6 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
             ORDER BY created_at DESC
             LIMIT 100;
         `);
-
-        const embed = EmbedBuilder.from(interaction.message.embeds[0]);
-        const filter = embed.data.title?.split(" ")[1] as InfractionFilter | undefined;
 
         const [pageCount, fields] = mapInfractionsToFields({
             infractions,

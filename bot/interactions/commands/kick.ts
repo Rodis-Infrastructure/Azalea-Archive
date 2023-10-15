@@ -3,7 +3,7 @@ import { resolveInfraction, validateModerationAction } from "@/utils/moderation"
 import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
 import { PunishmentType } from "@database/models/infraction";
-import { formatReason } from "@/utils";
+import { ensureError, formatReason } from "@/utils";
 
 import Config from "@/utils/config";
 
@@ -34,11 +34,11 @@ export default class KickCommand extends Command {
 
     async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const target = interaction.options.getMember("member");
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         if (!target) {
             await interaction.reply({
-                content: `${error} The user entered is not a member of the server.`,
+                content: `${emojis.error} The user entered is not a member of the server.`,
                 ephemeral
             });
             return;
@@ -56,7 +56,7 @@ export default class KickCommand extends Command {
 
         if (notModerateableReason) {
             await interaction.reply({
-                content: `${error} ${notModerateableReason}`,
+                content: `${emojis.error} ${notModerateableReason}`,
                 ephemeral
             });
             return;
@@ -73,11 +73,10 @@ export default class KickCommand extends Command {
                 guildId: interaction.guildId,
                 reason
             });
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} An error has occurred while trying to execute this interaction: ${err.message}`,
+                content: `${emojis.error} An error has occurred while trying to execute this interaction: ${error.message}`,
                 ephemeral
             });
             return;
@@ -91,7 +90,7 @@ export default class KickCommand extends Command {
 
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully kicked ${target}${formatReason(reason)}`,
+                content: `${emojis.success} Successfully kicked ${target}${formatReason(reason)}`,
                 ephemeral
             }),
             config.sendNotification(confirmation, {

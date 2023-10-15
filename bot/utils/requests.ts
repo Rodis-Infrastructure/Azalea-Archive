@@ -1,4 +1,11 @@
-import { capitalize, extract, formatMuteExpirationResponse, MAX_MUTE_DURATION, RegexPatterns } from "./index";
+import {
+    capitalize,
+    ensureError,
+    extract,
+    formatMuteExpirationResponse,
+    MAX_MUTE_DURATION,
+    RegexPatterns
+} from "./index";
 import { GuildMember, hyperlink, Message, messageLink, Snowflake, User, userMention } from "discord.js";
 import { muteMember, resolveInfraction, validateModerationAction } from "./moderation";
 import { Requests, RequestValidationResult } from "@/types/requests";
@@ -58,7 +65,7 @@ async function handleRequestApproval(data: {
 }): Promise<void> {
     const { message, executorId, config, requestType } = data;
     const { targetId, reason, duration } = extract(message.content, RegexPatterns.RequestValidation);
-    const { error } = config.emojis;
+    const { emojis } = config;
 
     if (!targetId || !reason) return;
 
@@ -120,10 +127,9 @@ async function handleRequestApproval(data: {
 
             cache.requests.delete(message.id);
             return;
-        } catch (_err) {
-            const err = _err as Error;
-            const response = `${error} ${userMention(executorId)} Failed to ${requestType} ${userMention(targetId)}: ${err.message}`;
-
+        } catch (_error) {
+            const error = ensureError(_error);
+            const response = `${emojis.error} ${userMention(executorId)} Failed to ${requestType} ${userMention(targetId)}: ${error.message}`;
             await config.sendNotification(response, { allowMentions: true });
         }
     }
@@ -158,9 +164,9 @@ async function handleRequestApproval(data: {
 
         await config.sendNotification(confirmation);
         cache.requests.delete(message.id);
-    } catch (_err) {
-        const err = _err as Error;
-        await config.sendNotification(`${error} ${userMention(executorId)} ${err.message}`, {
+    } catch (_error) {
+        const error = ensureError(_error);
+        await config.sendNotification(`${emojis.error} ${userMention(executorId)} ${error.message}`, {
             allowMentions: true
         });
     }
@@ -303,7 +309,7 @@ export async function handleBanRequestAutoMute(data: {
     } catch (_error) {
         if (target.isCommunicationDisabled()) return;
 
-        const error = _error as Error;
+        const error = ensureError(_error);
         const response = config.formatConfirmation(`mute the member automatically`, {
             executorId: target.id,
             success: false,

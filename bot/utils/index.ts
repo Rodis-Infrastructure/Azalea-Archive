@@ -1,4 +1,4 @@
-import { Channel, GuildTextBasedChannel, Message, time } from "discord.js";
+import { Channel, codeBlock, GuildTextBasedChannel, Message, time } from "discord.js";
 import { ExtractFuncResult, RegexPattern } from "@/types/internals";
 import { ComponentCustomId, CustomId } from "@/types/interactions";
 import { MessageModel } from "@database/models/message";
@@ -146,4 +146,12 @@ export function extract<T extends RegexPattern>(str: string, regex: T): ExtractF
     regex.pattern.lastIndex = 0;
 
     return res as ExtractFuncResult<T>;
+}
+
+export function ensureError(error: unknown): Error {
+    if (error instanceof Error) return error;
+    if (typeof error === "string") return new Error(error);
+
+    const stringifiedError = JSON.stringify(error, null, 2);
+    return new Error(`Unknown error\n${codeBlock(stringifiedError)}`);
 }

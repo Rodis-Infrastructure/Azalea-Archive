@@ -3,7 +3,7 @@ import { resolveInfraction, validateModerationAction } from "@/utils/moderation"
 import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
 import { PunishmentType } from "@database/models/infraction";
-import { formatReason } from "@/utils";
+import { ensureError, formatReason } from "@/utils";
 
 import Config from "@/utils/config";
 
@@ -38,7 +38,7 @@ export default class NoteCommand extends Command {
         const targetUser = interaction.options.getUser("user", true);
         const note = interaction.options.getString("note", true);
 
-        const { error, success } = config.emojis;
+        const { emojis } = config;
 
         if (targetMember) {
             const notModerateableReason = validateModerationAction({
@@ -49,7 +49,7 @@ export default class NoteCommand extends Command {
 
             if (notModerateableReason) {
                 await interaction.reply({
-                    content: `${error} ${notModerateableReason}`,
+                    content: `${emojis.error} ${notModerateableReason}`,
                     ephemeral
                 });
                 return;
@@ -64,11 +64,10 @@ export default class NoteCommand extends Command {
                 reason: note,
                 punishment: PunishmentType.Note
             });
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} An error occurred while trying to execute this interaction: ${err.message}`,
+                content: `${emojis.error} An error occurred while trying to execute this interaction: ${error.message}`,
                 ephemeral
             });
 
@@ -83,7 +82,7 @@ export default class NoteCommand extends Command {
 
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully added a note to ${targetUser}${formatReason(note)}`,
+                content: `${emojis.success} Successfully added a note to ${targetUser}${formatReason(note)}`,
                 ephemeral
             }),
             config.sendNotification(confirmation, {

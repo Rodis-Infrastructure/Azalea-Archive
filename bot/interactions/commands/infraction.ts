@@ -18,6 +18,7 @@ import {
 import {
     currentTimestamp,
     elipsify,
+    ensureError,
     formatMuteExpirationResponse,
     formatReason,
     msToString,
@@ -143,7 +144,7 @@ export default class InfractionCommand extends Command {
 
     async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const subcommand = interaction.options.getSubcommand(true);
-        const { error, success } = config.emojis;
+        const { emojis } = config;
 
         if (subcommand === InfractionSubcommand.Search) {
             await handleInfractionSearch(interaction, config, ephemeral);
@@ -174,7 +175,7 @@ export default class InfractionCommand extends Command {
 
         if (!canManageInfraction) {
             await interaction.reply({
-                content: `${error} You do not have permission to manage this infraction.`,
+                content: `${emojis.error} You do not have permission to manage this infraction.`,
                 ephemeral
             });
             return;
@@ -205,7 +206,7 @@ export default class InfractionCommand extends Command {
 
                 default:
                     await interaction.reply({
-                        content: `${error} Unknown subcommand: \`${subcommand}\``,
+                        content: `${emojis.error} Unknown subcommand: \`${subcommand}\``,
                         ephemeral
                     });
                     return;
@@ -218,18 +219,17 @@ export default class InfractionCommand extends Command {
 
             await Promise.all([
                 interaction.reply({
-                    content: `${success} Successfully ${response}`,
+                    content: `${emojis.success} Successfully ${response}`,
                     ephemeral
                 }),
                 config.sendNotification(confirmation, {
                     sourceChannelId: interaction.channelId
                 })
             ]);
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} ${err}`,
+                content: `${emojis.error} ${error.message}`,
                 ephemeral
             });
         }
@@ -320,19 +320,19 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         if (fields.length) embed.setFields(fields);
         if (maxPageCount > 1) {
             const nextBtn = new ButtonBuilder()
-                .setCustomId(`inf-page-next-${targetUser.id}`)
+                .setCustomId(`inf-page-next-${interaction.user.id}`)
                 .setLabel("\u2192")
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(infractions.length <= 5);
 
             const pageCountBtn = new ButtonBuilder()
-                .setCustomId("x")
+                .setCustomId("inf-page-count")
                 .setLabel(`1 / ${maxPageCount}`)
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(true);
 
             const previousBtn = new ButtonBuilder()
-                .setCustomId(`inf-page-back-${targetUser.id}`)
+                .setCustomId(`inf-page-back-${interaction.user.id}`)
                 .setLabel("\u2190")
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(true);

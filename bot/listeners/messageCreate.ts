@@ -2,7 +2,7 @@ import { getRequestType, handleBanRequestAutoMute, validateRequest } from "@/uti
 import { Events, hideLinkEmbed, Message, PartialMessage } from "discord.js";
 import { LoggingEvent, RolePermission } from "@/types/config";
 import { Requests } from "@/types/requests";
-import { serializeMessage } from "@/utils";
+import { ensureError, serializeMessage } from "@/utils";
 import { sendLog } from "@/utils/logging";
 
 import EventListener from "@/handlers/listeners/eventListener";
@@ -78,7 +78,7 @@ export default class MessageCreateEventListener extends EventListener {
                     });
                 }
             } catch (_error) {
-                const error = _error as Error;
+                const error = ensureError(_error);
                 const emoji = error.cause === ErrorCause.DuplicateRequest ? "🔄" : "⚠️";
 
                 const [response] = await Promise.all([

@@ -1,4 +1,12 @@
-import { currentTimestamp, formatMuteExpirationResponse, MAX_MUTE_DURATION, msToString, RegexPatterns } from "./index";
+import {
+    currentTimestamp,
+    ensureError,
+    formatMuteExpirationResponse,
+    MAX_MUTE_DURATION,
+    msToString,
+    RegexPatterns
+} from "./index";
+
 import { EmbedBuilder, GuildMember, GuildTextBasedChannel, Snowflake, time, User, userMention } from "discord.js";
 import { InfractionFlag, InfractionResolveOptions, PunishmentType } from "@database/models/infraction";
 import { MemberMuteResult, QuickMuteParams } from "@/types/moderation";
@@ -219,11 +227,11 @@ export async function purgeMessages(data: {
 /** @returns {Object} The response to send to the executor and whether the operation was successful */
 export async function handleQuickMute(data: QuickMuteParams): Promise<{ response: string, success: boolean }> {
     const { message, duration, executorId, config } = data;
-    const { success, error } = config.emojis;
+    const { emojis } = config;
 
     if (!message.member) {
         return {
-            response: `${error} Failed to fetch the message author.`,
+            response: `${emojis.error} Failed to fetch the message author.`,
             success: false
         };
     }
@@ -257,13 +265,13 @@ export async function handleQuickMute(data: QuickMuteParams): Promise<{ response
         ]);
 
         return {
-            response: `${success} Successfully ${response}`,
+            response: `${emojis.success} Successfully ${response}`,
             success: true
         };
-    } catch (_err) {
-        const err = _err as Error;
+    } catch (_error) {
+        const error = ensureError(_error);
         return {
-            response: `${error} ${userMention(executorId)} ${err.message}`,
+            response: `${emojis.error} ${userMention(executorId)} ${error.message}`,
             success: false
         };
     }

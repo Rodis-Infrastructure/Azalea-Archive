@@ -3,7 +3,7 @@ import { resolveInfraction, validateModerationAction } from "@/utils/moderation"
 import { PunishmentType } from "@database/models/infraction";
 import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
-import { formatReason } from "@/utils";
+import { ensureError, formatReason } from "@/utils";
 
 import Config from "@/utils/config";
 
@@ -40,7 +40,7 @@ export default class BanCommand extends Command {
             .then(() => true)
             .catch(() => false);
 
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         if (targetMember) {
             const notModerateableReason = validateModerationAction({
@@ -55,7 +55,7 @@ export default class BanCommand extends Command {
 
             if (notModerateableReason) {
                 await interaction.reply({
-                    content: `${error} ${notModerateableReason}`,
+                    content: `${emojis.error} ${notModerateableReason}`,
                     ephemeral
                 });
                 return;
@@ -64,7 +64,7 @@ export default class BanCommand extends Command {
 
         if (isBanned) {
             await interaction.reply({
-                content: `${error} This user has already been banned.`,
+                content: `${emojis.error} This user has already been banned.`,
                 ephemeral
             });
             return;
@@ -77,10 +77,10 @@ export default class BanCommand extends Command {
                 deleteMessageSeconds: config.deleteMessageSecondsOnBan,
                 reason
             });
-        } catch (_err) {
-            const err = _err as Error;
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} An error has occurred while trying to ban this user: ${err.message}`,
+                content: `${emojis.error} ${error.message}`,
                 ephemeral
             });
 
@@ -95,7 +95,7 @@ export default class BanCommand extends Command {
 
         await Promise.all([
             interaction.reply({
-                content: `${success} Successfully banned ${targetUser}${formatReason(reason)}`,
+                content: `${emojis.success} Successfully banned ${targetUser}${formatReason(reason)}`,
                 ephemeral
             }),
             config.sendNotification(confirmation, {

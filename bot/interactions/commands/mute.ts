@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
+import { ensureError, formatMuteExpirationResponse, formatReason, MAX_MUTE_DURATION } from "@/utils";
 import { InteractionResponseType } from "@/types/interactions";
 import { Command } from "@/handlers/interactions/interaction";
-import { formatMuteExpirationResponse, formatReason, MAX_MUTE_DURATION } from "@/utils";
 import { muteMember } from "@/utils/moderation";
 
 import Config from "@/utils/config";
@@ -39,11 +39,11 @@ export default class MuteCommand extends Command {
 
     async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
         const target = interaction.options.getMember("member");
-        const { success, error } = config.emojis;
+        const { emojis } = config;
 
         if (!target) {
             await interaction.reply({
-                content: `${error} The user entered is not a member of the server.`,
+                content: `${emojis.error} The user entered is not a member of the server.`,
                 ephemeral
             });
             return;
@@ -69,7 +69,7 @@ export default class MuteCommand extends Command {
 
             await Promise.all([
                 interaction.reply({
-                    content: `${success} Successfully ${response}${formatReason(reason)}`,
+                    content: `${emojis.success} Successfully ${response}${formatReason(reason)}`,
                     ephemeral
                 }),
                 config.sendNotification(confirmation, {
@@ -77,11 +77,10 @@ export default class MuteCommand extends Command {
                 })
             ]);
             return;
-        } catch (_err) {
-            const err = _err as Error;
-
+        } catch (_error) {
+            const error = ensureError(_error);
             await interaction.reply({
-                content: `${error} ${err.message}`,
+                content: `${emojis.error} ${error.message}`,
                 ephemeral
             });
         }
