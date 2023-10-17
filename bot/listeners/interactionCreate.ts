@@ -38,7 +38,7 @@ export default class InteractionCreateEventListener extends EventListener {
         }
 
         const { data } = cachedInteraction;
-        const customId = getCustomId(data.name);
+        let customId = getCustomId(data.name);
 
         if (!interaction.isCommand() && !config.canPerformAction(interaction.member, RoleInteraction.Button, customId)) {
             await interaction.reply({
@@ -64,6 +64,12 @@ export default class InteractionCreateEventListener extends EventListener {
             console.log(`Failed to execute interaction: ${customId}`);
             console.error(err);
             return;
+        }
+
+        // Display the full command name if it's a slash command
+        if (interaction.isChatInputCommand()) {
+            const subcommand = interaction.options.getSubcommand(false);
+            customId = subcommand ? `/${customId} ${subcommand}` : `/${customId}`;
         }
 
         const log = new EmbedBuilder()

@@ -12,8 +12,8 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
         super(Events.GuildAuditLogEntryCreate);
     }
 
-    async execute(log: GuildAuditLogsEntry, guild: Guild): Promise<void> {
-        const { target, reason, changes, executor } = log;
+    async execute(auditLog: GuildAuditLogsEntry, guild: Guild): Promise<void> {
+        const { target, reason, changes, executor } = auditLog;
 
         if (!executor || !target || executor.id === client.user?.id) return;
 
@@ -23,7 +23,7 @@ export default class GuildAuditLogEntryCreateListener extends EventListener {
 
         const infractionFlag = executor.bot ? InfractionFlag.Automatic : undefined;
 
-        switch (log.action) {
+        switch (auditLog.action) {
             case AuditLogEvent.MemberKick:
                 punishment = PunishmentType.Kick;
                 action = "kicked";
