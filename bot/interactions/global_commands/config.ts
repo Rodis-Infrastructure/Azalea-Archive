@@ -28,9 +28,9 @@ export default class ConfigCommand extends Command {
 
     async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean): Promise<void> {
         const guildId = interaction.options.getString("guild_id") ?? interaction.guildId;
-        const config = glob.sync(`config/${guildId}.{yml,yaml}`).join("\n");
+        const [filename] = glob.sync(`config/${guildId}.{yml,yaml}`);
 
-        const file = new AttachmentBuilder(config)
+        const file = new AttachmentBuilder(filename)
             .setName(`${guildId}.yaml`)
             .setDescription(`Configuration for guild with ID ${guildId}`);
 

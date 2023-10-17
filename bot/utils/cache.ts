@@ -8,7 +8,8 @@ import { elipsify } from "@/utils/index";
 
 export default class Cache {
     static components = new Collection<ComponentCustomId, Component<AnyComponentInteraction<"cached">>>();
-    static commands = new Collection<CustomId, Command>();
+    static globalCommands = new Collection<CustomId, Command>();
+    static guildCommands = new Collection<CustomId, Command>();
     private static instances = new Collection<Snowflake, Cache>();
     requests: Collection<Snowflake, CachedRequest>;
     messages: MessageCache;

@@ -1,5 +1,7 @@
 import {
     AnySelectMenuInteraction,
+    APIEmbed,
+    ApplicationCommandOptionChoiceData,
     ButtonInteraction,
     CategoryChannel,
     Collection,
@@ -38,6 +40,10 @@ export default class Config {
 
     get guildId(): Snowflake {
         return this.data.guildId;
+    }
+
+    get customCommandChoices(): ApplicationCommandOptionChoiceData<string>[] {
+        return this.data.commands?.map(({ name, value }) => ({ name, value })) || [];
     }
 
     get proofChannelIds(): Snowflake[] {
@@ -90,6 +96,11 @@ export default class Config {
         Config.instances.set(guildId, config);
 
         return config;
+    }
+
+    /** @param {string} value - The custom command's choice value */
+    getCustomCommandResponse(value: string): APIEmbed | undefined {
+        return this.data.commands?.find(command => command.value === value)?.embed;
     }
 
     getAutoReactions(channelId: Snowflake): string[] {

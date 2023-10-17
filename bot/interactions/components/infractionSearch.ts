@@ -1,4 +1,4 @@
-import { handleInfractionSearch } from "@/interactions/commands/infraction";
+import { handleInfractionSearch } from "@/interactions/global_commands/infraction";
 import { Component } from "@/handlers/interactions/interaction";
 import { InteractionResponseType } from "@/types/interactions";
 import { ButtonInteraction } from "discord.js";

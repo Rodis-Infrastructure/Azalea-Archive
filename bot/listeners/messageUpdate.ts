@@ -9,7 +9,7 @@ import {
     PartialMessage
 } from "discord.js";
 
-import { handleInfractionReasonChange } from "@/interactions/commands/infraction";
+import { handleInfractionReasonChange } from "@/interactions/global_commands/infraction";
 import { formatLogContent, referenceEmbed, sendLog } from "@/utils/logging";
 import { handleBanRequestAutoMute, validateRequest } from "@/utils/requests";
 import { LoggingEvent, RolePermission } from "@/types/config";

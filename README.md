@@ -50,6 +50,23 @@ channels:
   notifications: "channel-id"
 ```
 
+### Custom Commands
+
+The `commands` section allows you to configure custom commands that can be used by the bot.
+
+```yaml
+commands:
+  - name: "command-name"
+    value: "command-value" # Cannot have whitespace
+    embed:
+      title: "embed-title"
+      description: "embed-description"
+      color: 0x000000 # Optional
+```
+
+For more information on what embed attributes can be passed,
+see [Discord documentation](https://discord.com/developers/docs/resources/channel#embed-object).
+
 ### Request Notices
 
 A reminder/notice will be sent in the specified channel whenever there is a certain number of unhandled requests over
@@ -61,9 +78,24 @@ notices:
       enabled: true
       channelId: "channel-id"
       threshold: 25
-      interval: 3_600_000 # 1 hour
+      cron: "0 * * * *" # Every hour
       mentionedRoles: ["role-id"]
 ```
+
+### Scheduled Messages
+
+The `scheduledMessages` section allows you to configure messages that will be sent in the specified channel at a
+
+```yaml
+scheduledMessages:
+  - channelId: "channel-id"
+    cron: "0 0 * * *" # Every day at midnight
+    message: MessagePayload
+```
+
+See [discord.js](https://www.npmjs.com/package/discord.js) documentation on what can be parsed
+to [TextChannel.send()](https://old.discordjs.dev/#/docs/discord.js/main/class/TextChannel?scrollTo=send) for more
+information on the `message` field.
 
 ### Custom Emojis
 

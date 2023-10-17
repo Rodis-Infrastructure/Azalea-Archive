@@ -4,7 +4,7 @@ import glob from "fast-glob";
 import path from "node:path";
 
 export async function loadListeners(): Promise<void> {
-    const paths = glob.sync("./bot/listeners/*");
+    const paths = glob.sync("./bot/listeners/*.ts");
 
     for (const filepath of paths) {
         try {

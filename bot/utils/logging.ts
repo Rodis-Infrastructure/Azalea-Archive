@@ -9,6 +9,7 @@ import {
     StickerFormatType,
     userMention
 } from "discord.js";
+
 import { elipsify, isGuildTextBasedChannel, pluralize } from "./index";
 import { LogData, ReferenceLogData } from "@/types/logging";
 import { MessageModel } from "@database/models/message";

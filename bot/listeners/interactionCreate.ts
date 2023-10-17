@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder, Events, Interaction } from "discord.js";
+import { Colors, CommandInteraction, EmbedBuilder, Events, Interaction } from "discord.js";
 import { LoggingEvent, RoleInteraction } from "@/types/config";
 import { sendLog } from "@/utils/logging";
 import { getCustomId } from "@/utils";
@@ -6,6 +6,7 @@ import { getCustomId } from "@/utils";
 import EventListener from "@/handlers/listeners/eventListener";
 import Config from "@/utils/config";
 import Cache from "@/utils/cache";
+import { Command } from "@/handlers/interactions/interaction";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
@@ -26,7 +27,7 @@ export default class InteractionCreateEventListener extends EventListener {
         }
 
         const cachedInteraction = interaction.isCommand()
-            ? Cache.commands.get(`${interaction.commandName}_${interaction.commandType}`)
+            ? getCommand(interaction)
             : Cache.getComponent(interaction.customId);
 
         if (!cachedInteraction) {
@@ -94,4 +95,9 @@ export default class InteractionCreateEventListener extends EventListener {
             }
         });
     }
+}
+
+function getCommand({ commandName, commandType, guildId }: CommandInteraction): Command | undefined {
+    const key = `${commandName}_${commandType}`;
+    return Cache.globalCommands.get(key) || Cache.guildCommands.get(`${key}_${guildId}`);
 }

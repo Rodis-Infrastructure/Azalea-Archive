@@ -70,7 +70,7 @@ export default class InfoCommand extends Command {
                 {
                     name: targetMember.nickname ? "Nickname" : "Display Name",
                     // Server nickname OR Global display name OR Username
-                    value: targetMember.nickname || targetMember.displayName,
+                    value: targetMember.displayName,
                     inline: true
                 },
                 {

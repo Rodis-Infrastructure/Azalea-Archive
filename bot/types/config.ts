@@ -1,5 +1,4 @@
-import { Snowflake } from "discord.js";
-
+import { APIEmbed, MessageCreateOptions, MessagePayload, Snowflake } from "discord.js";
 import { CustomId } from "./interactions";
 
 interface UserFlag {
@@ -69,8 +68,8 @@ export interface NoticeConfig {
     channelId: Snowflake
     /** The number of unreviewed requests to trigger a notice */
     threshold: number
-    /** The number of milliseconds between notices */
-    interval: number
+    /** The interval for checking the number of unreviewed requests (cron syntax) */
+    cron: string
     mentionedRoles?: Snowflake[]
 }
 
@@ -81,11 +80,23 @@ export interface ChannelConfig {
     notifications?: Snowflake
 }
 
+interface CustomCommand {
+    name: string
+    value: string
+    embed: APIEmbed
+}
+
 export type LoggingConfig = ToggleableProperty & {
     [event in LoggingEvent]?: ToggleableProperty & {
         channelId: Snowflake
     }
 };
+
+interface ScheduledMessageData {
+    channelId: string
+    cron: string
+    message: string | MessagePayload | MessageCreateOptions
+}
 
 export interface AutoReactionConfig {
     channelId: Snowflake
@@ -98,8 +109,10 @@ export interface Notices {
 }
 
 export interface ConfigData {
+    commands?: CustomCommand[]
     autoReactions?: AutoReactionConfig[]
     deleteMessageSecondsOnBan?: number
+    scheduledMessages?: ScheduledMessageData[]
     proofChannelIds?: Snowflake[]
     notices?: Notices
     ephemeralResponses?: ToggleableProperty
