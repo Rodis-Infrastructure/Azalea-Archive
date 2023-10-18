@@ -3,15 +3,15 @@
         "target": "ESNext",
         "module": "commonjs",
         "rootDirs": [
-            "bot",
-            "database"
+            "./bot",
+            "./database"
         ],
         "paths": {
             "@/*": [
-                "bot/*"
+                "./bot/*"
             ],
             "@database/*": [
-                "database/*"
+                "./database/*"
             ]
         },
         "outDir": "./dist/",
@@ -25,18 +25,18 @@
         "forceConsistentCasingInFileNames": true,
         "removeComments": true,
         "typeRoots": [
-            "node_modules/discord-api-types"
+            "./node_modules/discord-api-types"
         ],
         "sourceMap": false
     },
     "files": [
-        "bot/client.ts"
+        "./bot/client.ts"
     ],
     "include": [
         "./**/*.ts"
     ],
     "exclude": [
-        "node_modules",
-        "dist"
+        "./node_modules",
+        "./dist"
     ]
 }
