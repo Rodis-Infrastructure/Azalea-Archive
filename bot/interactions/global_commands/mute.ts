@@ -76,7 +76,6 @@ export default class MuteCommand extends Command {
                     sourceChannelId: interaction.channelId
                 })
             ]);
-            return;
         } catch (_error) {
             const error = ensureError(_error);
             await interaction.reply({
