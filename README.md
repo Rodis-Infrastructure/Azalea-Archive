@@ -21,8 +21,9 @@ Please note that a `.env` file is required to run the bot. See the [`.env.exampl
 
 ## Configuration
 
-For a full example of the configuration, you can view the [`example.yaml`](config/example.yaml) file in the
-repository
+All configuration files must be located in the [`config`](config) directory and their name must use the following format: `<guild-id>.yaml` or `<guild-id>.yml`.
+
+For a full example of the configuration, you can view the [`example.yaml`](config/example.yaml) file.
 
 ### Message Deletion on Ban
 
