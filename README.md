@@ -2,6 +2,23 @@
 
 This file serves as documentation for the Roblox Discord's moderation bot.
 
+## Startup
+
+Prior to starting the bot, you must install the dependencies:
+
+```bash
+npm install
+```
+
+To start the bot, run the following commands:
+
+```bash
+npm run build
+npm start
+```
+
+Please note that a `.env` file is required to run the bot. See the [`.env.example`](.env.example) file for an example of what variables need to be set.
+
 ## Configuration
 
 For a full example of the configuration, you can view the [`example.yaml`](config/example.yaml) file in the
