@@ -156,7 +156,7 @@ userFlags:
       - "role-id"
 ```
 
-### Role and Group Configuration
+### Permission Configuration
 
 The `roles` and `groups` sections allow you to configure which roles have access to specific message components and
 modals.
@@ -167,8 +167,6 @@ modals.
 - `manageBanRequests` - Allows the user to approve or deny ban requests.
 - `manageMuteRequests` - Allows the user to approve or deny mute requests.
 - `autoMuteBanRequests` - Automatically mutes the user a ban requested was submitted for
-
-#### Permission Configuration
 
 ```yaml
 permissions:
