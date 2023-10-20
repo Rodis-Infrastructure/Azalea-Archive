@@ -5,7 +5,7 @@
     "main": "bot/client.ts",
     "scripts": {
         "build": "tsc",
-        "start": "node dist/client.js",
+        "start": "node dist/bot/client.js",
         "test": "mocha bot/client.ts"
     },
     "repository": {
