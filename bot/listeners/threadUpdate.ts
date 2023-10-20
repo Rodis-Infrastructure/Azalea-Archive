@@ -1,9 +1,9 @@
 import { Colors, EmbedBuilder, Events, ThreadChannel, userMention } from "discord.js";
-import { LoggingEvent } from "@/types/config";
-import { sendLog } from "@/utils/logging";
-import { capitalize } from "@/utils";
+import { LoggingEvent } from "@bot/types/config";
+import { sendLog } from "@bot/utils/logging";
+import { capitalize } from "@bot/utils";
 
-import EventListener from "@/handlers/listeners/eventListener";
+import EventListener from "@bot/handlers/listeners/eventListener";
 
 export default class ThreadUpdateEventListener extends EventListener {
     constructor() {

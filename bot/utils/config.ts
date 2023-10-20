@@ -25,22 +25,18 @@ import {
     RoleInteraction,
     RolePermission,
     RolePermissions
-} from "@/types/config";
+} from "@bot/types/config";
 
-import { AnyCommandInteraction, CustomId, InteractionResponseType } from "@/types/interactions";
+import { AnyCommandInteraction, CustomId, InteractionResponseType } from "@bot/types/interactions";
 import { formatReason, isGuildTextBasedChannel } from "./index";
 import { InfractionModel } from "@database/models/infraction";
-import { client } from "@/client";
+import { client } from "@bot/client";
 
 export default class Config {
     private static instances = new Collection<string, Config>();
 
     // @formatter:off
-    private constructor(public readonly data: ConfigData) {}
-
-    get guildId(): Snowflake {
-        return this.data.guildId;
-    }
+    private constructor(public readonly guildId: string, public readonly data: ConfigData) {}
 
     get customCommandChoices(): ApplicationCommandOptionChoiceData<string>[] {
         return this.data.commands?.map(({ name, value }) => ({ name, value })) || [];
@@ -60,10 +56,13 @@ export default class Config {
     }
 
     get emojis(): EmojiConfig {
-        return this.data.emojis ?? {
-            success: "✅",
-            error: "❌"
-        };
+        const emojis = this.data.emojis ?? {};
+
+        // Set default values
+        emojis.success ||= "✅";
+        emojis.error ||= "❌";
+
+        return emojis;
     }
 
     get channels(): ChannelConfig {
@@ -86,13 +85,11 @@ export default class Config {
         return this.instances.get(guildId);
     }
 
-    static create(guildId: Snowflake, data: Omit<ConfigData, "guildId">): Config {
+    static create(guildId: Snowflake, data: ConfigData): Config {
         const instance = this.instances.get(guildId);
         if (instance) return instance;
 
-        const properties = Object.assign(data, { guildId });
-        const config = new Config(properties);
-
+        const config = new Config(guildId, data);
         Config.instances.set(guildId, config);
 
         return config;

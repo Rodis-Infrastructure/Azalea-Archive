@@ -1,12 +1,12 @@
 import { Colors, CommandInteraction, EmbedBuilder, Events, Interaction } from "discord.js";
-import { LoggingEvent, RoleInteraction } from "@/types/config";
-import { sendLog } from "@/utils/logging";
-import { getCustomId } from "@/utils";
+import { LoggingEvent, RoleInteraction } from "@bot/types/config";
+import { sendLog } from "@bot/utils/logging";
+import { getCustomId } from "@bot/utils";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Config from "@/utils/config";
-import Cache from "@/utils/cache";
-import { Command } from "@/handlers/interactions/interaction";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Config from "@bot/utils/config";
+import Cache from "@bot/utils/cache";
+import { Command } from "@bot/handlers/interactions/interaction";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {

@@ -23,7 +23,7 @@ import {
     formatReason,
     msToString,
     RegexPatterns
-} from "@/utils";
+} from "@bot/utils";
 
 import {
     InfractionFilter,
@@ -33,17 +33,17 @@ import {
     PunishmentType
 } from "@database/models/infraction";
 
-import { InfractionSubcommand, InteractionResponseType } from "@/types/interactions";
-import { getInfractionEmbedData, mapInfractionsToFields } from "@/utils/infractions";
+import { InfractionSubcommand, InteractionResponseType } from "@bot/types/interactions";
+import { getInfractionEmbedData, mapInfractionsToFields } from "@bot/utils/infractions";
 import { allQuery, getQuery, runQuery, sanitizeString } from "@database/utils";
-import { Command } from "@/handlers/interactions/interaction";
-import { LoggingEvent, RolePermission } from "@/types/config";
+import { Command } from "@bot/handlers/interactions/interaction";
+import { LoggingEvent, RolePermission } from "@bot/types/config";
 import { TimestampStyles } from "@discordjs/formatters";
 import { APIEmbedField } from "discord-api-types/v10";
-import { sendLog } from "@/utils/logging";
-import { client } from "@/client";
+import { sendLog } from "@bot/utils/logging";
+import { client } from "@bot/client";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 import ms from "ms";
 
 export default class InfractionCommand extends Command {

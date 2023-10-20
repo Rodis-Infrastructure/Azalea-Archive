@@ -5,10 +5,10 @@ import {
     EmbedBuilder
 } from "discord.js";
 
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class FaqCommand extends Command {
     constructor(config: Config) {

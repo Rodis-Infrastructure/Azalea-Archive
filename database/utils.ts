@@ -1,7 +1,11 @@
 import { InfractionFlag, InfractionModel, PunishmentType } from "./models/infraction";
 import { Database } from "sqlite3";
 
-if (!process.env.DB_PATH) throw new Error("No database path provided (DB_PATH)");
+if (!process.env.DB_PATH) {
+    console.error("A database path must be specified in .env (DB_PATH)");
+    process.exit(0);
+}
+
 const database = new Database(process.env.DB_PATH);
 
 /** Runs a query that doesn't return anything */

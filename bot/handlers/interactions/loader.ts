@@ -1,39 +1,49 @@
-import { AnyComponentInteraction } from "@/types/interactions";
+import { AnyComponentInteraction } from "@bot/types/interactions";
 import { Command, Component } from "./interaction";
-import { client } from "@/client";
+import { startProgressBar } from "@bot/utils";
+import { Snowflake } from "discord.js";
+import { client } from "@bot/client";
 
-import Cache from "@/utils/cache";
+import Cache from "@bot/utils/cache";
 import glob from "fast-glob";
 import path from "node:path";
-import Config from "@/utils/config";
-import { Snowflake } from "discord.js";
+import Config from "@bot/utils/config";
+import fs from "node:fs";
 
 export async function loadGlobalInteractions(): Promise<void> {
-    const interactionFiles = glob.sync("./bot/interactions/(components|global_commands)/*.ts");
+    const dirPath = path.resolve(__dirname, "../../interactions");
+    const filepaths = glob.sync(`${dirPath}/{components,global_commands}/*`);
+    const bar = startProgressBar("Loading global interactions", filepaths.length);
 
-    for (const interactionFile of interactionFiles) {
+    for (const filepath of filepaths) {
         try {
-            const interactionModule = await import(path.resolve(interactionFile));
+            const filename = filepath.split("/").at(-1);
+            const interactionModule = await import(filepath);
             const interactionClass = interactionModule.default;
 
             registerGlobalInteraction(new interactionClass());
+            bar.increment({ filename });
         } catch (err) {
-            console.error(`Error loading interaction from file ${interactionFile}: ${err}`);
+            console.error(`Error loading global interaction from file ${filepath}: ${err}`);
         }
     }
 }
 
 export async function loadGuildCommands(config: Config): Promise<void> {
-    const commandFiles = glob.sync("./bot/interactions/guild_commands/*.ts");
+    const dirPath = path.resolve(__dirname, "../../interactions/guild_commands");
+    const filenames = fs.readdirSync(dirPath);
+    const bar = startProgressBar(`Loading guild commands — ${config.guildId}`, filenames.length);
 
-    for (const commandFile of commandFiles) {
+    for (const filename of filenames) {
         try {
-            const commandModule = await import(path.resolve(commandFile));
+            const filepath = path.resolve(__dirname, "../../interactions/guild_commands", filename);
+            const commandModule = await import(filepath);
             const commandClass = commandModule.default;
 
             registerGuildCommand(config.guildId, new commandClass(config));
+            bar.increment({ filename });
         } catch (err) {
-            console.error(`Error loading interaction from file ${commandFile}: ${err}`);
+            console.error(`Error loading guild command from file ${filename}: ${err}`);
         }
     }
 }
@@ -43,7 +53,7 @@ export async function publishGlobalCommands(): Promise<void> {
 
     try {
         await client.application?.commands.set(cachedCommands);
-        console.log(`Successfully published ${Cache.globalCommands.size} global commands!`);
+        console.log(`Successfully published ${cachedCommands.length} global commands!`);
     } catch (err) {
         console.error(`Error publishing global commands: ${err}`);
     }
@@ -59,7 +69,7 @@ export async function publishGuildCommands(guildId: Snowflake): Promise<void> {
         if (!guild) return;
 
         await guild.commands.set(cachedCommands);
-        console.log(`Successfully published ${Cache.guildCommands.size} guild commands! (${guildId})`);
+        console.log(`Successfully published ${cachedCommands.length} guild commands! (${guildId})`);
     } catch (err) {
         console.error(`Error publishing guild commands into ${guildId}: ${err}`);
     }

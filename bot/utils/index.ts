@@ -1,10 +1,26 @@
 import { Channel, codeBlock, GuildTextBasedChannel, Message, time } from "discord.js";
-import { ExtractFuncResult, RegexPattern } from "@/types/internals";
-import { ComponentCustomId, CustomId } from "@/types/interactions";
+import { ExtractFuncResult, RegexPattern } from "@bot/types/internals";
+import { ComponentCustomId, CustomId } from "@bot/types/interactions";
 import { MessageModel } from "@database/models/message";
 import { TimestampStyles } from "@discordjs/formatters";
+import { Presets, SingleBar } from "cli-progress";
 
 import Cache from "./cache";
+
+export function startProgressBar(text: string, total: number): SingleBar {
+    const bar = new SingleBar({
+        format: `${text} [{bar}] {value}/{total} ({filename})`,
+        barsize: total,
+        hideCursor: true,
+        stopOnComplete: true
+    }, Presets.legacy);
+
+    bar.start(total, 0, {
+        filename: "Loading..."
+    });
+
+    return bar;
+}
 
 export function capitalize(str: string): string {
     return str[0].toUpperCase() + str.slice(1);

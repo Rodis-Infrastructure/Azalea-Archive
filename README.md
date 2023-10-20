@@ -10,10 +10,9 @@ Prior to starting the bot, you must install the dependencies:
 npm install
 ```
 
-To start the bot, run the following commands:
+To start the bot, run the following command:
 
 ```bash
-npm run build
 npm start
 ```
 

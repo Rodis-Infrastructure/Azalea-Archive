@@ -8,12 +8,12 @@ import {
 } from "./index";
 import { GuildMember, hyperlink, Message, messageLink, Snowflake, User, userMention } from "discord.js";
 import { muteMember, resolveInfraction, validateModerationAction } from "./moderation";
-import { Requests, RequestValidationResult } from "@/types/requests";
-import { LoggingEvent, RolePermission } from "@/types/config";
+import { Requests, RequestValidationResult } from "@bot/types/requests";
+import { LoggingEvent, RolePermission } from "@bot/types/config";
 import { PunishmentType } from "@database/models/infraction";
-import { ErrorCause } from "@/types/internals";
+import { ErrorCause } from "@bot/types/internals";
 import { sendLog } from "./logging";
-import { client } from "@/client";
+import { client } from "@bot/client";
 
 import Config from "./config";
 import Cache from "./cache";
@@ -86,7 +86,7 @@ async function handleRequestApproval(data: {
         if (!log) {
             const response = `store media for ${userMention(targetId)}'s ${requestType} request`;
             const confirmation = config.formatConfirmation(response, {
-                executorId,
+                executorId: executorId,
                 success: false
             });
 
@@ -108,7 +108,7 @@ async function handleRequestApproval(data: {
             });
 
             const confirmation = config.formatConfirmation(`banned ${userMention(targetId)}`, {
-                executorId,
+                executorId: executorId,
                 success: true,
                 reason: formattedReason
             });
@@ -139,7 +139,7 @@ async function handleRequestApproval(data: {
 
     if (!targetMember) {
         const confirmation = config.formatConfirmation(`mute ${userMention(targetId)}, user may no longer be in the server`, {
-            executorId,
+            executorId: executorId,
             success: false
         });
 
@@ -158,7 +158,7 @@ async function handleRequestApproval(data: {
 
         const response = `muted ${targetMember} until ${formatMuteExpirationResponse(expiresAt)}`;
         const confirmation = config.formatConfirmation(response, {
-            executorId,
+            executorId: executorId,
             success: true
         });
 

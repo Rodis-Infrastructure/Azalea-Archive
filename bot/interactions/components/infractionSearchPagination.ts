@@ -1,11 +1,11 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, EmbedBuilder } from "discord.js";
 import { InfractionFilter, MinimalInfraction } from "@database/models/infraction";
-import { Component } from "@/handlers/interactions/interaction";
-import { InteractionResponseType } from "@/types/interactions";
-import { mapInfractionsToFields } from "@/utils/infractions";
+import { Component } from "@bot/handlers/interactions/interaction";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { mapInfractionsToFields } from "@bot/utils/infractions";
 import { allQuery } from "@database/utils";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class InfractionsNextButton extends Component<ButtonInteraction<"cached">> {
     constructor() {

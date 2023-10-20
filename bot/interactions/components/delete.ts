@@ -1,6 +1,6 @@
-import { InteractionResponseType } from "@/types/interactions";
+import { InteractionResponseType } from "@bot/types/interactions";
 import { ButtonInteraction } from "discord.js";
-import { Component } from "@/handlers/interactions/interaction";
+import { Component } from "@bot/handlers/interactions/interaction";
 
 export default class DeleteButton extends Component<ButtonInteraction<"cached">> {
     constructor() {

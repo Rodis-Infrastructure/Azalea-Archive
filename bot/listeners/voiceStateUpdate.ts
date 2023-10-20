@@ -1,8 +1,8 @@
 import { Colors, EmbedBuilder, Events, VoiceBasedChannel, VoiceState } from "discord.js";
-import { LoggingEvent } from "@/types/config";
-import { sendLog } from "@/utils/logging";
+import { LoggingEvent } from "@bot/types/config";
+import { sendLog } from "@bot/utils/logging";
 
-import EventListener from "@/handlers/listeners/eventListener";
+import EventListener from "@bot/handlers/listeners/eventListener";
 
 export default class VoiceStateUpdateEventListener extends EventListener {
     constructor() {

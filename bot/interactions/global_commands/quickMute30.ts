@@ -1,10 +1,10 @@
 import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "discord.js";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
-import { QuickMuteDuration } from "@/types/moderation";
-import { handleQuickMute } from "@/utils/moderation";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
+import { QuickMuteDuration } from "@bot/types/moderation";
+import { handleQuickMute } from "@bot/utils/moderation";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class QuickMute30Command extends Command {
     constructor() {

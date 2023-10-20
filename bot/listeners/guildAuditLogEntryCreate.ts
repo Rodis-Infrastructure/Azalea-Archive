@@ -1,11 +1,11 @@
 import { AuditLogEvent, Events, Guild, GuildAuditLogsEntry, User } from "discord.js";
 import { InfractionFlag, PunishmentType } from "@database/models/infraction";
-import { resolveInfraction } from "@/utils/moderation";
-import { client } from "@/client";
+import { resolveInfraction } from "@bot/utils/moderation";
+import { client } from "@bot/client";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Config from "@/utils/config";
-import { formatMuteExpirationResponse } from "@/utils";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Config from "@bot/utils/config";
+import { formatMuteExpirationResponse } from "@bot/utils";
 
 export default class GuildAuditLogEntryCreateListener extends EventListener {
     constructor() {

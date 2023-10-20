@@ -12,14 +12,14 @@ import {
 } from "discord.js";
 
 import { InfractionCount, InfractionModel, PunishmentType } from "@database/models/infraction";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
-import { mapInfractionCount } from "@/utils/infractions";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
+import { mapInfractionCount } from "@bot/utils/infractions";
 import { TimestampStyles } from "@discordjs/formatters";
-import { RolePermission } from "@/types/config";
+import { RolePermission } from "@bot/types/config";
 import { getQuery } from "@database/utils";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class InfoCommand extends Command {
     constructor() {

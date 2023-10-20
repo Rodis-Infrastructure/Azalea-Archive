@@ -11,12 +11,12 @@ import {
 } from "discord.js";
 
 import { MessageModel } from "@database/models/message";
-import { linkToPurgeLog, sendLog } from "@/utils/logging";
-import { LoggingEvent } from "@/types/config";
-import { serializeMessage } from "@/utils";
+import { linkToPurgeLog, sendLog } from "@bot/utils/logging";
+import { LoggingEvent } from "@bot/types/config";
+import { serializeMessage } from "@bot/utils";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Cache from "@/utils/cache";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Cache from "@bot/utils/cache";
 
 export default class MessageBulkDeleteEventListener extends EventListener {
     constructor() {

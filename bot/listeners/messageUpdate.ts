@@ -9,18 +9,18 @@ import {
     PartialMessage
 } from "discord.js";
 
-import { handleInfractionReasonChange } from "@/interactions/global_commands/infraction";
-import { formatLogContent, referenceEmbed, sendLog } from "@/utils/logging";
-import { handleBanRequestAutoMute, validateRequest } from "@/utils/requests";
-import { LoggingEvent, RolePermission } from "@/types/config";
-import { ErrorCause } from "@/types/internals";
-import { Requests } from "@/types/requests";
-import { ensureError, serializeMessage } from "@/utils";
-import { client } from "@/client";
+import { handleInfractionReasonChange } from "@bot/interactions/global_commands/infraction";
+import { formatLogContent, referenceEmbed, sendLog } from "@bot/utils/logging";
+import { handleBanRequestAutoMute, validateRequest } from "@bot/utils/requests";
+import { LoggingEvent, RolePermission } from "@bot/types/config";
+import { ErrorCause } from "@bot/types/internals";
+import { Requests } from "@bot/types/requests";
+import { ensureError, serializeMessage } from "@bot/utils";
+import { client } from "@bot/client";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Config from "@/utils/config";
-import Cache from "@/utils/cache";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Config from "@bot/utils/config";
+import Cache from "@bot/utils/cache";
 
 export default class MessageUpdateEventListener extends EventListener {
     constructor() {

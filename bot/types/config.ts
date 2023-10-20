@@ -1,4 +1,4 @@
-import { APIEmbed, MessageCreateOptions, MessagePayload, Snowflake } from "discord.js";
+import { APIEmbed, BaseMessageOptions, Snowflake } from "discord.js";
 import { CustomId } from "./interactions";
 
 interface UserFlag {
@@ -32,9 +32,9 @@ export enum RoleInteraction {
 }
 
 export type RolePermissions =
-    Record<RoleInteraction, CustomId[] | undefined>
-    & Record<RolePermission, boolean | undefined>
-    & Record<"roleIds", Snowflake[]>
+    Partial<Record<RoleInteraction, CustomId[]>> &
+    Partial<Record<RolePermission, boolean>> &
+    Record<"roleIds", Snowflake[]>
 
 export interface ToggleableProperty {
     enabled: boolean
@@ -54,8 +54,8 @@ export interface ConfirmationOptions {
 }
 
 export interface EmojiConfig {
-    success: string
-    error: string
+    success?: string
+    error?: string
     quickMute30?: string
     quickMute60?: string
     purgeMessages?: string
@@ -65,6 +65,7 @@ export interface EmojiConfig {
 
 export interface NoticeConfig {
     enabled: boolean
+    /** The channel to send notices to */
     channelId: Snowflake
     /** The number of unreviewed requests to trigger a notice */
     threshold: number
@@ -80,25 +81,28 @@ export interface ChannelConfig {
     notifications?: Snowflake
 }
 
-interface CustomCommand {
+interface FAQOption {
+    /** The option's displayed name */
     name: string
+    /** The option's unique ID */
     value: string
     embed: APIEmbed
 }
 
 export type LoggingConfig = ToggleableProperty & {
     [event in LoggingEvent]?: ToggleableProperty & {
+        /** The channel to log to */
         channelId: Snowflake
     }
 };
 
-interface ScheduledMessageData {
+interface ScheduledMessage {
     channelId: string
     cron: string
-    message: string | MessagePayload | MessageCreateOptions
+    message: string | Omit<BaseMessageOptions, "components" | "files">
 }
 
-export interface AutoReactionConfig {
+export interface AutoReaction {
     channelId: Snowflake
     reactions: string[]
 }
@@ -109,10 +113,11 @@ export interface Notices {
 }
 
 export interface ConfigData {
-    commands?: CustomCommand[]
-    autoReactions?: AutoReactionConfig[]
+    commands?: FAQOption[]
+    autoReactions?: AutoReaction[]
     deleteMessageSecondsOnBan?: number
-    scheduledMessages?: ScheduledMessageData[]
+    scheduledMessages?: ScheduledMessage[]
+    /** IDs of channels that can be linked to in infraction evidence */
     proofChannelIds?: Snowflake[]
     notices?: Notices
     ephemeralResponses?: ToggleableProperty
@@ -121,5 +126,4 @@ export interface ConfigData {
     emojis?: EmojiConfig
     userFlags?: UserFlag[]
     channels?: ChannelConfig
-    guildId: Snowflake
 }

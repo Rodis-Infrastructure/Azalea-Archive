@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
 import { PunishmentType } from "@database/models/infraction";
-import { resolveInfraction } from "@/utils/moderation";
-import { ensureError, formatReason } from "@/utils";
+import { resolveInfraction } from "@bot/utils/moderation";
+import { ensureError, formatReason } from "@bot/utils";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class UnbanCommand extends Command {
     constructor() {

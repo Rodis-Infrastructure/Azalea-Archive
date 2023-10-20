@@ -1,10 +1,10 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { purgeMessages, validateModerationAction } from "@/utils/moderation";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
-import { ensureError, pluralize } from "@/utils";
+import { purgeMessages, validateModerationAction } from "@bot/utils/moderation";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
+import { ensureError, pluralize } from "@bot/utils";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class CleanCommand extends Command {
     constructor() {

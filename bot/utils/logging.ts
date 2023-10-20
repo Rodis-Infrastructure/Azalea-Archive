@@ -11,9 +11,9 @@ import {
 } from "discord.js";
 
 import { elipsify, isGuildTextBasedChannel, pluralize } from "./index";
-import { LogData, ReferenceLogData } from "@/types/logging";
+import { LogData, ReferenceLogData } from "@bot/types/logging";
 import { MessageModel } from "@database/models/message";
-import { client } from "@/client";
+import { client } from "@bot/client";
 
 import Config from "./config";
 import Cache from "./cache";
@@ -61,7 +61,7 @@ export async function linkToPurgeLog(params: {
     if (!url) {
         const response = config.formatConfirmation("retrieve the log's URL", {
             success: false,
-            executorId
+            executorId: executorId
         });
 
         await config.sendNotification(response, { allowMentions: true });
@@ -77,7 +77,7 @@ export async function linkToPurgeLog(params: {
 
     const formattedMessage = config.formatConfirmation(message, {
         success: true,
-        executorId
+        executorId: executorId
     });
 
     await config.sendNotification(formattedMessage, { allowMentions: true });

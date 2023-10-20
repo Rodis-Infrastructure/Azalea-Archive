@@ -1,9 +1,9 @@
-import { handleInfractionSearch } from "@/interactions/global_commands/infraction";
-import { Component } from "@/handlers/interactions/interaction";
-import { InteractionResponseType } from "@/types/interactions";
+import { handleInfractionSearch } from "@bot/interactions/global_commands/infraction";
+import { Component } from "@bot/handlers/interactions/interaction";
+import { InteractionResponseType } from "@bot/types/interactions";
 import { ButtonInteraction } from "discord.js";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class InfractionSearchButton extends Component<ButtonInteraction<"cached">> {
     constructor() {

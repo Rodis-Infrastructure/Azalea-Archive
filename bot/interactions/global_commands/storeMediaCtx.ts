@@ -1,10 +1,10 @@
 import { ApplicationCommandType, hideLinkEmbed, MessageContextMenuCommandInteraction } from "discord.js";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
-import { LoggingEvent } from "@/types/config";
-import { sendLog } from "@/utils/logging";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
+import { LoggingEvent } from "@bot/types/config";
+import { sendLog } from "@bot/utils/logging";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class StoreMediaCtxCommand extends Command {
     constructor() {

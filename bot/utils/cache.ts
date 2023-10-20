@@ -1,10 +1,10 @@
-import { AnyComponentInteraction, ComponentCustomId, CustomId } from "@/types/interactions";
+import { AnyComponentInteraction, ComponentCustomId, CustomId } from "@bot/types/interactions";
 import { allQuery, getQuery, runQuery, sanitizeString } from "@database/utils";
-import { Command, Component } from "@/handlers/interactions/interaction";
-import { CachedRequest, MessageCache } from "@/types/cache";
+import { Command, Component } from "@bot/handlers/interactions/interaction";
+import { CachedRequest, MessageCache } from "@bot/types/cache";
 import { MessageModel } from "@database/models/message";
 import { Collection, Snowflake } from "discord.js";
-import { elipsify } from "@/utils/index";
+import { elipsify } from "./index";
 
 export default class Cache {
     static components = new Collection<ComponentCustomId, Component<AnyComponentInteraction<"cached">>>();
@@ -20,17 +20,17 @@ export default class Cache {
     }
 
     static get(guildId: Snowflake): Cache {
-        return this.instances.get(guildId) || Cache.create(guildId);
+        return Cache.instances.get(guildId) || Cache.create(guildId);
     }
 
     static create(guildId: Snowflake): Cache {
         const cache = new Cache();
-        this.instances.set(guildId, cache);
+        Cache.instances.set(guildId, cache);
         return cache;
     }
 
     static getComponent(customId: CustomId): Component<AnyComponentInteraction<"cached">> | null {
-        return this.components.find(item => {
+        return Cache.components.find(item => {
             const { name } = item.data;
 
             if (typeof name === "string") return name === customId;
@@ -44,7 +44,7 @@ export default class Cache {
 
     /** Stores cached messages in the database */
     static async storeMessages(): Promise<void> {
-        const messages = this.instances.flatMap(cache => cache.messages.store);
+        const messages = Cache.instances.flatMap(cache => cache.messages.store);
         const messagesToInsert = messages.map((data, messageId) => {
             const croppedContent = data.content ? elipsify(data.content, 1024) : null;
 

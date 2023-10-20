@@ -1,14 +1,14 @@
-import { getRequestType, handleBanRequestAutoMute, validateRequest } from "@/utils/requests";
+import { getRequestType, handleBanRequestAutoMute, validateRequest } from "@bot/utils/requests";
 import { Events, hideLinkEmbed, Message, PartialMessage } from "discord.js";
-import { LoggingEvent, RolePermission } from "@/types/config";
-import { Requests } from "@/types/requests";
-import { ensureError, serializeMessage } from "@/utils";
-import { sendLog } from "@/utils/logging";
+import { LoggingEvent, RolePermission } from "@bot/types/config";
+import { Requests } from "@bot/types/requests";
+import { ensureError, serializeMessage } from "@bot/utils";
+import { sendLog } from "@bot/utils/logging";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Config from "@/utils/config";
-import Cache from "@/utils/cache";
-import { ErrorCause } from "@/types/internals";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Config from "@bot/utils/config";
+import Cache from "@bot/utils/cache";
+import { ErrorCause } from "@bot/types/internals";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {

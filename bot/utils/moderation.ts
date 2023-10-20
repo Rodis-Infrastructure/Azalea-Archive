@@ -9,12 +9,12 @@ import {
 
 import { EmbedBuilder, GuildMember, GuildTextBasedChannel, Snowflake, time, User, userMention } from "discord.js";
 import { InfractionFlag, InfractionResolveOptions, PunishmentType } from "@database/models/infraction";
-import { MemberMuteResult, QuickMuteParams } from "@/types/moderation";
+import { MemberMuteResult, QuickMuteParams } from "@bot/types/moderation";
 import { MessageModel } from "@database/models/message";
 import { allQuery, storeInfraction } from "@database/utils";
 import { TimestampStyles } from "@discordjs/formatters";
 import { getInfractionEmbedData } from "./infractions";
-import { LoggingEvent } from "@/types/config";
+import { LoggingEvent } from "@bot/types/config";
 import { sendLog } from "./logging";
 
 import Config from "./config";
@@ -247,7 +247,7 @@ export async function handleQuickMute(data: QuickMuteParams): Promise<{ response
 
         const response = `quick muted ${message.author} until ${formatMuteExpirationResponse(expiresAt)}`;
         const confirmation = config.formatConfirmation(response, {
-            executorId,
+            executorId: executorId,
             success: true,
             reason: message.content
         });

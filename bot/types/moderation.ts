@@ -1,5 +1,5 @@
 import { Message, Snowflake } from "discord.js";
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export enum QuickMuteDuration {
     /** 30 minutes */

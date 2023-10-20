@@ -4,19 +4,19 @@ import {
     loadGuildCommands,
     publishGlobalCommands,
     publishGuildCommands
-} from "@/handlers/interactions/loader";
-import { extract, RegexPatterns } from "@/utils";
+} from "@bot/handlers/interactions/loader";
+import { extract, RegexPatterns } from "@bot/utils";
 import { readFile } from "node:fs/promises";
-import { ConfigData } from "@/types/config";
-import { Requests } from "@/types/requests";
+import { ConfigData } from "@bot/types/config";
+import { Requests } from "@bot/types/requests";
 import { runQuery } from "@database/utils";
-import { client } from "@/client";
+import { client } from "@bot/client";
 import { CronJob } from "cron";
 import { parse } from "yaml";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Config from "@/utils/config";
-import Cache from "@/utils/cache";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Config from "@bot/utils/config";
+import Cache from "@bot/utils/cache";
 import glob from "fast-glob";
 import ms from "ms";
 
@@ -28,10 +28,10 @@ export default class ReadyEventListener extends EventListener {
     }
 
     async execute(): Promise<void> {
-        console.log(`${client.user?.tag} is online!`);
+        console.log(`${client.user?.tag} is online!\n`);
 
         /** Guild configuration file paths */
-        const paths = glob.sync("config/*.{yml,yaml}");
+        const paths = glob.sync("config/*.{yaml,yml}");
 
         for (const filepath of paths) {
             // File name format: <guildId>.yml or <guildId>.yaml

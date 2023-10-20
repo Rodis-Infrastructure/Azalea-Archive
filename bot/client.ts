@@ -3,9 +3,6 @@ import { loadListeners } from "./handlers/listeners/loader";
 
 import "dotenv/config";
 
-process.on("unhandledRejection", (error: Error) => console.error(error.stack));
-process.on("uncaughtException", (error: Error) => console.error(error.stack));
-
 export const client = new Client({
     intents: [
         GatewayIntentBits.GuildMessageReactions,
@@ -22,8 +19,11 @@ export const client = new Client({
 });
 
 (async(): Promise<void> => {
-    await Promise.all([
-        loadListeners(),
-        client.login(process.env.BOT_TOKEN)
-    ]);
+    if (!process.env.BOT_TOKEN) {
+        console.error("A bot token must be specified in .env (BOT_TOKEN)");
+        process.exit(0);
+    }
+
+    await loadListeners();
+    await client.login(process.env.BOT_TOKEN);
 })();

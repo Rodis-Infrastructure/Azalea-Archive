@@ -1,9 +1,9 @@
 import { PunishmentType } from "@database/models/infraction";
 import { Events, GuildMember } from "discord.js";
-import { currentTimestamp } from "@/utils";
+import { currentTimestamp } from "@bot/utils";
 import { runQuery } from "@database/utils";
 
-import EventListener from "@/handlers/listeners/eventListener";
+import EventListener from "@bot/handlers/listeners/eventListener";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {

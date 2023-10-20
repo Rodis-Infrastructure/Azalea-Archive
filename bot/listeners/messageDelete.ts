@@ -12,13 +12,13 @@ import {
     userMention
 } from "discord.js";
 
-import { formatLogContent, linkToPurgeLog, referenceEmbed, sendLog } from "@/utils/logging";
-import { isGuildTextBasedChannel, serializeMessage } from "@/utils";
-import { LoggingEvent } from "@/types/config";
-import { client } from "@/client";
+import { formatLogContent, linkToPurgeLog, referenceEmbed, sendLog } from "@bot/utils/logging";
+import { isGuildTextBasedChannel, serializeMessage } from "@bot/utils";
+import { LoggingEvent } from "@bot/types/config";
+import { client } from "@bot/client";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Cache from "@/utils/cache";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Cache from "@bot/utils/cache";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {

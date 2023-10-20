@@ -1,10 +1,10 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { ensureError, formatMuteExpirationResponse, formatReason, MAX_MUTE_DURATION } from "@/utils";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
-import { muteMember } from "@/utils/moderation";
+import { ensureError, formatMuteExpirationResponse, formatReason, MAX_MUTE_DURATION } from "@bot/utils";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
+import { muteMember } from "@bot/utils/moderation";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 import ms from "ms";
 
 export default class MuteCommand extends Command {

@@ -1,25 +1,30 @@
-import { client } from "@/client";
+import { startProgressBar } from "@bot/utils";
+import { client } from "@bot/client";
 
-import glob from "fast-glob";
 import path from "node:path";
+import fs from "node:fs";
 
 export async function loadListeners(): Promise<void> {
-    const paths = glob.sync("./bot/listeners/*.ts");
+    const dirPath = path.resolve(__dirname, "../../listeners");
+    const paths = fs.readdirSync(dirPath);
+    const bar = startProgressBar("Loading listeners", paths.length);
 
-    for (const filepath of paths) {
+    for (const filename of paths) {
         try {
-            const listenerModule = await import(path.resolve(filepath));
+            const filepath = path.resolve(__dirname, "../../listeners", filename);
+            const listenerModule = await import(filepath);
             const listenerClass = listenerModule.default;
             const listener = new listenerClass();
 
             if (listener.data?.once) {
                 client.once(listener.name, (...args) => listener.execute(...args));
-                continue;
+            } else {
+                client.on(listener.name, (...args) => listener.execute(...args));
             }
 
-            client.on(listener.name, (...args) => listener.execute(...args));
+            bar.increment({ filename });
         } catch (err) {
-            console.error(`Failed to load listener ${filepath}: ${err}`);
+            console.error(`Failed to load listener ${filename}: ${err}`);
         }
     }
 }

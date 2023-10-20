@@ -10,7 +10,7 @@ import { capitalize, currentTimestamp, elipsify, msToString, pluralize } from ".
 import { ColorResolvable, Colors, time, userMention } from "discord.js";
 import { TimestampStyles } from "@discordjs/formatters";
 import { APIEmbedField } from "discord-api-types/v10";
-import { InfractionLogData } from "@/types/logging";
+import { InfractionLogData } from "@bot/types/logging";
 
 export function getInfractionEmbedData(punishment: PunishmentType): InfractionLogData {
     let color: ColorResolvable = Colors.NotQuiteBlack;

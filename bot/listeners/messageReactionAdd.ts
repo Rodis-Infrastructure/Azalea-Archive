@@ -1,12 +1,12 @@
 import { EmbedBuilder, Events, GuildEmoji, hyperlink, Message, MessageReaction, ReactionEmoji, User } from "discord.js";
-import { handleQuickMute, purgeMessages, validateModerationAction } from "@/utils/moderation";
-import { LoggingEvent, RoleInteraction } from "@/types/config";
-import { formatLogContent, sendLog } from "@/utils/logging";
-import { handleRequestManagement } from "@/utils/requests";
-import { QuickMuteDuration } from "@/types/moderation";
+import { handleQuickMute, purgeMessages, validateModerationAction } from "@bot/utils/moderation";
+import { LoggingEvent, RoleInteraction } from "@bot/types/config";
+import { formatLogContent, sendLog } from "@bot/utils/logging";
+import { handleRequestManagement } from "@bot/utils/requests";
+import { QuickMuteDuration } from "@bot/types/moderation";
 
-import EventListener from "@/handlers/listeners/eventListener";
-import Config from "@/utils/config";
+import EventListener from "@bot/handlers/listeners/eventListener";
+import Config from "@bot/utils/config";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {

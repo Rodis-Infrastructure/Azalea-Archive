@@ -1,7 +1,7 @@
 import { ApplicationCommandData, ApplicationCommandType, CommandInteraction, PermissionFlagsBits } from "discord.js";
-import { AnyComponentInteraction, CommandData, ComponentData } from "@/types/interactions";
+import { AnyComponentInteraction, CommandData, ComponentData } from "@bot/types/interactions";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export abstract class Command {
     // @formatter:off

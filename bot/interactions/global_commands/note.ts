@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { resolveInfraction, validateModerationAction } from "@/utils/moderation";
-import { InteractionResponseType } from "@/types/interactions";
-import { Command } from "@/handlers/interactions/interaction";
+import { resolveInfraction, validateModerationAction } from "@bot/utils/moderation";
+import { InteractionResponseType } from "@bot/types/interactions";
+import { Command } from "@bot/handlers/interactions/interaction";
 import { PunishmentType } from "@database/models/infraction";
-import { ensureError, formatReason } from "@/utils";
+import { ensureError, formatReason } from "@bot/utils";
 
-import Config from "@/utils/config";
+import Config from "@bot/utils/config";
 
 export default class NoteCommand extends Command {
     constructor() {
