@@ -61,7 +61,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
             FROM infractions
             WHERE guild_id = ${interaction.guildId}
               AND target_id = ${targetId}
-            ORDER BY created_at DESC
+            ORDER BY infraction_id DESC
             LIMIT 100;
         `);
 

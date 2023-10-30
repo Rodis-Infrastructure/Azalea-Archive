@@ -14,8 +14,7 @@ CREATE TABLE IF NOT EXISTS messages
     deleted      TINYINT
 );
 
-CREATE INDEX IF NOT EXISTS idx_created_at ON messages (created_at);
-CREATE INDEX IF NOT EXISTS idx_channel_messages ON messages (message_id, channel_id, guild_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_latest_messages ON messages (channel_id, guild_id, deleted, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS infractions
 (
@@ -35,13 +34,7 @@ CREATE TABLE IF NOT EXISTS infractions
     reason            TEXT CHECK (length(reason) <= 1024)
 );
 
-CREATE INDEX IF NOT EXISTS idx_latest_user_infraction_by_type
-    ON infractions (target_id, guild_id, action, infraction_id DESC);
-
-CREATE INDEX IF NOT EXISTS idx_user_infractions_descending
-    ON infractions (target_id, guild_id, created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_infraction
-    ON infractions (infraction_id, guild_id);
+CREATE INDEX IF NOT EXISTS idx_latest_user_infractions
+    ON infractions (target_id, guild_id, infraction_id DESC);
 
 COMMIT;

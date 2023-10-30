@@ -276,7 +276,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
             FROM infractions
             WHERE executor_id = ${interaction.user.id}
               AND guild_id = ${interaction.guildId}
-            ORDER BY created_at DESC
+            ORDER BY infraction_id DESC
             LIMIT 100;
         `;
     } else {
