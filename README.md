@@ -2,10 +2,27 @@
 
 This file serves as documentation for the Roblox Discord's moderation bot.
 
+## Startup
+
+Prior to starting the bot, you must install the dependencies:
+
+```bash
+npm install
+```
+
+To start the bot, run the following command:
+
+```bash
+npm start
+```
+
+Please note that a `.env` file is required to run the bot. See the [`.env.example`](.env.example) file for an example of what variables need to be set.
+
 ## Configuration
 
-For a full example of the configuration, you can view the [`example.yaml`](config/guilds/example.yaml) file in the
-repository
+All configuration files must be located in the [`config`](config) directory and their name must use the following format: `<guild-id>.yaml` or `<guild-id>.yml`.
+
+For a full example of the configuration, you can view the [`example.yaml`](config/example.yaml) file.
 
 ### Message Deletion on Ban
 
@@ -47,7 +64,7 @@ channels:
   banRequestQueue: "channel-id"
   muteRequestQueue: "channel-id"
   mediaConversion: "channel-id"
-  confirmations: "channel-id"
+  notifications: "channel-id"
 ```
 
 ### Custom Commands
@@ -73,11 +90,13 @@ A reminder/notice will be sent in the specified channel whenever there is a cert
 specified period of time.
 
 ```yaml
-banRequestNotices: # or muteRequestNotices
-  enabled: true
-  channelId: "channel-id"
-  threshold: 25
-  cron: "0 * * * *" # Every hour
+notices:
+  banRequests: # or muteRequests
+      enabled: true
+      channelId: "channel-id"
+      threshold: 25
+      cron: "0 * * * *" # Every hour
+      mentionedRoles: ["role-id"]
 ```
 
 ### Scheduled Messages
@@ -136,7 +155,7 @@ userFlags:
       - "role-id"
 ```
 
-### Role and Group Configuration
+### Permission Configuration
 
 The `roles` and `groups` sections allow you to configure which roles have access to specific message components and
 modals.
@@ -148,10 +167,8 @@ modals.
 - `manageMuteRequests` - Allows the user to approve or deny mute requests.
 - `autoMuteBanRequests` - Automatically mutes the user a ban requested was submitted for
 
-#### Role Configuration
-
 ```yaml
-roles:
+permissions:
   - id: "role-id"
     guildStaff: false
     manageInfractions: false
@@ -159,23 +176,6 @@ roles:
     manageBanRequests: false
     manageMuteRequests: false
     autoMuteBanRequests: false
-    selections: []
-    buttons: []
-    modals: []
-    reactions: []
-```
-
-#### Role Group Configuration
-
-```yaml
-groups:
-  - guildStaff: false
-    manageInfractions: false
-    viewModerationActivity: false
-    manageBanRequests: false
-    manageMuteRequests: false
-    autoMuteBanRequests: false
-    roleIds: []
     selectMenus: []
     buttons: []
     modals: []

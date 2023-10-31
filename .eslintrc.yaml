@@ -1,5 +1,7 @@
 root: true
 parser: '@typescript-eslint/parser'
+parserOptions:
+  project: './tsconfig.json'
 env:
   node: true
 extends:
@@ -13,11 +15,18 @@ rules:
   semi:
     - error
     - always
+  'import/no-anonymous-default-export': error
+  'import/no-useless-path-segments': error
   '@typescript-eslint/no-non-null-assertion': off
   '@typescript-eslint/explicit-member-accessibility': off
   '@typescript-eslint/prefer-interface': off
   '@typescript-eslint/explicit-module-boundary-types': off
-  '@typescript-eslint/no-unused-vars': error
+  '@typescript-eslint/no-unused-vars':
+    - error
+    - destructuredArrayIgnorePattern: "^_"
+      argsIgnorePattern: "^_"
+  '@typescript-eslint/explicit-function-return-type': error
+  '@typescript-eslint/no-unnecessary-condition': error
   '@typescript-eslint/indent':
     - error
     - 4
@@ -36,7 +45,10 @@ rules:
     - property
   dot-notation: error
   eqeqeq: error
-  no-empty-function: error
+  no-empty-function:
+    - error
+    - allow:
+        - constructors
   no-floating-decimal: error
   no-lone-blocks: error
   no-multi-spaces: error
@@ -167,3 +179,4 @@ rules:
   yield-star-spacing: error
 plugins:
   - '@typescript-eslint'
+  - import

@@ -1,23 +1,24 @@
 {
-    "name": "moderation-bot",
+    "name": "azalea",
     "version": "1.0.0",
     "description": "The Roblox Discord's Moderation Bot",
-    "main": "src/client.ts",
+    "main": "bot/client.ts",
     "scripts": {
-        "build": "tsc",
-        "start": "node dist/client.js",
-        "dev": "ts-node src/client.ts"
+        "build": "tsc && tsc-alias",
+        "start": "test -d dist && node dist/bot/client.js || npm run build && npm start",
+        "test": "mocha bot/client.ts"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Rodis-Infrastructure/moderation-bot.git"
+        "url": "git+https://github.com/Rodis-Infrastructure/azalea.git"
     },
     "author": "",
     "bugs": {
-        "url": "https://github.com/Rodis-Infrastructure/moderation-bot/issues"
+        "url": "https://github.com/Rodis-Infrastructure/azalea/issues"
     },
-    "homepage": "https://github.com/Rodis-Infrastructure/moderation-bot#readme",
+    "homepage": "https://github.com/Rodis-Infrastructure/azalea#readme",
     "dependencies": {
+        "cli-progress": "^3.12.0",
         "cron": "^2.4.3",
         "discord.js": "^14.13.0",
         "dotenv": "^16.3.1",
@@ -26,11 +27,16 @@
         "yaml": "^2.3.2"
     },
     "devDependencies": {
+        "@types/cli-progress": "^3.11.4",
         "@types/ms": "^0.7.32",
         "@typescript-eslint/eslint-plugin": "^5.62.0",
         "@typescript-eslint/parser": "^5.62.0",
         "eslint": "^8.50.0",
+        "eslint-plugin-import": "^2.28.1",
+        "mocha": "^10.2.0",
         "ts-node": "^10.9.1",
+        "tsc-alias": "^1.8.8",
+        "tsconfig-paths": "^4.2.0",
         "typescript": "^5.2.2"
     }
 }

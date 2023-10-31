@@ -5,10 +5,10 @@
 
 # Directories
 node_modules
-config/guilds/*
+config/*
 dist
 .idea
 .vscode
 
 # Files excluded from being ignored
-!config/guilds/example.*
+!config/example.*
