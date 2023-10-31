@@ -1,6 +1,8 @@
 import { InfractionFlag, InfractionModel, PunishmentType } from "./models/infraction";
 import { Database } from "sqlite3";
 
+import "dotenv/config";
+
 if (!process.env.DB_PATH) {
     console.error("A database path must be specified in .env (DB_PATH)");
     process.exit(0);
