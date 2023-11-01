@@ -39,7 +39,7 @@ export function getInfractionEmbedData(punishment: PunishmentType): InfractionLo
         case PunishmentType.Note: {
             color = Colors.Yellow;
             action = "Note Added";
-            icon = "note.png";
+            icon = "noteUpdate.png";
             break;
         }
 
