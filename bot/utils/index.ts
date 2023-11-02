@@ -83,6 +83,7 @@ export function getCustomId(customId: ComponentCustomId): CustomId {
 
 /** Maximum mute duration in milliseconds (28 days) */
 export const MAX_MUTE_DURATION = 86_400_000;
+export const ROLE_REQUEST_MENTION_LIMIT = 30;
 
 export const RegexPatterns = {
     /**

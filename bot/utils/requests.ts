@@ -4,9 +4,28 @@ import {
     extract,
     formatMuteExpirationResponse,
     MAX_MUTE_DURATION,
-    RegexPatterns
+    RegexPatterns,
+    ROLE_REQUEST_MENTION_LIMIT
 } from "./index";
-import { GuildMember, hyperlink, Message, messageLink, Snowflake, User, userMention } from "discord.js";
+
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    Colors,
+    EmbedBuilder,
+    Guild,
+    GuildMember,
+    GuildTextBasedChannel,
+    hyperlink,
+    Message,
+    messageLink,
+    Snowflake,
+    StringSelectMenuBuilder,
+    User,
+    userMention
+} from "discord.js";
+
 import { muteMember, resolveInfraction, validateModerationAction } from "./moderation";
 import { Requests, RequestValidationResult } from "@bot/types/requests";
 import { LoggingEvent, RolePermission } from "@bot/types/config";
@@ -18,6 +37,8 @@ import { client } from "@bot/client";
 import Config from "./config";
 import Cache from "./cache";
 import ms from "ms";
+import { getQuery, runQuery } from "@database/utils";
+import { TemporaryRole } from "@database/models/temporaryRole";
 
 export function getRequestType(channelId: Snowflake, config: Config): Requests | null {
     if (channelId === config.channels.banRequestQueue) return Requests.Ban;
@@ -340,4 +361,97 @@ export async function handleBanRequestAutoMute(data: {
     if (!requestData) return;
 
     cache.requests.set(request.id, { ...requestData, muteId: infractionId });
+}
+
+export async function handleRoleRequest(message: Message<true>, config: Config): Promise<void> {
+    const mentions = message.mentions.users;
+
+    // Limit the amount of users that can be mentioned to avoid exceeding the character limit
+    if (mentions.size > ROLE_REQUEST_MENTION_LIMIT) {
+        await message.reply(`You can only mention up to \`${ROLE_REQUEST_MENTION_LIMIT}\` users at a time.`);
+        return;
+    }
+
+    const options = await config.getRequestableRoleOptions();
+
+    if (!options.length) {
+        await message.reply("No roles have been configured for role requests.");
+        return;
+    }
+
+    const embed = new EmbedBuilder()
+        .setColor(Colors.NotQuiteBlack)
+        .setAuthor({ name: `Role Request (by ${message.author.tag})`, iconURL: message.author.displayAvatarURL() })
+        .setFields({
+            name: "Users",
+            value: Array.from(mentions.values()).join("\n")
+        })
+        .setFooter({ text: `ID: ${message.author.id}` })
+        .setTimestamp();
+
+    const roles = new StringSelectMenuBuilder()
+        .setCustomId("role-request-role-add")
+        .setPlaceholder("Select role...")
+        .setOptions(options);
+
+    const noteBtn = new ButtonBuilder()
+        .setCustomId("role-request-note-add")
+        .setStyle(ButtonStyle.Primary)
+        .setLabel("Add Note");
+
+    const selectMenuActionRow = new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(roles);
+    const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(noteBtn);
+
+    await Promise.all([
+        message.delete().catch(() => null),
+        message.channel.send({
+            embeds: [embed],
+            components: [selectMenuActionRow, buttonActionRow]
+        })
+    ]);
+}
+
+/**
+ * Set a timeout for removing a temporary role
+ *
+ * - Removes the role from the users
+ * - Deletes the request message
+ * - Deletes the record from the database
+ */
+export function setTemporaryRoleTimeout(data: {
+    requestQueue: GuildTextBasedChannel,
+    requestId: Snowflake,
+    expiresAt: number,
+    guild: Guild
+}): void {
+    const { guild, requestId, requestQueue, expiresAt } = data;
+    const config = Config.get(guild.id);
+
+    if (!config) {
+        throw new Error(`setTemporaryRoleTimeout - Failed to fetch config for guild ${guild.id}`);
+    }
+
+    setTimeout(async() => {
+        // Get the most up-to-date result
+        const res = await getQuery<Pick<TemporaryRole, "role_id" | "users">>(`
+            SELECT role_id, users
+            FROM temporary_roles
+            WHERE request_id = ${requestId}
+        `);
+
+        if (!res) return;
+
+        const [members, request] = await Promise.all([
+            guild.members.fetch({ user: res.users.split(",") }),
+            requestQueue.messages.fetch(requestId)
+        ]);
+
+        await Promise.all([
+            ...members.map(member => member.roles.remove(res.role_id)),
+            request.delete().catch(() => null),
+            runQuery(`DELETE
+                      FROM temporary_roles
+                      WHERE request_id = ${requestId}`)
+        ]);
+    }, expiresAt - Date.now());
 }

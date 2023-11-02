@@ -21,7 +21,8 @@ export enum RolePermission {
     ViewModerationActivity = "viewModerationActivity",
     ManageBanRequests = "manageBanRequests",
     ManageMuteRequests = "manageMuteRequests",
-    AutoMuteBanRequests = "autoMuteBanRequests"
+    AutoMuteBanRequests = "autoMuteBanRequests",
+    ManageRoleRequests = "manageRoleRequests"
 }
 
 export enum RoleInteraction {
@@ -112,11 +113,23 @@ export interface Notices {
     muteRequests?: NoticeConfig
 }
 
+export interface RoleRequests {
+    channelId: Snowflake
+    roles: TemporaryRole[]
+}
+
+interface TemporaryRole {
+    roleId: Snowflake
+    /** Amount of time until the role is removed (ms) */
+    duration?: number
+}
+
 export interface ConfigData {
     commands?: FAQOption[]
     autoReactions?: AutoReaction[]
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessage[]
+    roleRequests?: RoleRequests
     /** IDs of channels that can be linked to in infraction evidence */
     proofChannelIds?: Snowflake[]
     notices?: Notices

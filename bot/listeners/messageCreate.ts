@@ -1,4 +1,4 @@
-import { getRequestType, handleBanRequestAutoMute, validateRequest } from "@bot/utils/requests";
+import { getRequestType, handleBanRequestAutoMute, handleRoleRequest, validateRequest } from "@bot/utils/requests";
 import { Events, hideLinkEmbed, Message, PartialMessage } from "discord.js";
 import { LoggingEvent, RolePermission } from "@bot/types/config";
 import { Requests } from "@bot/types/requests";
@@ -30,30 +30,10 @@ export default class MessageCreateEventListener extends EventListener {
         if (!config) return;
 
         const reactions = config.getAutoReactions(message.channelId);
+
         if (reactions.length) await Promise.all(reactions.map(r => message.react(r)));
-
-        // Handle media to link conversion
-        if (message.channelId === config.channels.mediaConversion && message.attachments.size) {
-            const log = await sendLog({
-                event: LoggingEvent.Media,
-                guildId: message.guildId,
-                options: {
-                    content: `Media stored by ${message.author}`,
-                    files: Array.from(message.attachments.values()),
-                    allowedMentions: { parse: [] }
-                }
-            });
-
-            if (!log) {
-                await message.reply("Failed to store media, please contact the bot owner(s) if this keeps happening.");
-                return;
-            }
-
-            await Promise.all([
-                message.delete().catch(() => null),
-                message.channel.send(`${message.author} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`)
-            ]);
-        }
+        if (message.channelId === config.roleRequests?.channelId && message.mentions.users.size) await handleRoleRequest(message, config);
+        if (message.channelId === config.channels.mediaConversion && message.attachments.size) await handleMediaConversion(message);
 
         const requestType = getRequestType(message.channelId, config);
 
@@ -96,4 +76,26 @@ export default class MessageCreateEventListener extends EventListener {
             }
         }
     }
+}
+
+async function handleMediaConversion(message: Message<true>): Promise<void> {
+    const log = await sendLog({
+        event: LoggingEvent.Media,
+        guildId: message.guildId,
+        options: {
+            content: `Media stored by ${message.author}`,
+            files: Array.from(message.attachments.values()),
+            allowedMentions: { parse: [] }
+        }
+    });
+
+    if (!log) {
+        await message.reply("Failed to store media, please contact the bot owner(s) if this keeps happening.");
+        return;
+    }
+
+    await Promise.all([
+        message.delete().catch(() => null),
+        message.channel.send(`${message.author} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`)
+    ]);
 }

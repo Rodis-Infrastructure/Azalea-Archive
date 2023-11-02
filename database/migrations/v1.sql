@@ -1,5 +1,14 @@
 BEGIN EXCLUSIVE;
 
+CREATE TABLE IF NOT EXISTS temporary_roles
+(
+    request_id TEXT      NOT NULL PRIMARY KEY,
+    role_id    TEXT      NOT NULL,
+    guild_id   TEXT      NOT NULL,
+    users      TEXT      NOT NULL,
+    expires_at TIMESTAMP NOT NULL
+) WITHOUT ROWID;
+
 CREATE TABLE IF NOT EXISTS messages
 (
     message_id   TEXT      NOT NULL PRIMARY KEY,
@@ -12,7 +21,7 @@ CREATE TABLE IF NOT EXISTS messages
     reference_id TEXT,
     category_id  TEXT,
     deleted      TINYINT
-);
+) WITHOUT ROWID;
 
 CREATE INDEX IF NOT EXISTS idx_latest_messages ON messages (channel_id, guild_id, deleted, created_at DESC);
 
@@ -32,7 +41,7 @@ CREATE TABLE IF NOT EXISTS infractions
     updated_at        TIMESTAMP,
     flag              TINYINT,
     reason            TEXT CHECK (length(reason) <= 1024)
-);
+) WITHOUT ROWID;
 
 CREATE INDEX IF NOT EXISTS idx_latest_user_infractions
     ON infractions (target_id, guild_id, infraction_id DESC);
