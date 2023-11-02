@@ -446,9 +446,17 @@ export function setTemporaryRoleTimeout(data: {
             requestQueue.messages.fetch(requestId)
         ]);
 
+        const deleteBtn = new ButtonBuilder()
+            .setCustomId("delete")
+            .setLabel("Delete")
+            .setStyle(ButtonStyle.Danger);
+
+        const actionRow = new ActionRowBuilder<ButtonBuilder>()
+            .setComponents(deleteBtn);
+
         await Promise.all([
             ...members.map(member => member.roles.remove(res.role_id)),
-            request.delete().catch(() => null),
+            request.edit({ components: [actionRow] }),
             runQuery(`DELETE
                       FROM temporary_roles
                       WHERE request_id = ${requestId}`)

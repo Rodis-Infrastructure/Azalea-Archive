@@ -1,5 +1,5 @@
 import { InteractionResponseType } from "@bot/types/interactions";
-import { ButtonInteraction, EmbedBuilder, Snowflake } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, Snowflake } from "discord.js";
 import { Component } from "@bot/handlers/interactions/interaction";
 import { RegexPatterns } from "@bot/utils";
 import { runQuery } from "@database/utils";
@@ -41,6 +41,14 @@ export default class RemoveRolesButton extends Component<ButtonInteraction<"cach
             `);
         }
 
-        await interaction.update({ components: [] });
+        const deleteBtn = new ButtonBuilder()
+            .setCustomId("delete")
+            .setLabel("Delete")
+            .setStyle(ButtonStyle.Danger);
+
+        const actionRow = new ActionRowBuilder<ButtonBuilder>()
+            .setComponents(deleteBtn);
+
+        await interaction.update({ components: [actionRow] });
     }
 }
