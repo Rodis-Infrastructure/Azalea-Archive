@@ -43,6 +43,19 @@ allowedProofChannelIds:
   - "channel-id"
 ```
 
+### Role Requests
+
+The `roleRequests` section allows you to configure which roles can be requested by permitted users (managed in interaction permissions). The duration field indicates how long the role will be given to the user for, if not duration is specified, the role will be given to the user indefinitely.
+
+```yaml
+roleRequests:
+  channelId: "channel-id"
+  roles:
+    - roleId: "role-id"
+    - roleId: "role-id"
+      duration: 600000 # ms
+```
+
 ### Auto Reactions
 
 The `autoReactions` section allows you to configure which reactions the bot will add to every message sent in a
