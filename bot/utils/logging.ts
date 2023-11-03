@@ -80,7 +80,7 @@ export async function linkToPurgeLog(params: {
         executorId: executorId
     });
 
-    await config.sendNotification(formattedMessage, { allowMentions: true });
+    await config.sendNotification(`${formattedMessage}: ${url}`, { allowMentions: true });
     delete cache.messages.purged;
 }
 

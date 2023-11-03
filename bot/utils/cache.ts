@@ -158,31 +158,32 @@ export default class Cache {
      * Set the `deleted` field of the cached/stored message(s) to `true`
      * @returns The cached/stored messages
      */
-    async handleBulkDeletedMessages(messageIds: Snowflake[]): Promise<MessageModel[]> {
-        const uncachedMessages: Snowflake[] = [];
-        let messages: MessageModel[] = [];
+    async handleBulkDeletedMessages(messageIds: Set<Snowflake>): Promise<Set<MessageModel>> {
+        const uncachedMessages = new Set<Snowflake>();
+        const messages = new Set<MessageModel>();
 
         for (const messageId of messageIds) {
             const cachedMessage = this.messages.store.get(messageId);
 
             if (!cachedMessage) {
-                uncachedMessages.push(messageId);
+                uncachedMessages.add(messageId);
             } else {
-                messages.push(cachedMessage);
+                messages.add(cachedMessage);
                 cachedMessage.deleted = true;
                 this.messages.store.set(messageId, cachedMessage);
             }
         }
 
-        if (uncachedMessages.length) {
+        if (uncachedMessages.size) {
+            const messageIdList = Array.from(uncachedMessages).join(",");
             const storedMessages = await allQuery<MessageModel>(`
                 UPDATE messages
                 SET deleted = true
-                WHERE message_id IN (${uncachedMessages.join(",")})
+                WHERE message_id IN (${messageIdList})
                 RETURNING *;
             `);
 
-            messages = messages.concat(storedMessages);
+            storedMessages.forEach(message => messages.add(message));
         }
 
         return messages;
