@@ -54,6 +54,7 @@ export default class VoiceStateUpdateEventListener extends EventListener {
             ]);
         }
 
+        if (!logAuthorIcon) return;
         log.data.author!.icon_url = `attachment://${logAuthorIcon}`;
 
         await sendLog({
