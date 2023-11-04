@@ -15,7 +15,7 @@ import { InfractionLogData } from "@bot/types/logging";
 export function getInfractionEmbedData(punishment: PunishmentType): InfractionLogData {
     let color: ColorResolvable = Colors.NotQuiteBlack;
     let action = "Failed to resolve punishment";
-    let icon: string | undefined;
+    let icon = "memberDelete.png";
 
     switch (punishment) {
         case PunishmentType.Mute: {
