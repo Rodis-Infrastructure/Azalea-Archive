@@ -6,10 +6,10 @@ import { handleQuickMute } from "@bot/utils/moderation";
 
 import Config from "@bot/utils/config";
 
-export default class QuickMute30Command extends Command {
+export default class QuickMute60CtxCommand extends Command {
     constructor() {
         super({
-            name: "Quick mute (30m)",
+            name: "Quick mute (60m)",
             defer: InteractionResponseType.Default,
             type: ApplicationCommandType.Message,
             skipInternalUsageCheck: false
@@ -19,7 +19,7 @@ export default class QuickMute30Command extends Command {
     async execute(interaction: MessageContextMenuCommandInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
         const { response } = await handleQuickMute({
             message: interaction.targetMessage,
-            duration: QuickMuteDuration.Short,
+            duration: QuickMuteDuration.Long,
             executorId: interaction.user.id,
             config
         });
