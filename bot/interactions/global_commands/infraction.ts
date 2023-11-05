@@ -371,7 +371,7 @@ export async function handleInfractionReasonChange(infractionId: number, data: {
 
     const log = new EmbedBuilder()
         .setColor(Colors.Yellow)
-        .setAuthor({ name: "Reason Changed", iconURL: "attachment://infractionUpdate.png" })
+        .setAuthor({ name: "Reason Changed", iconURL: "attachment://informationUpdate.png" })
         .setFields([
             {
                 name: "Moderator",
@@ -391,8 +391,8 @@ export async function handleInfractionReasonChange(infractionId: number, data: {
         options: {
             embeds: [log],
             files: [{
-                attachment: "./icons/infractionUpdate.png",
-                name: "infractionUpdate.png"
+                attachment: "./icons/informationUpdate.png",
+                name: "informationUpdate.png"
             }]
         }
     });
@@ -438,7 +438,7 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
 
     const log = new EmbedBuilder()
         .setColor(Colors.Yellow)
-        .setAuthor({ name: "Duration Changed", iconURL: "attachment://infractionUpdate.png" })
+        .setAuthor({ name: "Duration Changed", iconURL: "attachment://informationUpdate.png" })
         .setFields([
             {
                 name: "Moderator",
@@ -458,8 +458,8 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
         options: {
             embeds: [log],
             files: [{
-                attachment: "./icons/infractionUpdate.png",
-                name: "infractionUpdate.png"
+                attachment: "./icons/informationUpdate.png",
+                name: "informationUpdate.png"
             }]
         }
     });
@@ -487,7 +487,7 @@ async function handleInfractionArchive(infractionId: number, interaction: ChatIn
 
     const log = new EmbedBuilder()
         .setColor(Colors.Red)
-        .setAuthor({ name: "Infraction Archived", iconURL: "attachment://infractionDelete.png" })
+        .setAuthor({ name: "Infraction Archived", iconURL: "attachment://noteDelete.png" })
         .setFields({
             name: "Moderator",
             value: `${interaction.user}`
@@ -501,8 +501,8 @@ async function handleInfractionArchive(infractionId: number, interaction: ChatIn
         options: {
             embeds: [log],
             files: [{
-                attachment: "./icons/infractionDelete.png",
-                name: "infractionDelete.png"
+                attachment: "./icons/noteDelete.png",
+                name: "noteDelete.png"
             }]
         }
     });

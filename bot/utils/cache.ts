@@ -44,26 +44,28 @@ export default class Cache {
 
     /** Stores cached messages in the database */
     static async storeMessages(): Promise<void> {
-        const messages = Cache.instances.flatMap(cache => cache.messages.store);
-        const messagesToInsert = messages.map((data, messageId) => {
-            const croppedContent = data.content ? elipsify(data.content, 1024) : null;
+        const messageValues = Cache.instances
+            .flatMap(cache => cache.messages.store)
+            .map(data => {
+                const croppedContent = data.content && elipsify(data.content, 1024);
 
-            return `(
-                ${messageId}, 
-                ${data.author_id}, 
-                ${data.channel_id}, 
-                ${data.guild_id}, 
-                ${data.created_at},
-                ${sanitizeString(croppedContent)},
-                ${data.reference_id},
-                ${data.category_id},
-                ${data.sticker_id},
-                ${data.deleted}
-            )`;
-        }).join(",");
+                return `(
+                    ${data.message_id}, 
+                    ${data.author_id}, 
+                    ${data.channel_id}, 
+                    ${data.guild_id}, 
+                    ${data.created_at},
+                    ${sanitizeString(croppedContent)},
+                    ${data.reference_id},
+                    ${data.category_id},
+                    ${data.sticker_id},
+                    ${data.deleted}
+                )`;
+            })
+            .join(",");
 
         // If any changes need to be made, make sure the field names and values are in the exact same order
-        if (messagesToInsert) {
+        if (messageValues) {
             // @formatter:off
             await runQuery(`
                 INSERT INTO messages (
@@ -78,9 +80,12 @@ export default class Cache {
                     sticker_id,
                     deleted
                 )
-                VALUES ${messagesToInsert};
-            `);
+                VALUES ${messageValues};
+            `).catch(() => null);
         }
+
+        // Clear the cached messages
+        Cache.instances.forEach(cache => cache.messages.store.clear());
     }
 
     /** @returns IDs of the cached messages sorted by their creation dates */

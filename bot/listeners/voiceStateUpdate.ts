@@ -38,7 +38,7 @@ export default class VoiceStateUpdateEventListener extends EventListener {
 
         // User moved from one voice channel to another
         if (oldState.channel && newState.channel) {
-            logAuthorIcon = "voiceMove.png";
+            logAuthorIcon = "voiceUpdate.png";
 
             log.setColor(Colors.Yellow);
             log.setAuthor({ name: "Voice Move" });
