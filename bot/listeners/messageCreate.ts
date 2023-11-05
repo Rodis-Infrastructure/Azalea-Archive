@@ -33,7 +33,11 @@ export default class MessageCreateEventListener extends EventListener {
         if (reactions.length) await Promise.all(reactions.map(r => message.react(r)));
 
         // Handle media to link conversion
-        if (message.channelId === config.channels.mediaConversion && message.attachments.size) {
+        if (
+            message.channelId === config.channels.mediaConversion &&
+            message.attachments.size &&
+            !message.content
+        ) {
             const log = await sendLog({
                 event: LoggingEvent.Media,
                 guildId: message.guildId,
