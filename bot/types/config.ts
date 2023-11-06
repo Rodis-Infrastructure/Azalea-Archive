@@ -115,6 +115,7 @@ export interface Notices {
 export interface ConfigData {
     commands?: FAQOption[]
     autoReactions?: AutoReaction[]
+    mediaChannels?: Snowflake[]
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessage[]
     /** IDs of channels that can be linked to in infraction evidence */
