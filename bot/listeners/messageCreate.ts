@@ -30,7 +30,7 @@ export default class MessageCreateEventListener extends EventListener {
         if (!config) return;
 
         // Handle media-only channels
-        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size) {
+        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.embeds.length) {
             await handleMediaChannelMessage(message, config);
         }
 
