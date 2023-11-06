@@ -29,6 +29,11 @@ export default class MessageCreateEventListener extends EventListener {
         const config = Config.get(message.guildId);
         if (!config) return;
 
+        // Handle media-only channels
+        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size) {
+            await handleMediaChannelMessage(message, config);
+        }
+
         const reactions = config.getAutoReactions(message.channelId);
         if (reactions.length) await Promise.all(reactions.map(r => message.react(r)));
 
@@ -100,4 +105,19 @@ export default class MessageCreateEventListener extends EventListener {
             }
         }
     }
+}
+
+async function handleMediaChannelMessage(message: Message, config: Config): Promise<void> {
+    // Do not remove staff messages
+    if (message.member && config.isGuildStaff(message.member)) return;
+
+    const [reply] = await Promise.all([
+        message.channel.send(`${message.author} This is a media-only channel, your message must have at least one attachment.`),
+        message.delete().catch(() => null)
+    ]);
+
+    // Remove after 3 seconds
+    setTimeout(async() => {
+        await reply.delete().catch(() => null);
+    }, 3000);
 }

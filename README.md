@@ -33,6 +33,15 @@ will be deleted. If set to `0`, the bot will not delete any messages.
 deleteMessageSecondsOnBan: 0
 ```
 
+### Media Channels
+
+Channels that only allow messages with at least one attachment to be sent (excludes guild staff).
+
+```yaml
+mediaChannels:
+  - "channel-id"
+```
+
 ### Allowed Proof Channels
 
 Require all message links in infraction evidence to be from specific channels. If set to an empty array, all channels
