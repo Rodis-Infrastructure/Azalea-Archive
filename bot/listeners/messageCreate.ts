@@ -60,7 +60,7 @@ export default class MessageCreateEventListener extends EventListener {
 
             await Promise.all([
                 message.delete().catch(() => null),
-                message.channel.send(`${message.author} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`)
+                message.channel.send(`${message.author} Your media log: ${log.url}\n\n> ${hideLinkEmbed(log.url)}`)
             ]);
         }
 

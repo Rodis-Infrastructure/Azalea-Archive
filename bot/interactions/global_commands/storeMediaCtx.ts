@@ -65,7 +65,7 @@ export default class StoreMediaCtxCommand extends Command {
         }
 
         await Promise.all([
-            mediaConversionChannel.send(`${interaction.user} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`),
+            mediaConversionChannel.send(`${interaction.user} Your media log: ${log.url}\n\n> ${hideLinkEmbed(log.url)}`),
             interaction.reply({
                 content: `${emojis.success} Successfully stored \`${log.attachments.size}\` attachments from ${targetMessage.author}`,
                 ephemeral: true
