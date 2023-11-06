@@ -29,8 +29,8 @@ export default class MessageCreateEventListener extends EventListener {
         const config = Config.get(message.guildId);
         if (!config) return;
 
-        // Handle media-only channels
-        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.embeds.length) {
+        // Remove messages from media channel if it doesn't have an attachment or a link
+        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.content.includes("http")) {
             await handleMediaChannelMessage(message, config);
         }
 
