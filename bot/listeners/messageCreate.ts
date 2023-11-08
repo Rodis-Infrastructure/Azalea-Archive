@@ -29,11 +29,20 @@ export default class MessageCreateEventListener extends EventListener {
         const config = Config.get(message.guildId);
         if (!config) return;
 
+        // Remove messages from media channel if it doesn't have an attachment or a link
+        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.content.includes("http")) {
+            await handleMediaChannelMessage(message, config);
+        }
+
         const reactions = config.getAutoReactions(message.channelId);
         if (reactions.length) await Promise.all(reactions.map(r => message.react(r)));
 
         // Handle media to link conversion
-        if (message.channelId === config.channels.mediaConversion && message.attachments.size) {
+        if (
+            message.channelId === config.channels.mediaConversion &&
+            message.attachments.size &&
+            !message.content
+        ) {
             const log = await sendLog({
                 event: LoggingEvent.Media,
                 guildId: message.guildId,
@@ -51,7 +60,7 @@ export default class MessageCreateEventListener extends EventListener {
 
             await Promise.all([
                 message.delete().catch(() => null),
-                message.channel.send(`${message.author} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`)
+                message.channel.send(`${message.author} Your media log: ${log.url}\n\n> ${hideLinkEmbed(log.url)}`)
             ]);
         }
 
@@ -96,4 +105,19 @@ export default class MessageCreateEventListener extends EventListener {
             }
         }
     }
+}
+
+async function handleMediaChannelMessage(message: Message, config: Config): Promise<void> {
+    // Do not remove staff messages
+    if (message.member && config.isGuildStaff(message.member)) return;
+
+    const [reply] = await Promise.all([
+        message.channel.send(`${message.author} This is a media-only channel, your message must have at least one attachment.`),
+        message.delete().catch(() => null)
+    ]);
+
+    // Remove after 3 seconds
+    setTimeout(async() => {
+        await reply.delete().catch(() => null);
+    }, 3000);
 }
