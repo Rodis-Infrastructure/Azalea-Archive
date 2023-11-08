@@ -17,7 +17,8 @@ import { Command } from "@bot/handlers/interactions/interaction";
 import { mapInfractionCount } from "@bot/utils/infractions";
 import { TimestampStyles } from "@discordjs/formatters";
 import { RolePermission } from "@bot/types/config";
-import { getQuery } from "@database/utils";
+import { SQLQueryBindings } from "bun:sqlite";
+import { db } from "@database/utils.ts";
 
 import Config from "@bot/utils/config";
 
@@ -97,15 +98,21 @@ export default class InfoCommand extends Command {
                 .catch(() => false);
 
             if (targetIsBanned) {
-                const ban = await getQuery<Pick<InfractionModel, "reason">>(`
+                const banReasonQuery = db.prepare<Pick<InfractionModel, "reason">, SQLQueryBindings>(`
                     SELECT reason
                     FROM infractions
-                    WHERE target_id = ${targetUser.id}
-                      AND guild_id = ${interaction.guildId}
-                      AND action = ${PunishmentType.Ban}
+                    WHERE target_id = $targetId
+                      AND guild_id = $guildId
+                      AND action = $action
                     ORDER BY infraction_id DESC
                     LIMIT 1;
                 `);
+
+                const ban = banReasonQuery.get({
+                    $targetId: targetUser.id,
+                    $guildId: interaction.guildId,
+                    $action: PunishmentType.Ban
+                });
 
                 embed.setTitle("Banned");
                 embed.setDescription(ban?.reason || "No reason provided.");
@@ -116,16 +123,20 @@ export default class InfoCommand extends Command {
 
         // Only allows staff to view member infractions, but not the infractions of other staff
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member)) {
-            const infractionCount = await getQuery<InfractionCount, false>(`
+            const infractionCountQuery = db.prepare<InfractionCount, SQLQueryBindings>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE target_id = ${targetUser.id}
-                  AND guild_id = ${interaction.guildId};
-
+                WHERE target_id = $targetId
+                  AND guild_id = $guildId;
             `);
+
+            const infractionCount = infractionCountQuery.get({
+                $targetId: targetUser.id,
+                $guildId: interaction.guildId
+            })!;
 
             embed.addFields({
                 name: "Infractions",
@@ -147,24 +158,26 @@ export default class InfoCommand extends Command {
             config.hasPermission(interaction.member, RolePermission.ViewModerationActivity)
         ) {
             ephemeral = true;
-            const dealtInfractionCount = await getQuery<InfractionCount>(`
+            const infractionsDealtCountQuery = db.prepare<InfractionCount, SQLQueryBindings>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE (executor_id = ${targetUser.id} OR request_author_id = ${targetUser.id})
-                  AND guild_id = ${interaction.guildId};
-
+                WHERE (executor_id = $targetId OR request_author_id = $targetId)
+                  AND guild_id = $guildId;
             `);
 
-            if (dealtInfractionCount) {
-                embed.addFields({
-                    name: "Infractions Dealt",
-                    value: mapInfractionCount(dealtInfractionCount),
-                    inline: true
-                });
-            }
+            const dealtInfractionCount = infractionsDealtCountQuery.get({
+                $targetId: targetUser.id,
+                $guildId: interaction.guildId
+            })!;
+
+            embed.addFields({
+                name: "Infractions Dealt",
+                value: mapInfractionCount(dealtInfractionCount),
+                inline: true
+            });
         }
 
         if (flags.length) {

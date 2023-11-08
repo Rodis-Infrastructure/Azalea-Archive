@@ -1,15 +1,16 @@
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, hyperlink, messageLink, roleMention } from "discord.js";
 import {
     loadGlobalInteractions,
     loadGuildCommands,
     publishGlobalCommands,
     publishGuildCommands
 } from "@bot/handlers/interactions/loader";
+
+import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, hyperlink, messageLink, roleMention } from "discord.js";
 import { extract, RegexPatterns } from "@bot/utils";
 import { readFile } from "node:fs/promises";
 import { ConfigData } from "@bot/types/config";
 import { Requests } from "@bot/types/requests";
-import { runQuery } from "@database/utils";
+import { db } from "@database/utils.ts";
 import { client } from "@bot/client";
 import { CronJob } from "cron";
 import { parse } from "yaml";
@@ -58,12 +59,15 @@ export default class ReadyEventListener extends EventListener {
         new CronJob("*/10 * * * *", Cache.storeMessages).start();
 
         // Delete messages older than 24 hours every 2 hours
-        new CronJob("0 */2 * * *", async() => {
-            await runQuery(`
-                DELETE
+        new CronJob("0 */2 * * *", () => {
+            db.run(`
+                DELETE 
                 FROM messages
-                WHERE ${Date.now()} - created_at > ${ms("24h")}
-            `);
+                WHERE $now - created_at > $timeout
+            `, [{
+                $now: Date.now(),
+                $timeout: ms("24h")
+            }]);
         }).start();
     }
 }

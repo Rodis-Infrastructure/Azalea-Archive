@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "module": "commonjs",
+        "module": "ESNext",
         "rootDirs": [
             "./bot",
             "./database"
@@ -14,22 +14,17 @@
                 "./database/*"
             ]
         },
-        "outDir": "./dist/",
+        "moduleResolution": "bundler",
+        "moduleDetection": "force",
         "strict": true,
-        "moduleResolution": "node",
         "importHelpers": true,
         "experimentalDecorators": true,
+        "allowImportingTsExtensions": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,
         "removeComments": true,
-        "typeRoots": [
-            "./node_modules/discord-api-types"
-        ]
-    },
-    "include": [
-        "./bot/**/*.ts",
-        "./database/**/*.ts"
-    ]
+        "types": ["bun-types"]
+    }
 }

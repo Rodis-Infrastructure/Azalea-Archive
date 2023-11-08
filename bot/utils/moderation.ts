@@ -11,10 +11,11 @@ import { EmbedBuilder, GuildMember, GuildTextBasedChannel, Snowflake, time, User
 import { InfractionFlag, InfractionResolveOptions, PunishmentType } from "@database/models/infraction";
 import { MemberMuteResult, QuickMuteParams } from "@bot/types/moderation";
 import { MessageModel } from "@database/models/message";
-import { allQuery, storeInfraction } from "@database/utils";
+import { db, storeInfraction } from "@database/utils";
 import { TimestampStyles } from "@discordjs/formatters";
 import { getInfractionEmbedData } from "./infractions";
 import { LoggingEvent } from "@bot/types/config";
+import { SQLQueryBindings } from "bun:sqlite";
 import { sendLog } from "./logging";
 
 import Config from "./config";
@@ -189,24 +190,33 @@ export async function purgeMessages(data: {
 
     if (messagesToPurge.length < amount) {
         const messagesToFetch = amount - messagesToPurge.length;
-        const authorCondition = targetId ? `AND author_id = ${targetId}` : "";
 
         try {
             // @formatter:off
-            const storedMessages = await allQuery<Pick<MessageModel, "message_id">>(`
+            const deleteMessagesQuery = db.prepare<Pick<MessageModel, "message_id">, SQLQueryBindings>(`
                 UPDATE messages
                 SET deleted = 1
                 WHERE message_id IN (
                     SELECT message_id FROM messages
-                    WHERE channel_id = ${channel.id} ${authorCondition} 
-                        AND guild_id = ${channel.guildId}
-                        AND message_id NOT IN (${messagesToPurge.join(",")}) -- Not cached
+                    WHERE channel_id = $channelId
+                        AND ($authorId IS NULL OR author_id = $authorId)
+                        AND guild_id = $guildId
+                        AND message_id NOT IN ($messageIds) -- Not cached
                         AND deleted = 0
                     ORDER BY created_at DESC
-                    LIMIT ${messagesToFetch}
+                    LIMIT $limit
                 )
                 RETURNING message_id;
             `);
+
+            // @formatter:on
+            const storedMessages = deleteMessagesQuery.all({
+                $channelId: channel.id,
+                $guildId: channel.guildId,
+                $limit: messagesToFetch,
+                $authorId: targetId ?? null,
+                $messageIds: messagesToPurge.join(",")
+            });
 
             messagesToPurge.push(...storedMessages.map(({ message_id }) => message_id));
         } catch (err) {
