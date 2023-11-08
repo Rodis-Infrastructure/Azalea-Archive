@@ -2,7 +2,6 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { loadListeners } from "./handlers/listeners/loader";
 
 import "@bot/handlers/errors";
-import "dotenv/config";
 
 export const client = new Client({
     intents: [
