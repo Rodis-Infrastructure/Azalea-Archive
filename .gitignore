@@ -2,6 +2,7 @@
 .env
 .DS_Store
 *.db
+*.sqlite
 
 # Directories
 node_modules
