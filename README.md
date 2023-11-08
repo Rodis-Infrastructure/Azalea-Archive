@@ -30,7 +30,7 @@ Before you start, you must ensure that you have the following installed:
    npm run db:init
    ```
 
-5. To start the bot, run the following command:
+5. Start the bot by running the following command:
 
    ```bash
    npm start
