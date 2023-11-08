@@ -127,6 +127,7 @@ interface TemporaryRole {
 export interface ConfigData {
     commands?: FAQOption[]
     autoReactions?: AutoReaction[]
+    mediaChannels?: Snowflake[]
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessage[]
     roleRequests?: RoleRequests

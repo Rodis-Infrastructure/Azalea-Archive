@@ -76,6 +76,10 @@ export default class Config {
         return this.data.channels ?? {};
     }
 
+    get mediaChannels(): Snowflake[] {
+        return this.data.mediaChannels ?? [];
+    }
+
     get banRequestNotices(): NoticeConfig | undefined {
         return this.data.notices?.banRequests;
     }

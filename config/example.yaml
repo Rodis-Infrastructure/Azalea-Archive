@@ -12,6 +12,9 @@ userFlags:
     roleIds:
       - "role-id"
 
+mediaOnlyChannels:
+    - "channel-id"
+
 notices:
   banRequests:
     enabled: true
