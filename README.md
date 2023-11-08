@@ -21,12 +21,16 @@ Before you start, you must ensure that you have the following installed:
    ```
 
 3. Install the project dependencies using a package manager of your choice. For example, if you are using npm, run the following command:
-
    ```bash
    npm install
    ```
 
-4. To start the bot, run the following command:
+4. Initiate the database before starting the bot. This will create the database and all the required tables.
+   ```bash
+   npm run db:init
+   ```
+
+5. To start the bot, run the following command:
 
    ```bash
    npm start
@@ -42,7 +46,7 @@ The bot can also be run using Docker. To build and containerize the image, run t
 docker-compose up --build -d
 ```
 
-Steps 3 and 4 from the [Installation](#installation) section are not required when using Docker.
+Only steps 1 and 2 from the [Installation](#installation) section are required when using Docker.
 
 ## Configuration
 
