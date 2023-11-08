@@ -5,8 +5,9 @@ services:
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
       DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}
-      DB_PATH: ${DB_PATH:-db.sqlite}
+      DB_PATH: data/${DB_FILE:-db.sqlite}
     volumes:
-      - type: bind
-        source: ./${DB_PATH}
-        target: /usr/src/azalea/${DB_PATH}
+      - data:/usr/src/azalea/data
+
+volumes:
+  data:

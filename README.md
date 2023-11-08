@@ -2,21 +2,47 @@
 
 This file serves as documentation for the Roblox Discord's moderation bot.
 
-## Startup
+## Prerequisites
 
-Prior to starting the bot, you must install the dependencies:
+Before you start, you must ensure that you have the following installed:
 
-```bash
-npm install
-```
+* **Bun**: You need to have bun installed on your machine. See [bun.sh](https://bun.sh/) for more information. 
 
-To start the bot, run the following command:
+### Installation
 
-```bash
-npm start
-```
+1. Clone the repository
+   ```bash
+   git clone https://github.com/Rodis-Infrastructure/Azalea.git
+   ```
+
+2. Navigate to the project directory
+   ```bash
+   cd Azalea
+   ```
+
+3. Install the project dependencies using a package manager of your choice. For example, if you are using npm, run the following command:
+
+   ```bash
+   npm install
+   ```
+
+4. To start the bot, run the following command:
+
+   ```bash
+   npm start
+   ```
 
 Please note that a `.env` file is required to run the bot. See the [`.env.example`](.env.example) file for an example of what variables need to be set.
+
+### Docker
+
+The bot can also be run using Docker. To build and containerize the image, run the following command:
+
+```bash
+docker-compose up --build -d
+```
+
+Steps 3 and 4 from the [Installation](#installation) section are not required when using Docker.
 
 ## Configuration
 
