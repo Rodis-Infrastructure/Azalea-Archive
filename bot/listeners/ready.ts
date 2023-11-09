@@ -73,12 +73,12 @@ export default class ReadyEventListener extends EventListener {
         // Store cached messages every 10 minutes
         new CronJob("*/10 * * * *", Cache.storeMessages).start();
 
-        // Delete messages older than 24 hours every 2 hours
-        new CronJob("0 */2 * * *", async() => {
+        // Delete messages older than 14 days every 12 hours
+        new CronJob("0 */12 * * *", async() => {
             await runQuery(`
                 DELETE
                 FROM messages
-                WHERE ${Date.now()} - created_at > ${ms("24h")}
+                WHERE ${Date.now()} - created_at > ${ms("14d")}
             `);
         }).start();
     }
