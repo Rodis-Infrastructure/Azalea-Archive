@@ -49,7 +49,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
         if (direction === "next") currentPage++;
         else if (direction === "back") currentPage--;
 
-        const infractions = await db.all<MinimalInfraction>(`
+        const infractions = await db.all<Omit<MinimalInfraction, "archived_at" | "archived_by">>(`
             SELECT infraction_id,
                    target_id,
                    executor_id,
@@ -68,10 +68,12 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
             $targetId: targetId
         }]);
 
+        const embedAuthorText = embed.data.author!.name!;
         const [pageCount, fields] = mapInfractionsToFields({
             infractions,
             filter: filter || null,
-            page: currentPage
+            page: currentPage,
+            targetIsStaff: embedAuthorText.startsWith("Infractions by")
         });
 
         pageCountBtn.setLabel(`${currentPage} / ${pageCount}`);

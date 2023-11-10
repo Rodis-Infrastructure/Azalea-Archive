@@ -37,7 +37,8 @@ export enum InfractionFlag {
     Quick = 2,
 }
 
-export type MinimalInfraction = Omit<InfractionModel, "updated_by" | "updated_at" | "request_author_id" | "target_id">
+/** Primarily used for infraction searches */
+export type MinimalInfraction = Omit<InfractionModel, "updated_by" | "updated_at" | "request_author_id">
 
 export enum InfractionFilter {
     All = "All",

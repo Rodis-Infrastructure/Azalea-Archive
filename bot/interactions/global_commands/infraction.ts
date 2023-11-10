@@ -261,7 +261,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         targetUser = await client.users.fetch(interaction.customId.split("-")[2]);
     }
 
-    const targetIsStaff = targetMember && config.isGuildStaff(targetMember);
+    const targetIsStaff = (targetMember && config.isGuildStaff(targetMember)) || false;
     const executorCanViewModerationActivity = config.hasPermission(interaction.member, RolePermission.ViewModerationActivity);
 
     if (targetIsStaff && !executorCanViewModerationActivity) {
@@ -292,6 +292,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
 
     const infractions = await db.all<MinimalInfraction>(`
         SELECT infraction_id,
+               target_id,
                executor_id,
                created_at,
                reason,
@@ -308,6 +309,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         LIMIT 100;
     `, infractionsQueryParams);
 
+    // Embed author text is depended on by the pagination buttons
     const components: ActionRowBuilder<ButtonBuilder>[] = [];
     const searchContext = targetIsStaff && executorCanViewModerationActivity ? "by" : "of";
     const embed = new EmbedBuilder()
@@ -323,7 +325,8 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         const [maxPageCount, fields] = mapInfractionsToFields({
             infractions,
             filter,
-            page: 1
+            page: 1,
+            targetIsStaff
         });
 
         if (fields.length) embed.setFields(fields);

@@ -74,9 +74,10 @@ export function getInfractionEmbedData(punishment: PunishmentType): InfractionLo
 export function mapInfractionsToFields(data: {
     infractions: MinimalInfraction[],
     filter: InfractionFilter | null,
-    page: number
+    page: number,
+    targetIsStaff: boolean
 }): [number, APIEmbedField[]] {
-    const { infractions, filter, page } = data;
+    const { infractions, filter, page, targetIsStaff } = data;
     const filteredInfractions = infractions.filter(infraction => {
         switch (filter) {
             // Automatic infractions are hidden by default
@@ -97,21 +98,31 @@ export function mapInfractionsToFields(data: {
         const flag = infraction.flag ? `${InfractionFlag[infraction.flag]} ` : "";
 
         // Remove all URLs
-        const cleanReason = infraction.reason?.replace(/https?:\/\/.+( |$)/gi, "").trim();
+        const cleanReason = infraction.reason?.replace(/\s*http(.|[\n\r])*/gi, "");
         const data = [
             {
                 key: "Created",
                 val: time(infraction.created_at, TimestampStyles.RelativeTime)
             },
             {
-                key: "Moderator",
-                val: userMention(infraction.executor_id)
-            },
-            {
                 key: "Reason",
                 val: elipsify(cleanReason || "No reason provided", 200)
             }
         ];
+
+        if (targetIsStaff) {
+            // Infractions initiated by a staff member are being viewed
+            data.splice(1, 0, {
+                key: "User",
+                val: userMention(infraction.target_id)
+            });
+        } else {
+            // Infractions of a user are being viewed
+            data.splice(1, 0, {
+                key: "Moderator",
+                val: userMention(infraction.executor_id)
+            });
+        }
 
         if (infraction.expires_at) {
             if (infraction.expires_at > currentTimestamp()) {
