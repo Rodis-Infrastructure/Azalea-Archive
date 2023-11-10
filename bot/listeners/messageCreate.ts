@@ -38,8 +38,8 @@ export default class MessageCreateEventListener extends EventListener {
 
         // There are reactions configured to be added automatically
         if (reactions.length) {
-            const reactionsAddPromise = reactions.map(r => message.react(r));
-            await Promise.all(reactionsAddPromise).catch(() => null);
+            const reactionsAddPromise = reactions.map(r => message.react(r).catch(() => null));
+            await Promise.all(reactionsAddPromise);
         }
 
         // Handle media to link conversion
