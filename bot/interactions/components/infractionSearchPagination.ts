@@ -3,7 +3,6 @@ import { InfractionFilter, MinimalInfraction } from "@database/models/infraction
 import { Component } from "@bot/handlers/interactions/interaction";
 import { InteractionResponseType } from "@bot/types/interactions";
 import { mapInfractionsToFields } from "@bot/utils/infractions";
-import { SQLQueryBindings } from "bun:sqlite";
 import { db } from "@database/utils.ts";
 
 import Config from "@bot/utils/config";
@@ -50,19 +49,24 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
         if (direction === "next") currentPage++;
         else if (direction === "back") currentPage--;
 
-        const stmt = db.prepare<MinimalInfraction, SQLQueryBindings>(`
-            SELECT infraction_id, target_id, executor_id, action, reason, created_at, expires_at, flag
+        const infractions = await db.all<MinimalInfraction>(`
+            SELECT infraction_id,
+                   target_id,
+                   executor_id,
+                   action,
+                   reason,
+                   created_at,
+                   expires_at,
+                   flag
             FROM infractions
             WHERE guild_id = $guildId
               AND target_id = $targetId
             ORDER BY infraction_id DESC
             LIMIT 100;
-        `);
-
-        const infractions = stmt.all({
+        `, [{
             $guildId: interaction.guildId,
             $targetId: targetId
-        });
+        }]);
 
         const [pageCount, fields] = mapInfractionsToFields({
             infractions,

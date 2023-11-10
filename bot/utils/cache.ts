@@ -5,7 +5,6 @@ import { MessageModel } from "@database/models/message";
 import { Collection, Snowflake } from "discord.js";
 import { elipsify } from "./index";
 import { db } from "@database/utils.ts";
-import { SQLQueryBindings } from "bun:sqlite";
 
 export default class Cache {
     static components = new Collection<ComponentCustomId, Component<AnyComponentInteraction<"cached">>>();
@@ -66,12 +65,14 @@ export default class Cache {
 
         // If any changes need to be made, make sure the field names and values are in the exact same order
         if (messages.length) {
-            const insertMessageQuery = db.prepare(`
-                INSERT INTO messages (message_id, author_id, channel_id, guild_id, created_at, content, reference_id, category_id, sticker_id, deleted)
-                VALUES ($messageId, $authorId, $channelId, $guildId, $createdAt, $content, $referenceId, $categoryId, $stickerId, $deleted)
+            const insertMessageQuery = db._db.prepare(`
+                INSERT INTO messages (message_id, author_id, channel_id, guild_id, created_at, content, reference_id,
+                                      category_id, sticker_id, deleted)
+                VALUES ($messageId, $authorId, $channelId, $guildId, $createdAt, $content, $referenceId, $categoryId,
+                        $stickerId, $deleted)
             `);
 
-            const insertMessages = db.transaction(messages => {
+            const insertMessages = db._db.transaction(messages => {
                 for (const message of messages) insertMessageQuery.run(message);
             });
 
@@ -101,14 +102,14 @@ export default class Cache {
     }
 
     /** Set the content of the cached/stored message to the new message content */
-    handleEditedMessage(messageId: Snowflake, updatedContent: string): void {
+    async handleEditedMessage(messageId: Snowflake, updatedContent: string): Promise<void> {
         const message = this.messages.store.get(messageId);
         const croppedContent = elipsify(updatedContent, 1024);
 
         if (message) {
             message.content = croppedContent;
         } else {
-            db.run(`
+            await db.run(`
                 UPDATE messages
                 SET content = $content
                 WHERE message_id = $messageId;
@@ -123,48 +124,48 @@ export default class Cache {
      * Set the `deleted` field of the cached/stored message to `true`
      * @returns The cached/stored message and its reference (if `true` is passed to `fetchReference`)
      */
-    handleDeletedMessage(messageId: Snowflake, fetchReference: boolean): Record<"message" | "reference", MessageModel | null> {
+    async handleDeletedMessage(messageId: Snowflake, fetchReference: boolean): Promise<Record<"message" | "reference", MessageModel | null>> {
         let message = this.messages.store.get(messageId) || null;
         let reference: MessageModel | null = null;
 
         if (message) {
             message.deleted = true;
         } else {
-            const deleteMessageQuery = db.prepare<MessageModel, SQLQueryBindings>(`
+            message = await db.get<MessageModel>(`
                 UPDATE messages
                 SET deleted = 1
                 WHERE message_id = $messageId
                 RETURNING *;
-            `);
-
-            message = deleteMessageQuery.get({ $messageId: messageId });
+            `, [{
+                $messageId: messageId
+            }]);
         }
 
         if (fetchReference && message?.reference_id) {
-            reference = this.fetchMessage(message.reference_id);
+            reference = await this.fetchMessage(message.reference_id);
         }
 
         return { message, reference };
     }
 
-    fetchMessage(messageId: Snowflake): MessageModel | null {
+    fetchMessage(messageId: Snowflake): Promise<MessageModel | null> {
         const cachedMessage = this.messages.store.get(messageId);
-        if (cachedMessage) return cachedMessage;
+        if (cachedMessage) return Promise.resolve(cachedMessage);
 
-        const messageQuery = db.prepare<MessageModel, SQLQueryBindings>(`
+        return db.get<MessageModel>(`
             SELECT *
             FROM messages
             WHERE message_id = $messageId;
-        `);
-
-        return messageQuery.get({ $messageId: messageId });
+        `, [{
+            $messageId: messageId
+        }]);
     }
 
     /**
      * Set the `deleted` field of the cached/stored message(s) to `true`
      * @returns The cached/stored messages
      */
-    handleBulkDeletedMessages(messageIds: Snowflake[]): MessageModel[] {
+    async handleBulkDeletedMessages(messageIds: Snowflake[]): Promise<MessageModel[]> {
         const uncachedMessages: Snowflake[] = [];
         let messages: MessageModel[] = [];
 
@@ -181,14 +182,15 @@ export default class Cache {
         }
 
         if (uncachedMessages.length) {
-            const deleteMessagesQuery = db.prepare<MessageModel, SQLQueryBindings>(`
+            const storedMessages = await db.all<MessageModel>(`
                 UPDATE messages
                 SET deleted = true
                 WHERE message_id IN (${uncachedMessages.join(",")})
                 RETURNING *;
-            `);
+            `, [{
+                $messageIds: uncachedMessages.join(",")
+            }]);
 
-            const storedMessages = deleteMessagesQuery.all({ $messageIds: uncachedMessages.join(",") });
             messages = messages.concat(storedMessages);
         }
 

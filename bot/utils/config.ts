@@ -20,7 +20,6 @@ import {
     ConfirmationOptions,
     EmojiConfig,
     LoggingEvent,
-    NoticeConfig,
     NotificationOptions,
     RoleInteraction,
     RolePermission,
@@ -71,14 +70,6 @@ export default class Config {
 
     get mediaChannels(): Snowflake[] {
         return this.data.mediaChannels ?? [];
-    }
-
-    get banRequestNotices(): NoticeConfig | undefined {
-        return this.data.notices?.banRequests;
-    }
-
-    get muteRequestNotices(): NoticeConfig | undefined {
-        return this.data.notices?.muteRequests;
     }
 
     private get permissions(): RolePermissions[] {

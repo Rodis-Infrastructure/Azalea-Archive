@@ -4,11 +4,11 @@ import { LoggingEvent, RolePermission } from "@bot/types/config";
 import { Requests } from "@bot/types/requests";
 import { ensureError, serializeMessage } from "@bot/utils";
 import { sendLog } from "@bot/utils/logging";
+import { ErrorCause } from "@bot/types/internals";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 import Config from "@bot/utils/config";
 import Cache from "@bot/utils/cache";
-import { ErrorCause } from "@bot/types/internals";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {
@@ -99,7 +99,7 @@ export default class MessageCreateEventListener extends EventListener {
                 ]);
 
                 // Remove after 5 seconds
-                setTimeout(async() => {
+                setTimeout(async () => {
                     await response.delete().catch(() => null);
                 }, 5000);
             }
@@ -117,7 +117,7 @@ async function handleMediaChannelMessage(message: Message, config: Config): Prom
     ]);
 
     // Remove after 3 seconds
-    setTimeout(async() => {
+    setTimeout(async () => {
         await reply.delete().catch(() => null);
     }, 3000);
 }

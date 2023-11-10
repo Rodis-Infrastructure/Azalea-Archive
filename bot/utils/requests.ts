@@ -319,7 +319,7 @@ export async function handleBanRequestAutoMute(data: {
         const reply = await request.reply(response);
 
         // Remove after 3 seconds
-        setTimeout(async() => {
+        setTimeout(async () => {
             await reply.delete().catch(() => null);
         }, 3000);
 

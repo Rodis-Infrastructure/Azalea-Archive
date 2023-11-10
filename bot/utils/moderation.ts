@@ -15,7 +15,6 @@ import { db, storeInfraction } from "@database/utils";
 import { TimestampStyles } from "@discordjs/formatters";
 import { getInfractionEmbedData } from "./infractions";
 import { LoggingEvent } from "@bot/types/config";
-import { SQLQueryBindings } from "bun:sqlite";
 import { sendLog } from "./logging";
 
 import Config from "./config";
@@ -193,7 +192,7 @@ export async function purgeMessages(data: {
 
         try {
             // @formatter:off
-            const deleteMessagesQuery = db.prepare<Pick<MessageModel, "message_id">, SQLQueryBindings>(`
+            const storedMessages = await db.all<Pick<MessageModel, "message_id">>(`
                 UPDATE messages
                 SET deleted = 1
                 WHERE message_id IN (
@@ -207,17 +206,15 @@ export async function purgeMessages(data: {
                     LIMIT $limit
                 )
                 RETURNING message_id;
-            `);
-
-            // @formatter:on
-            const storedMessages = deleteMessagesQuery.all({
+            `, [{
                 $channelId: channel.id,
                 $guildId: channel.guildId,
                 $limit: messagesToFetch,
                 $authorId: targetId ?? null,
                 $messageIds: messagesToPurge.join(",")
-            });
+            }]);
 
+            // @formatter:on
             messagesToPurge.push(...storedMessages.map(({ message_id }) => message_id));
         } catch (err) {
             console.error(err);

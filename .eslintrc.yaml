@@ -1,7 +1,7 @@
 root: true
 parser: '@typescript-eslint/parser'
 parserOptions:
-  project: './tsconfig.json'
+  project: ./tsconfig.json
 env:
   node: true
 extends:
@@ -15,8 +15,6 @@ rules:
   semi:
     - error
     - always
-  'import/no-anonymous-default-export': error
-  'import/no-useless-path-segments': error
   '@typescript-eslint/no-non-null-assertion': off
   '@typescript-eslint/explicit-member-accessibility': off
   '@typescript-eslint/prefer-interface': off
@@ -155,7 +153,9 @@ rules:
   space-before-blocks: off
   space-before-function-paren:
     - error
-    - never
+    - asyncArrow: always
+      anonymous: never
+      named: never
   space-in-parens: error
   space-infix-ops: error
   space-unary-ops: error
@@ -179,4 +179,3 @@ rules:
   yield-star-spacing: error
 plugins:
   - '@typescript-eslint'
-  - import

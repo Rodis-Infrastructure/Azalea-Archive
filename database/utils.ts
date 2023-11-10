@@ -1,7 +1,40 @@
-import {InfractionFlag, InfractionModel, PunishmentType} from "./models/infraction";
-import {Database, SQLQueryBindings} from "bun:sqlite";
+import { InfractionFlag, InfractionModel, PunishmentType } from "./models/infraction";
+import { Database, SQLQueryBindings } from "bun:sqlite";
 
-export const db = new Database(process.env.DB_PATH ?? "db.sqlite", {create: true});
+/**
+ * A wrapper around the bun:sqlite {@link Database} database that provides async methods
+ * and simplifies the API.
+ */
+class AsyncDatabase {
+    _db: Database;
+
+    constructor(path: string) {
+        this._db = new Database(path, { create: true });
+    }
+
+    run(query: string, bindings: [SQLQueryBindings]): Promise<void> {
+        return new Promise(resolve => {
+            this._db.run(query, bindings);
+            resolve();
+        });
+    }
+
+    get<ReturnType, Nullable extends boolean = true>(query: string, bindings: [SQLQueryBindings]): Promise<Nullable extends true ? ReturnType | null : ReturnType> {
+        return new Promise(resolve => {
+            const stmt = this._db.prepare<ReturnType, SQLQueryBindings>(query);
+            resolve(stmt.get(...bindings) as ReturnType);
+        });
+    }
+
+    all<ReturnType>(query: string, bindings: [SQLQueryBindings]): Promise<ReturnType[]> {
+        return new Promise(resolve => {
+            const stmt = this._db.prepare<ReturnType, SQLQueryBindings>(query);
+            resolve(stmt.all(...bindings));
+        });
+    }
+}
+
+export const db = new AsyncDatabase(process.env.DB_PATH ?? "db.sqlite");
 
 interface StoreInfractionParams {
     guildId: string;
@@ -17,7 +50,7 @@ interface StoreInfractionParams {
 /** Stores an infraction in the database
  * @returns The infraction ID if successful, null otherwise
  */
-export function storeInfraction({
+export async function storeInfraction({
     executorId,
     targetId,
     action,
@@ -26,14 +59,8 @@ export function storeInfraction({
     expiresAt = null,
     flag = null,
     reason = null
-}: StoreInfractionParams): number | null {
-    const insertInfractionQuery = db.prepare<Pick<InfractionModel, "infraction_id">, SQLQueryBindings>(`
-        INSERT INTO infractions (guild_id, executor_id, target_id, action, request_author_id, expires_at, flag, reason)
-        VALUES ($guildId, $executorId, $targetId, $action, $requestAuthorId, $expiresAt, $flag, $reason)
-        RETURNING infraction_id;
-    `);
-
-    const infraction = insertInfractionQuery.get({
+}: StoreInfractionParams): Promise<number | null> {
+    const params: [SQLQueryBindings] = [{
         $guildId: guildId,
         $executorId: executorId,
         $targetId: targetId,
@@ -42,7 +69,13 @@ export function storeInfraction({
         $expiresAt: expiresAt,
         $flag: flag,
         $reason: reason
-    });
+    }];
+
+    const infraction = await db.get<Pick<InfractionModel, "infraction_id">>(`
+        INSERT INTO infractions (guild_id, executor_id, target_id, action, request_author_id, expires_at, flag, reason)
+        VALUES ($guildId, $executorId, $targetId, $action, $requestAuthorId, $expiresAt, $flag, $reason)
+        RETURNING infraction_id;
+    `, params);
 
     return infraction?.infraction_id ?? null;
 }

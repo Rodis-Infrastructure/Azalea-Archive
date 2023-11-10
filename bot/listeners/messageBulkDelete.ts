@@ -38,8 +38,9 @@ export default class MessageBulkDeleteEventListener extends EventListener {
         }
 
         const cache = Cache.get(channel.guildId);
+        const cachedMessages = await cache.handleBulkDeletedMessages(partialMessageIds);
 
-        for (const message of await cache.handleBulkDeletedMessages(partialMessageIds)) {
+        for (const message of cachedMessages) {
             const msCreatedAt = message.created_at * 1000;
 
             entries.push(`[${msCreatedAt.toLocaleString("en-GB")}] ${message.author_id} — ${message.content}`);

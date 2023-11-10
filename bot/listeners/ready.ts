@@ -61,7 +61,7 @@ export default class ReadyEventListener extends EventListener {
         // Delete messages older than 14 days every 12 hours
         new CronJob("0 */12 * * *", () => {
             db.run(`
-                DELETE 
+                DELETE
                 FROM messages
                 WHERE $now - created_at > $timeout
             `, [{
@@ -102,7 +102,7 @@ async function setGuildCronJobs(config: Config): Promise<void> {
     if (notices?.muteRequests?.enabled && muteRequestQueue && muteRequestNoticesChannel) {
         const { cron, threshold, mentionedRoles } = notices.muteRequests;
 
-        new CronJob(cron, async() => {
+        new CronJob(cron, async () => {
             const cachedMuteRequests = cache.requests.filter(r => r.requestType === Requests.Mute);
             if (cachedMuteRequests.size < threshold) return;
 
@@ -125,7 +125,7 @@ async function setGuildCronJobs(config: Config): Promise<void> {
     if (notices?.banRequests?.enabled && banRequestQueue && banRequestNoticesChannel) {
         const { cron, threshold, mentionedRoles } = notices.banRequests;
 
-        new CronJob(cron, async() => {
+        new CronJob(cron, async () => {
             const cachedBanRequests = cache.requests.filter(r => r.requestType === Requests.Ban);
             if (cachedBanRequests.size < threshold) return;
 

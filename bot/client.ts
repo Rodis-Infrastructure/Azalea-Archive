@@ -18,7 +18,7 @@ export const client = new Client({
     ]
 });
 
-(async(): Promise<void> => {
+(async (): Promise<void> => {
     if (!process.env.BOT_TOKEN) {
         console.error("A bot token must be specified in .env (BOT_TOKEN)");
         process.exit(0);

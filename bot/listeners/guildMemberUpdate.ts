@@ -10,10 +10,10 @@ export default class InteractionCreateEventListener extends EventListener {
         super(Events.GuildMemberUpdate);
     }
 
-    execute(oldMember: GuildMember, newMember: GuildMember): void {
+    async execute(oldMember: GuildMember, newMember: GuildMember): Promise<void> {
         // Update the mute expiration timestamp if the member was unmuted early
         if (oldMember.isCommunicationDisabled() && !newMember.isCommunicationDisabled()) {
-            db.run(`
+            await db.run(`
                 UPDATE infractions
                 SET expires_at = $expiresAt
                 WHERE guild_id = $guildId

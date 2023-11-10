@@ -33,19 +33,19 @@ import {
     PunishmentType
 } from "@database/models/infraction";
 
-import { InfractionSubcommand, InteractionResponseType } from "@bot/types/interactions";
-import { getInfractionEmbedData, mapInfractionsToFields } from "@bot/utils/infractions";
-import { Command } from "@bot/handlers/interactions/interaction";
-import { LoggingEvent, RolePermission } from "@bot/types/config";
-import { TimestampStyles } from "@discordjs/formatters";
 import { APIEmbedField } from "discord-api-types/v10";
+import { db } from "@database/utils.ts";
 import { sendLog } from "@bot/utils/logging";
+import { SQLQueryBindings } from "bun:sqlite";
+import { TimestampStyles } from "@discordjs/formatters";
+import { getInfractionEmbedData, mapInfractionsToFields } from "@bot/utils/infractions";
+import { InfractionSubcommand, InteractionResponseType } from "@bot/types/interactions";
+import { LoggingEvent, RolePermission } from "@bot/types/config";
+import { Command } from "@bot/handlers/interactions/interaction";
 import { client } from "@bot/client";
 
 import Config from "@bot/utils/config";
 import ms from "ms";
-import { db } from "@database/utils.ts";
-import { SQLQueryBindings } from "bun:sqlite";
 
 export default class InfractionCommand extends Command {
     constructor() {
@@ -153,17 +153,23 @@ export default class InfractionCommand extends Command {
         }
 
         const infractionId = interaction.options.getNumber("infraction_id", true);
-        const infractionQuery = db.prepare<InfractionModel, SQLQueryBindings>(`
+        const infraction = await db.get<InfractionModel>(`
             SELECT *
             FROM infractions
             WHERE infraction_id = $infractionId
               AND guild_id = $guildId
-        `);
-
-        const infraction = infractionQuery.get({
+        `, [{
             $infractionId: infractionId,
             $guildId: interaction.guildId
-        })!;
+        }]);
+
+        if (!infraction) {
+            await interaction.reply({
+                content: `${emojis.error} Infraction **#${infractionId}** not found.`,
+                ephemeral
+            });
+            return;
+        }
 
         if (subcommand === InfractionSubcommand.Info) {
             const embed = getInfractionInfoEmbed(infraction);
@@ -266,7 +272,25 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         return;
     }
 
-    const infractionsQuery = db.prepare<MinimalInfraction, SQLQueryBindings>(`
+    let infractionsQueryParams: [SQLQueryBindings];
+
+    if (executorCanViewModerationActivity && targetIsStaff) {
+        // Fetch infractions dealt by a staff member
+        infractionsQueryParams = [{
+            $guildId: interaction.guildId,
+            $executorId: interaction.user.id,
+            $targetId: null
+        }];
+    } else {
+        // Fetch infractions of a user
+        infractionsQueryParams = [{
+            $guildId: interaction.guildId,
+            $targetId: targetUser.id,
+            $executorId: null
+        }];
+    }
+
+    const infractions = await db.all<MinimalInfraction>(`
         SELECT infraction_id,
                executor_id,
                created_at,
@@ -282,25 +306,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
           AND ($targetId IS NULL OR target_id = $targetId)
         ORDER BY infraction_id DESC
         LIMIT 100;
-    `);
-
-    let infractions: MinimalInfraction[];
-
-    if (executorCanViewModerationActivity && targetIsStaff) {
-        // Fetch infractions dealt by a staff member
-        infractions = infractionsQuery.all({
-            $guildId: interaction.guildId,
-            $executorId: interaction.user.id,
-            $targetId: null
-        });
-    } else {
-        // Fetch infractions of a user
-        infractions = infractionsQuery.all({
-            $guildId: interaction.guildId,
-            $targetId: targetUser.id,
-            $executorId: null
-        });
-    }
+    `, infractionsQueryParams);
 
     const components: ActionRowBuilder<ButtonBuilder>[] = [];
     const searchContext = targetIsStaff && executorCanViewModerationActivity ? "by" : "of";
@@ -363,7 +369,7 @@ export async function handleInfractionReasonChange(infractionId: number, data: {
 }): Promise<string> {
     const { updatedById, guildId, newReason } = data;
 
-    db.run(`
+    await db.run(`
         UPDATE infractions
         SET reason     = $reason,
             updated_at = $updatedAt,
@@ -433,7 +439,7 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
     try {
         await target.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.infraction_id})`);
 
-        db.run(`
+        await db.run(`
             UPDATE infractions
             SET expires_at = $expiresAt,
                 updated_at = $updatedAt,
@@ -489,7 +495,7 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
  */
 async function handleInfractionArchive(infractionId: number, interaction: ChatInputCommandInteraction<"cached">): Promise<string> {
     try {
-        db.run(`
+        await db.run(`
             UPDATE infractions
             SET archived_at = $archivedAt,
                 archived_by = $archivedBy
