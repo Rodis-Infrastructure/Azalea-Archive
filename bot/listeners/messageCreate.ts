@@ -125,6 +125,6 @@ export async function handleMediaChannelMessage(message: Message, config: Config
 
     // Remove after 3 seconds
     setTimeout(async() => {
-        await reply.delete().catch(console.error);
+        await reply.delete().catch(() => null);
     }, 3000);
 }
