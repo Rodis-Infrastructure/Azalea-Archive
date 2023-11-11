@@ -115,9 +115,9 @@ export interface Notices {
 export interface MediaChannel {
     channelId: Snowflake
     /** Require the user to have at least one of these roles to use the channel */
-    requiredRoles?: Snowflake[]
+    allowedRoles?: Snowflake[]
     /** The response to send when a user without the required roles uses the channel */
-    notAllowedResponse?: string
+    fallbackResponse?: string
 }
 
 export interface ConfigData {

@@ -117,7 +117,7 @@ export async function handleMediaChannelMessage(message: Message<true>, config: 
     const notAllowedResponse = config.isAllowedInMediaChannel(message);
     if (!notAllowedResponse) return;
 
-    const [reply] = await Promise.all([
+    const [_, reply] = await Promise.all([
         message.delete().catch(() => null),
         message.channel.send({
             content: `${message.author} ${notAllowedResponse}`,
