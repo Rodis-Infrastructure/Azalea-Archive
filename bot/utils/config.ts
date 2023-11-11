@@ -8,6 +8,7 @@ import {
     GuildBasedChannel,
     GuildMember,
     GuildTextBasedChannel,
+    Message,
     MessageMentionTypes,
     ModalSubmitInteraction,
     Snowflake,
@@ -20,7 +21,6 @@ import {
     ConfirmationOptions,
     EmojiConfig,
     LoggingEvent,
-    NoticeConfig,
     NotificationOptions,
     RoleInteraction,
     RolePermission,
@@ -69,18 +69,6 @@ export default class Config {
         return this.data.channels ?? {};
     }
 
-    get mediaChannels(): Snowflake[] {
-        return this.data.mediaChannels ?? [];
-    }
-
-    get banRequestNotices(): NoticeConfig | undefined {
-        return this.data.notices?.banRequests;
-    }
-
-    get muteRequestNotices(): NoticeConfig | undefined {
-        return this.data.notices?.muteRequests;
-    }
-
     private get permissions(): RolePermissions[] {
         return this.data.permissions ?? [];
     }
@@ -97,6 +85,32 @@ export default class Config {
         Config.instances.set(guildId, config);
 
         return config;
+    }
+
+    isMediaChannel(channelId: Snowflake): boolean {
+        return this.data.mediaChannels?.some(mediaChannel =>
+            mediaChannel.channelId === channelId
+        ) ?? false;
+    }
+
+    /** @returns {string | void} - The error message if the member cannot post in the media channel */
+    isAllowedInMediaChannel(message: Message<true>): string | void {
+        if (message.member) {
+            const channel = this.data.mediaChannels?.find(mediaChannel =>
+                mediaChannel.channelId === message.channelId
+            );
+
+            if (!channel?.requiredRoles?.length) return;
+
+            // Member has at least one of the required roles
+            if (!channel.requiredRoles.some(message.member.roles.cache.has)) {
+                return channel.notAllowedResponse || "You do not have permission to post in this channel";
+            }
+        }
+
+        if (!message.attachments.size && !message.content.match(/https?:\/\/\w+/g)) {
+            return "This is a media-only channel, your message must have at least one attachment.";
+        }
     }
 
     /** @param {string} value - The custom command's choice value */

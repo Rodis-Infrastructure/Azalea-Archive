@@ -112,10 +112,16 @@ export interface Notices {
     muteRequests?: NoticeConfig
 }
 
+export interface MediaChannel {
+    channelId: Snowflake
+    requiredRoles?: Snowflake[]
+    notAllowedResponse?: string
+}
+
 export interface ConfigData {
     commands?: FAQOption[]
     autoReactions?: AutoReaction[]
-    mediaChannels?: Snowflake[]
+    mediaChannels?: MediaChannel[]
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessage[]
     /** IDs of channels that can be linked to in infraction evidence */
