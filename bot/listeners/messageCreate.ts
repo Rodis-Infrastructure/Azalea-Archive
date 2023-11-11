@@ -118,8 +118,11 @@ export async function handleMediaChannelMessage(message: Message<true>, config: 
     if (!notAllowedResponse) return;
 
     const [reply] = await Promise.all([
-        message.channel.send(`${message.author} ${notAllowedResponse}`).catch(() => null),
-        message.delete().catch(() => null)
+        message.delete().catch(() => null),
+        message.channel.send({
+            content: `${message.author} ${notAllowedResponse}`,
+            allowedMentions: { parse: ["users"] }
+        }).catch(() => null)
     ]);
 
     if (!reply) return;

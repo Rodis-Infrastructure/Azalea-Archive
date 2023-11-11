@@ -102,8 +102,10 @@ export default class Config {
 
             if (!channel?.requiredRoles?.length) return;
 
-            // Member has at least one of the required roles
-            if (!channel.requiredRoles.some(message.member.roles.cache.has)) {
+            const memberRoles = message.member.roles.cache;
+            const hasAnyRequiredRole = channel.requiredRoles.some(roleId => memberRoles.has(roleId));
+
+            if (!hasAnyRequiredRole) {
                 return channel.notAllowedResponse || "You do not have permission to post in this channel";
             }
         }
