@@ -3,12 +3,12 @@ import { Events, hideLinkEmbed, Message, PartialMessage } from "discord.js";
 import { LoggingEvent, RolePermission } from "@bot/types/config";
 import { Requests } from "@bot/types/requests";
 import { ensureError, serializeMessage } from "@bot/utils";
+import { ErrorCause } from "@bot/types/internals";
 import { sendLog } from "@bot/utils/logging";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 import Config from "@bot/utils/config";
 import Cache from "@bot/utils/cache";
-import { ErrorCause } from "@bot/types/internals";
 
 export default class MessageCreateEventListener extends EventListener {
     constructor() {
@@ -36,7 +36,12 @@ export default class MessageCreateEventListener extends EventListener {
 
         const reactions = config.getAutoReactions(message.channelId);
 
-        if (reactions.length) await Promise.all(reactions.map(r => message.react(r)));
+        // There are reactions configured to be added automatically
+        if (reactions.length) {
+            const reactionsAddPromise = reactions.map(r => message.react(r).catch(() => null));
+            await Promise.all(reactionsAddPromise);
+        }
+
         if (message.channelId === config.roleRequests?.channelId && message.mentions.users.size) await handleRoleRequest(message, config);
         if (message.channelId === config.channels.mediaConversion && message.attachments.size) await handleMediaConversion(message);
 
@@ -83,7 +88,6 @@ export default class MessageCreateEventListener extends EventListener {
     }
 }
 
-
 async function handleMediaConversion(message: Message<true>): Promise<void> {
     const log = await sendLog({
         event: LoggingEvent.Media,
@@ -104,15 +108,18 @@ async function handleMediaConversion(message: Message<true>): Promise<void> {
         message.delete().catch(() => null),
         message.channel.send(`${message.author} Your media log: ${log.url} (${hideLinkEmbed(log.url)})`)
     ]);
+}
 
-async function handleMediaChannelMessage(message: Message, config: Config): Promise<void> {
+export async function handleMediaChannelMessage(message: Message, config: Config): Promise<void> {
     // Do not remove staff messages
     if (message.member && config.isGuildStaff(message.member)) return;
 
     const [reply] = await Promise.all([
-        message.channel.send(`${message.author} This is a media-only channel, your message must have at least one attachment.`),
+        message.channel.send(`${message.author} This is a media-only channel, your message must have at least one attachment.`).catch(() => null),
         message.delete().catch(() => null)
     ]);
+
+    if (!reply) return;
 
     // Remove after 3 seconds
     setTimeout(async() => {
