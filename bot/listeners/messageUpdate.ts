@@ -12,6 +12,7 @@ import {
 import { handleInfractionReasonChange } from "@bot/interactions/global_commands/infraction";
 import { formatLogContent, referenceEmbed, sendLog } from "@bot/utils/logging";
 import { handleBanRequestAutoMute, validateRequest } from "@bot/utils/requests";
+import { handleMediaChannelMessage } from "@bot/listeners/messageCreate";
 import { LoggingEvent, RolePermission } from "@bot/types/config";
 import { ErrorCause } from "@bot/types/internals";
 import { Requests } from "@bot/types/requests";
@@ -36,6 +37,11 @@ export default class MessageUpdateEventListener extends EventListener {
 
         const config = Config.get(message.guildId);
         if (!config) return;
+
+        // Remove messages from media channel if it doesn't have an attachment or a link
+        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.content.includes("http")) {
+            await handleMediaChannelMessage(message, config);
+        }
 
         if (message.channelId === config.channels.muteRequestQueue || message.channelId === config.channels.banRequestQueue) {
             await handleRequestEdit(message, config);
