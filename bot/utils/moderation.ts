@@ -196,16 +196,15 @@ export async function purgeMessages(data: {
             const storedMessages = await allQuery<Pick<MessageModel, "message_id">>(`
                 UPDATE messages
                 SET deleted = 1
-                WHERE message_id IN (
+                FROM (
                     SELECT message_id FROM messages
                     WHERE channel_id = ${channel.id} ${authorCondition} 
-                        AND guild_id = ${channel.guildId}
-                        AND message_id NOT IN (${messagesToPurge.join(",")}) -- Not cached
                         AND deleted = 0
                     ORDER BY created_at DESC
                     LIMIT ${messagesToFetch}
-                )
-                RETURNING message_id;
+                ) as s
+                WHERE messages.message_id = s.message_id
+                RETURNING messages.message_id;
             `);
 
             messagesToPurge.push(...storedMessages.map(({ message_id }) => message_id));

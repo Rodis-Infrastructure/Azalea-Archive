@@ -12,7 +12,7 @@ export default class CleanCommand extends Command {
             name: "clean",
             description: "Purge messages in the channel.",
             type: ApplicationCommandType.ChatInput,
-            defer: InteractionResponseType.Default,
+            defer: InteractionResponseType.Defer,
             skipInternalUsageCheck: false,
             options: [
                 {
@@ -52,8 +52,11 @@ export default class CleanCommand extends Command {
         });
     }
 
-    async execute(interaction: ChatInputCommandInteraction<"cached">, ephemeral: boolean, config: Config): Promise<void> {
-        if (!interaction.channel || !interaction.channel.isTextBased()) return;
+    async execute(interaction: ChatInputCommandInteraction<"cached">, _ephemeral: never, config: Config): Promise<void> {
+        if (!interaction.channel) {
+            await interaction.editReply("Failed to fetch channel.");
+            return;
+        }
 
         const amount = interaction.options.getInteger("amount") ?? 100;
         const targetUser = interaction.options.getUser("user");
@@ -69,10 +72,7 @@ export default class CleanCommand extends Command {
             });
 
             if (notModerateableReason) {
-                await interaction.reply({
-                    content: `${emojis.error} ${notModerateableReason}`,
-                    ephemeral
-                });
+                await interaction.editReply(`${emojis.error} ${notModerateableReason}`);
                 return;
             }
         }
@@ -86,23 +86,14 @@ export default class CleanCommand extends Command {
             });
 
             if (!purgedMessageCount) {
-                await interaction.reply({
-                    content: `${emojis.error} There are no messages to purge.`,
-                    ephemeral
-                });
+                await interaction.editReply(`${emojis.error} There are no messages to purge.`);
                 return;
             }
 
-            await interaction.reply({
-                content: `${emojis.success} Successfully purged \`${purgedMessageCount}\` ${pluralize("message", purgedMessageCount)}.`,
-                ephemeral
-            });
+            await interaction.editReply(`${emojis.success} Successfully purged \`${purgedMessageCount}\` ${pluralize("message", purgedMessageCount)}.`);
         } catch (_error) {
             const err = ensureError(_error);
-            await interaction.reply({
-                content: `${emojis.error} ${err.message}`,
-                ephemeral
-            });
+            await interaction.editReply(`${emojis.error} ${err.message}`);
         }
     }
 }
