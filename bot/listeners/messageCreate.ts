@@ -5,7 +5,6 @@ import { Requests } from "@bot/types/requests";
 import { ensureError, serializeMessage } from "@bot/utils";
 import { ErrorCause } from "@bot/types/internals";
 import { sendLog } from "@bot/utils/logging";
-import { ErrorCause } from "@bot/types/internals";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 import Config from "@bot/utils/config";
