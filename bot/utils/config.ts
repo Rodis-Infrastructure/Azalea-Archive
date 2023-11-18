@@ -11,6 +11,8 @@ import {
     Message,
     MessageMentionTypes,
     ModalSubmitInteraction,
+    Role,
+    SelectMenuComponentOptionData,
     Snowflake,
     userMention
 } from "discord.js";
@@ -24,7 +26,8 @@ import {
     NotificationOptions,
     RoleInteraction,
     RolePermission,
-    RolePermissions
+    RolePermissions,
+    RoleRequests
 } from "@bot/types/config";
 
 import { AnyCommandInteraction, CustomId, InteractionResponseType } from "@bot/types/interactions";
@@ -44,6 +47,10 @@ export default class Config {
 
     get proofChannelIds(): Snowflake[] {
         return this.data.proofChannelIds ?? [];
+    }
+
+    get roleRequests(): RoleRequests | undefined {
+        return this.data.roleRequests;
     }
 
     get deleteMessageSecondsOnBan(): number {
@@ -85,6 +92,23 @@ export default class Config {
         Config.instances.set(guildId, config);
 
         return config;
+    }
+
+    /** @returns {number} The duration in milliseconds until the role is removed */
+    getTemporaryRoleDuration(roleId: Snowflake): number | undefined {
+        return this.data.roleRequests?.roles.find(role => role.roleId === roleId)?.duration;
+    }
+
+    async getRequestableRoleOptions(): Promise<SelectMenuComponentOptionData[]> {
+        const roleIds = this.data.roleRequests?.roles.map(({ roleId }) => roleId) ?? [];
+        const guild = await client.guilds.fetch(this.guildId);
+        const roles = await Promise.all(roleIds.map(roleId => guild.roles.fetch(roleId)));
+        const filteredRoles = roles.filter(Boolean) as Role[];
+
+        return filteredRoles.map(role => ({
+            label: role.name,
+            value: role.id
+        }));
     }
 
     isMediaChannel(channelId: Snowflake): boolean {
