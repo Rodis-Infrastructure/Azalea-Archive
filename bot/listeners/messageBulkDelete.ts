@@ -24,42 +24,80 @@ export default class MessageBulkDeleteEventListener extends EventListener {
     }
 
     async execute(deletedMessages: Collection<Snowflake, Message<true> | PartialMessage>, channel: GuildTextBasedChannel): Promise<void> {
-        const entries: string[] = [];
-        const partialMessageIds: Snowflake[] = [];
-        const messages: MessageModel[] = [];
+        /** References mapped by their reply's ID */
+        const references = new Collection<Snowflake, MessageModel>();
+        const cache = Cache.get(channel.guildId);
+
+        const partialMessages = new Set<Snowflake>();
+        const authors = new Set<ReturnType<typeof userMention>>();
+        const messages = new Set<MessageModel>();
 
         for (const message of deletedMessages.values()) {
             if (message.partial) {
-                partialMessageIds.push(message.id);
-            } else {
-                entries.push(`[${message.createdAt.toLocaleString("en-GB")}] ${message.author.id} — ${message.content}`);
-                messages.push(serializeMessage(message, true));
+                partialMessages.add(message.id);
+                continue;
             }
+
+            await storeMessageAndReference({
+                message: serializeMessage(message, true),
+                channel,
+                cache,
+                sets: {
+                    messages,
+                    authors,
+                    references
+                }
+            });
         }
 
-        const cache = Cache.get(channel.guildId);
+        const cachedMessages = await cache.handleBulkDeletedMessages(partialMessages);
 
-        for (const message of await cache.handleBulkDeletedMessages(partialMessageIds)) {
-            const msCreatedAt = message.created_at * 1000;
-
-            entries.push(`[${msCreatedAt.toLocaleString("en-GB")}] ${message.author_id} — ${message.content}`);
-            messages.push(message);
+        for (const message of cachedMessages) {
+            await storeMessageAndReference({
+                message,
+                channel,
+                cache,
+                sets: {
+                    messages,
+                    authors,
+                    references
+                }
+            });
         }
 
-        if (!entries.length) return;
+        // There are no messages to log
+        if (!messages.size) return;
 
-        const file = new AttachmentBuilder(Buffer.from(entries.join("\n\n")))
+        /** Messages by their creation date (descending) */
+        const sortedMessages = Array.from(messages)
+            .sort((a, b) => a.created_at - b.created_at);
+
+        const entries = sortedMessages.map(message => {
+            const createdAtTimestamp = new Date(message.created_at).toLocaleString("en-GB");
+            const reference = references.get(message.message_id);
+            const entry = `[${createdAtTimestamp}] ${message.author_id} — ${message.content}`;
+
+            if (reference) {
+                const referenceCreatedAtTimestamp = new Date(reference.created_at).toLocaleString("en-GB");
+
+                return `REF: [${referenceCreatedAtTimestamp}] ${reference.author_id} — ${reference.content}\n` +
+                    ` └── ${entry}`;
+            }
+
+            return entry;
+        });
+
+        const buffer = Buffer.from(entries.join("\n\n"));
+        const file = new AttachmentBuilder(buffer)
             .setName(`messages.txt`)
             .setDescription("Purged messages");
 
-        const authorIds = new Set(messages.map(m => m.author_id));
-        const mentionedAuthors = Array.from(authorIds).map(id => userMention(id));
-
+        const authorMentions = Array.from(authors).join(" ");
         const log = await sendLog({
             event: LoggingEvent.Message,
             sourceChannel: channel,
             options: {
-                content: `Purged \`${entries.length}\` messages in ${channel} (\`#${channel.name}\`) by: ${mentionedAuthors}`,
+                content: `Purged \`${messages.size}\` messages in ${channel} (\`#${channel.name}\`) by: ${authorMentions}`,
                 allowedMentions: { parse: [] },
                 files: [file]
             }
@@ -74,9 +112,35 @@ export default class MessageBulkDeleteEventListener extends EventListener {
             log.edit(`${log.content}\n\n${hyperlink("Open in browser", url)}`),
             linkToPurgeLog({
                 guildId: channel.guildId,
-                data: messages,
+                data: Array.from(messages),
                 url: log.url
             })
         ]);
+    }
+}
+
+async function storeMessageAndReference(data: {
+    message: MessageModel,
+    channel: GuildTextBasedChannel,
+    cache: Cache,
+    sets: {
+        messages: Set<MessageModel>,
+        authors: Set<ReturnType<typeof userMention>>,
+        references: Collection<Snowflake, MessageModel>
+    }
+}): Promise<void> {
+    const { message, channel, cache, sets } = data;
+
+    sets.messages.add(message);
+    sets.authors.add(userMention(message.author_id));
+
+    const referenceId = message.reference_id;
+
+    if (referenceId) {
+        const reference = await channel.messages.fetch(referenceId)
+            .then(serializeMessage)
+            .catch(() => cache.fetchMessage(referenceId));
+
+        if (reference) sets.references.set(message.message_id, reference);
     }
 }
