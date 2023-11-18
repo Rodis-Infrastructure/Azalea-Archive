@@ -39,9 +39,25 @@ export default class InteractionCreateEventListener extends EventListener {
         }
 
         const { data } = cachedInteraction;
-        let customId = getCustomId(data.name);
 
-        if (!interaction.isCommand() && !config.canPerformAction(interaction.member, RoleInteraction.Button, customId)) {
+        let customId = getCustomId(data.name);
+        let componentType: RoleInteraction | undefined;
+
+        switch (true) {
+            case interaction.isAnySelectMenu():
+                componentType = RoleInteraction.SelectMenu;
+                break;
+
+            case interaction.isButton():
+                componentType = RoleInteraction.Button;
+                break;
+
+            case interaction.isModalSubmit():
+                componentType = RoleInteraction.Modal;
+                break;
+        }
+
+        if (componentType && !config.canPerformAction(interaction.member, componentType, customId)) {
             await interaction.reply({
                 content: "You do not have permission to use this interaction",
                 ephemeral: true

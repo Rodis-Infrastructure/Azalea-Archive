@@ -1,17 +1,29 @@
 import {
+    Colors,
+    EmbedBuilder,
+    Events,
+    Guild,
+    GuildTextBasedChannel,
+    hyperlink,
+    messageLink,
+    roleMention
+} from "discord.js";
+
+import {
     loadGlobalInteractions,
     loadGuildCommands,
     publishGlobalCommands,
     publishGuildCommands
-} from "@bot/handlers/interactions/loader";
+} from "@bot/handlers/interactions/loader.ts";
 
-import { Colors, EmbedBuilder, Events, GuildTextBasedChannel, hyperlink, messageLink, roleMention } from "discord.js";
-import { extract, RegexPatterns } from "@bot/utils";
+import { TemporaryRole } from "@database/models/temporaryRole";
+import { setTemporaryRoleTimeout } from "@bot/utils/requests";
+import { extract, isGuildTextBasedChannel, RegexPatterns } from "@bot/utils";
 import { readFile } from "node:fs/promises";
 import { ConfigData } from "@bot/types/config";
 import { Requests } from "@bot/types/requests";
-import { db } from "@database/utils.ts";
 import { client } from "@bot/client";
+import { db } from "@database/utils.ts";
 import { CronJob } from "cron";
 import { parse } from "yaml";
 
@@ -20,6 +32,7 @@ import Config from "@bot/utils/config";
 import Cache from "@bot/utils/cache";
 import glob from "fast-glob";
 import ms from "ms";
+
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -43,9 +56,12 @@ export default class ReadyEventListener extends EventListener {
             const fileContent = await readFile(filepath, "utf-8");
             const data: ConfigData = parse(fileContent) ?? {};
             const config = Config.create(id, data);
+            const guild = await client.guilds.fetch(id).catch(() => null);
+
+            if (guild) await setTemporaryRoleTimeouts(guild, config);
 
             await Promise.all([
-                setGuildCronJobs(config),
+                setRequestNoticeCronJob(config),
                 loadGuildCommands(config)
             ]);
 
@@ -72,7 +88,7 @@ export default class ReadyEventListener extends EventListener {
     }
 }
 
-async function setGuildCronJobs(config: Config): Promise<void> {
+async function setRequestNoticeCronJob(config: Config): Promise<void> {
     const { scheduledMessages, channels, notices } = config.data;
 
     // Scheduled messages
@@ -142,5 +158,31 @@ async function setGuildCronJobs(config: Config): Promise<void> {
                 embeds: [requestNotice]
             });
         }).start();
+    }
+}
+
+/** Set a cron job to remove temporary roles from users every 24 hours */
+async function setTemporaryRoleTimeouts(guild: Guild, config: Config): Promise<void> {
+    const requestChannelId = config.roleRequests?.channelId;
+    if (!requestChannelId) return;
+
+    const requestQueue = await guild.channels.fetch(requestChannelId).catch(() => null);
+    if (!requestQueue || !isGuildTextBasedChannel(requestQueue)) return;
+
+    const timeouts = await db.all<Pick<TemporaryRole, "request_id" | "expires_at">>(`
+        SELECT request_id, expires_at
+        FROM temporary_roles
+        WHERE guild_id = $guildId
+    `, [{
+        $guildId: guild.id
+    }]);
+
+    for (const timeout of timeouts) {
+        setTemporaryRoleTimeout({
+            requestId: timeout.request_id,
+            expiresAt: timeout.expires_at,
+            requestQueue,
+            guild
+        });
     }
 }
