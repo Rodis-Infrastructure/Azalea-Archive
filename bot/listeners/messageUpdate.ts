@@ -60,7 +60,7 @@ export default class MessageUpdateEventListener extends EventListener {
 }
 
 async function handleMessageEditLog(message: Message<true>, oldContent: string): Promise<void> {
-    const jumpURL = messageLink(message.id, message.channelId, message.guildId);
+    const jumpURL = messageLink(message.channelId, message.id, message.guildId);
     const log = new EmbedBuilder()
         .setColor(Colors.Orange)
         .setDescription(hyperlink("Jump to Message", jumpURL))
