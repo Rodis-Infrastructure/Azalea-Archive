@@ -134,7 +134,7 @@ export async function muteMember(target: GuildMember, data: {
     return { expiresAt, infractionId };
 }
 
-export function muteExpirationTimestamp(member: GuildMember): EpochTimeStamp | null {
+export function muteExpirationTimestamp(member: GuildMember): number | null {
     const msExpiresAt = member.communicationDisabledUntilTimestamp;
 
     if (msExpiresAt && msExpiresAt >= Date.now()) {
@@ -195,17 +195,16 @@ export async function purgeMessages(data: {
             const storedMessages = await db.all<Pick<MessageModel, "message_id">>(`
                 UPDATE messages
                 SET deleted = 1
-                WHERE message_id IN (
+                FROM (
                     SELECT message_id FROM messages
                     WHERE channel_id = $channelId
                         AND ($authorId IS NULL OR author_id = $authorId)
-                        AND guild_id = $guildId
-                        AND message_id NOT IN ($messageIds) -- Not cached
                         AND deleted = 0
                     ORDER BY created_at DESC
                     LIMIT $limit
-                )
-                RETURNING message_id;
+                ) as s
+                WHERE messages.message_id = s.message_id
+                RETURNING messages.message_id;
             `, [{
                 $channelId: channel.id,
                 $guildId: channel.guildId,

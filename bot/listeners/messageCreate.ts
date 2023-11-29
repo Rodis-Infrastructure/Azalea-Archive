@@ -30,9 +30,7 @@ export default class MessageCreateEventListener extends EventListener {
         if (!config) return;
 
         // Remove messages from media channel if it doesn't have an attachment or a link
-        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.content.includes("http")) {
-            await handleMediaChannelMessage(message, config);
-        }
+        if (config.isMediaChannel(message.channelId)) await handleMediaChannelMessage(message, config);
 
         const reactions = config.getAutoReactions(message.channelId);
 
@@ -110,13 +108,19 @@ async function handleMediaConversion(message: Message<true>): Promise<void> {
     ]);
 }
 
-export async function handleMediaChannelMessage(message: Message, config: Config): Promise<void> {
+export async function handleMediaChannelMessage(message: Message<true>, config: Config): Promise<void> {
     // Do not remove staff messages
     if (message.member && config.isGuildStaff(message.member)) return;
 
-    const [reply] = await Promise.all([
-        message.channel.send(`${message.author} This is a media-only channel, your message must have at least one attachment.`).catch(() => null),
-        message.delete().catch(() => null)
+    const notAllowedResponse = config.isAllowedInMediaChannel(message);
+    if (!notAllowedResponse) return;
+
+    const [_, reply] = await Promise.all([
+        message.delete().catch(() => null),
+        message.channel.send({
+            content: `${message.author} ${notAllowedResponse}`,
+            allowedMentions: { parse: ["users"] }
+        }).catch(() => null)
     ]);
 
     if (!reply) return;

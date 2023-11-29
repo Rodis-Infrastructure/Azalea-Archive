@@ -59,7 +59,7 @@ export function formatReason(reason: string | null | undefined): string {
     return reason ? ` (\`${reason.replaceAll("`", "")}\`)` : "";
 }
 
-export function formatMuteExpirationResponse<T extends EpochTimeStamp>(expiresAt: T): `<t:${T}:F> | Expires <t:${T}:R>` {
+export function formatMuteExpirationResponse<T extends number>(expiresAt: T): `<t:${T}:F> | Expires <t:${T}:R>` {
     const expiresAtDateTimestamp = time(expiresAt, TimestampStyles.LongDateTime);
     const expiresAtRelativeTimestamp = time(expiresAt, TimestampStyles.RelativeTime);
 
@@ -67,7 +67,7 @@ export function formatMuteExpirationResponse<T extends EpochTimeStamp>(expiresAt
 }
 
 /** Current epoch timestamp in seconds */
-export function currentTimestamp(): EpochTimeStamp {
+export function currentTimestamp(): number {
     return Math.floor(Date.now() / 1000);
 }
 

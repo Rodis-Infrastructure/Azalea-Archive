@@ -124,10 +124,18 @@ interface TemporaryRole {
     duration?: number
 }
 
+export interface MediaChannel {
+    channelId: Snowflake
+    /** Require the user to have at least one of these roles to use the channel */
+    allowedRoles?: Snowflake[]
+    /** The response to send when a user without the required roles uses the channel */
+    fallbackResponse?: string
+}
+
 export interface ConfigData {
     commands?: FAQOption[]
     autoReactions?: AutoReaction[]
-    mediaChannels?: Snowflake[]
+    mediaChannels?: MediaChannel[]
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessage[]
     roleRequests?: RoleRequests

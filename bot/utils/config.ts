@@ -8,6 +8,7 @@ import {
     GuildBasedChannel,
     GuildMember,
     GuildTextBasedChannel,
+    Message,
     MessageMentionTypes,
     ModalSubmitInteraction,
     Role,
@@ -75,10 +76,6 @@ export default class Config {
         return this.data.channels ?? {};
     }
 
-    get mediaChannels(): Snowflake[] {
-        return this.data.mediaChannels ?? [];
-    }
-
     private get permissions(): RolePermissions[] {
         return this.data.permissions ?? [];
     }
@@ -112,6 +109,34 @@ export default class Config {
             label: role.name,
             value: role.id
         }));
+    }
+
+    isMediaChannel(channelId: Snowflake): boolean {
+        return this.data.mediaChannels?.some(mediaChannel =>
+            mediaChannel.channelId === channelId
+        ) ?? false;
+    }
+
+    /** @returns {string | void} - The error message if the member cannot post in the media channel */
+    isAllowedInMediaChannel(message: Message<true>): string | void {
+        if (message.member) {
+            const channel = this.data.mediaChannels?.find(mediaChannel =>
+                mediaChannel.channelId === message.channelId
+            );
+
+            if (!channel?.allowedRoles?.length) return;
+
+            const memberRoles = message.member.roles.cache;
+            const hasAnyRequiredRole = channel.allowedRoles.some(roleId => memberRoles.has(roleId));
+
+            if (!hasAnyRequiredRole) {
+                return channel.fallbackResponse || "You do not have permission to post in this channel";
+            }
+        }
+
+        if (!message.attachments.size && !message.content.match(/https?:\/\/\w+/g)) {
+            return "This is a media-only channel, your message must have at least one attachment.";
+        }
     }
 
     /** @param {string} value - The custom command's choice value */

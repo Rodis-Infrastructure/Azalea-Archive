@@ -5,7 +5,7 @@ export interface MessageModel {
     author_id: Snowflake;
     channel_id: Snowflake;
     guild_id: Snowflake;
-    created_at: EpochTimeStamp;
+    created_at: number;
     deleted: boolean;
     reference_id: Snowflake | null;
     category_id: Snowflake | null;

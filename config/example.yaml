@@ -13,7 +13,10 @@ userFlags:
       - "role-id"
 
 mediaOnlyChannels:
-    - "channel-id"
+  - channelId: "channel-id"
+    fallbackResponse: "You do not have permission to use this media channel"
+    allowedRoles:
+      - "role-id"
 
 notices:
   banRequests:
