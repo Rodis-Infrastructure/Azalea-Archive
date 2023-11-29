@@ -11,7 +11,7 @@ export default class PurgeMessageCtxCommand extends Command {
         super({
             name: "Purge messages",
             type: ApplicationCommandType.Message,
-            defer: InteractionResponseType.Default,
+            defer: InteractionResponseType.Defer,
             skipInternalUsageCheck: false
         });
     }
@@ -32,10 +32,7 @@ export default class PurgeMessageCtxCommand extends Command {
             });
 
             if (notModerateableReason) {
-                await interaction.reply({
-                    content: `${emojis.error} ${notModerateableReason}`,
-                    ephemeral: true
-                });
+                await interaction.editReply(`${emojis.error} ${notModerateableReason}`);
                 return;
             }
         }
@@ -49,23 +46,14 @@ export default class PurgeMessageCtxCommand extends Command {
             });
 
             if (!purgedMessageCount) {
-                await interaction.reply({
-                    content: `${emojis.error} There are no messages to purge.`,
-                    ephemeral: true
-                });
+                await interaction.editReply(`${emojis.error} There are no messages to purge.`);
                 return;
             }
 
-            await interaction.reply({
-                content: `${emojis.success} Successfully purged \`${purgedMessageCount}\` messages by ${targetUser}.`,
-                ephemeral: true
-            });
+            await interaction.editReply(`${emojis.success} Successfully purged \`${purgedMessageCount}\` messages by ${targetUser}.`);
         } catch (_error) {
             const error = ensureError(_error);
-            await interaction.reply({
-                content: `${emojis.error} Failed to purge messages: ${error.message}`,
-                ephemeral: true
-            });
+            await interaction.editReply(`${emojis.error} Failed to purge messages: ${error.message}`);
         }
     }
 }

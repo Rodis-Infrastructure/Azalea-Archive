@@ -39,9 +39,7 @@ export default class MessageUpdateEventListener extends EventListener {
         if (!config) return;
 
         // Remove messages from media channel if it doesn't have an attachment or a link
-        if (config.mediaChannels.includes(message.channelId) && !message.attachments.size && !message.content.includes("http")) {
-            await handleMediaChannelMessage(message, config);
-        }
+        if (config.isMediaChannel(message.channelId)) await handleMediaChannelMessage(message, config);
 
         if (message.channelId === config.channels.muteRequestQueue || message.channelId === config.channels.banRequestQueue) {
             await handleRequestEdit(message, config);
@@ -62,7 +60,7 @@ export default class MessageUpdateEventListener extends EventListener {
 }
 
 async function handleMessageEditLog(message: Message<true>, oldContent: string): Promise<void> {
-    const jumpURL = messageLink(message.id, message.channelId, message.guildId);
+    const jumpURL = messageLink(message.channelId, message.id, message.guildId);
     const log = new EmbedBuilder()
         .setColor(Colors.Orange)
         .setDescription(hyperlink("Jump to Message", jumpURL))
