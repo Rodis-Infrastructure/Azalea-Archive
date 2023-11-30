@@ -33,7 +33,7 @@ export default class ApproveRoleRequestSelectMenu extends Component<StringSelect
         super({
             name: "role-request-role-add",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

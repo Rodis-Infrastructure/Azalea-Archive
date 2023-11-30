@@ -1,15 +1,13 @@
 import {
-    AnySelectMenuInteraction,
     ApplicationCommandData,
     ApplicationCommandType,
-    ButtonInteraction,
     CacheType,
-    ChatInputCommandInteraction,
-    MessageContextMenuCommandInteraction,
-    ModalSubmitInteraction,
-    UserContextMenuCommandInteraction
+    MessageComponentInteraction,
+    ModalSubmitInteraction
 } from "discord.js";
 
+/** Custom ID of an interaction */
+export type CustomId = string;
 export type ComponentCustomId = string | { startsWith: string } | { endsWith: string } | { includes: string };
 
 export enum InfractionSubcommand {
@@ -21,34 +19,27 @@ export enum InfractionSubcommand {
 }
 
 export enum InteractionResponseType {
-    Default = 0,
-    Defer = 1,
-    DeferUpdate = 2,
+    /** Don't defer the interaction (respond using `.reply()` or `.update()`) */
+    Default = "default",
+    /** Defer the interaction response (respond using `.editReply()`) */
+    Defer = "defer",
+    /** Defer the interaction's message edit (edit message using `.editReply()`) */
+    DeferUpdate = "deferUpdate",
 }
 
-export interface ComponentData {
-    name: ComponentCustomId;
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
+type BaseInteractionData = {
+    skipEphemeralCheck: boolean;
+} & ({
+    defer: InteractionResponseType.Default;
+    ephemeral?: never;
+} | {
+    defer: Exclude<InteractionResponseType, InteractionResponseType.Default>;
     ephemeral?: boolean;
-}
+});
 
-export type CommandData = ApplicationCommandData & {
-    skipInternalUsageCheck: boolean;
-    defer: InteractionResponseType;
-    type: ApplicationCommandType;
-    ephemeral?: boolean;
-}
+export type ComponentData = BaseInteractionData & Record<"name", ComponentCustomId>;
+export type CommandData = ApplicationCommandData & BaseInteractionData & Record<"type", ApplicationCommandType>
 
 export type AnyComponentInteraction<Cached extends CacheType = CacheType> =
-    ButtonInteraction<Cached>
-    | ModalSubmitInteraction<Cached>
-    | AnySelectMenuInteraction<Cached>;
-
-export type AnyCommandInteraction =
-    ChatInputCommandInteraction
-    | UserContextMenuCommandInteraction
-    | MessageContextMenuCommandInteraction;
-
-/** Custom ID of an interaction */
-export type CustomId = string;
+    MessageComponentInteraction<Cached>
+    | ModalSubmitInteraction<Cached>;

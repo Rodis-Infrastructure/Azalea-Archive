@@ -14,7 +14,7 @@ export default class UnmuteCommand extends Command {
             description: "Revoke a user's timeout.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "member",

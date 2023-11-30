@@ -4,7 +4,7 @@ import {
     ApplicationCommandOptionChoiceData,
     ButtonInteraction,
     CategoryChannel,
-    Collection,
+    Collection, CommandInteraction,
     GuildBasedChannel,
     GuildMember,
     GuildTextBasedChannel,
@@ -30,7 +30,7 @@ import {
     RoleRequests
 } from "@bot/types/config";
 
-import { AnyCommandInteraction, CustomId, InteractionResponseType } from "@bot/types/interactions";
+import { CustomId, InteractionResponseType } from "@bot/types/interactions";
 import { formatReason, isGuildTextBasedChannel } from "./index";
 import { InfractionModel } from "@database/models/infraction";
 import { client } from "@bot/client";
@@ -272,7 +272,7 @@ export default class Config {
     }
 
     async applyDeferralState(data: {
-        interaction: ModalSubmitInteraction | ButtonInteraction | AnySelectMenuInteraction | AnyCommandInteraction,
+        interaction: ModalSubmitInteraction | ButtonInteraction | AnySelectMenuInteraction | CommandInteraction,
         state: InteractionResponseType,
         skipInternalUsageCheck: boolean
         ephemeral?: boolean

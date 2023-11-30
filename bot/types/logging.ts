@@ -6,7 +6,8 @@ import {
     EmbedBuilder,
     GuildBasedChannel,
     MessageCreateOptions,
-    MessagePayload
+    MessagePayload,
+    Snowflake
 } from "discord.js";
 
 import { LoggingEvent } from "./config";
@@ -30,5 +31,5 @@ export type LogData = {
     guildId?: never
 } | {
     sourceChannel?: never,
-    guildId: string
+    guildId: Snowflake
 })

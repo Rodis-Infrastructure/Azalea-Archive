@@ -69,7 +69,7 @@ export default class InteractionCreateEventListener extends EventListener {
         const ephemeral = await config.applyDeferralState({
             interaction,
             state: data.defer,
-            skipInternalUsageCheck: data.skipInternalUsageCheck,
+            skipInternalUsageCheck: data.skipEphemeralCheck,
             ephemeral: data.ephemeral
         });
 

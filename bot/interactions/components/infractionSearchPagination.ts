@@ -13,7 +13,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
             // Custom ID format: inf-page-{next|back}-{executorId}
             name: { startsWith: "inf-page" },
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

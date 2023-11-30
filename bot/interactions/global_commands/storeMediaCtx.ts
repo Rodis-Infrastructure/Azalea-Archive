@@ -12,7 +12,7 @@ export default class StoreMediaCtxCommand extends Command {
             name: "Store media",
             type: ApplicationCommandType.Message,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

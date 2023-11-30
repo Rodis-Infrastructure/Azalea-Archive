@@ -54,7 +54,7 @@ export default class InfractionCommand extends Command {
             description: "All infraction-related commands",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: InfractionSubcommand.Info,

@@ -28,7 +28,7 @@ export default class InfoCommand extends Command {
             description: "Get information about a user.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [{
                 name: "user",
                 description: "The user to get information about.",

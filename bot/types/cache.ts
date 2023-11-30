@@ -9,6 +9,7 @@ interface PurgedMessages {
 }
 
 export interface MessageCache {
+    /** Messages to store in the database at regular intervals. */
     store: Collection<Snowflake, MessageModel>;
     purged?: PurgedMessages;
 }

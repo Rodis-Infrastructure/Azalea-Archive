@@ -33,8 +33,10 @@ export enum PunishmentType {
 }
 
 export enum InfractionFlag {
+    /** Infraction given by bot */
     Automatic = 1,
-    Quick = 2,
+    /** Infraction given using pre-set values (such as duration) */
+    Quick = 2
 }
 
 /** Primarily used for infraction searches */

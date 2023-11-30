@@ -7,7 +7,7 @@ export default class RoleRequestNoteAddButton extends Component<ButtonInteractio
         super({
             name: "role-request-note-add",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

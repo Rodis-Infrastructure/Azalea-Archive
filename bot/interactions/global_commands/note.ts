@@ -14,7 +14,7 @@ export default class NoteCommand extends Command {
             description: "Add a note to a member's infraction history.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "user",

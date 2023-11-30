@@ -18,7 +18,7 @@ export default class RoleRequestNoteInputButton extends Component<ModalSubmitInt
         super({
             name: "role-request-note-input",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

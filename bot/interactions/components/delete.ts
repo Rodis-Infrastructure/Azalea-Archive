@@ -7,7 +7,7 @@ export default class DeleteButton extends Component<ButtonInteraction<"cached">>
         super({
             name: "delete",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

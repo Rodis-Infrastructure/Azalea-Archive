@@ -12,7 +12,7 @@ export default class QuickMute30CtxCommand extends Command {
             name: "Quick mute (30m)",
             defer: InteractionResponseType.Default,
             type: ApplicationCommandType.Message,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

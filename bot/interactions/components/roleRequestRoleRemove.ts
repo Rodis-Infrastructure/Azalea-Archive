@@ -11,7 +11,7 @@ export default class RemoveRolesButton extends Component<ButtonInteraction<"cach
         super({
             name: "role-request-role-remove",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

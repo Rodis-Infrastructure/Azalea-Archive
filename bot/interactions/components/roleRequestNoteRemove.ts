@@ -16,7 +16,7 @@ export default class RoleRequestNoteRemoveButton extends Component<ButtonInterac
         super({
             name: "role-request-note-remove",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 
