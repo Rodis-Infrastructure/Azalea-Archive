@@ -53,10 +53,8 @@ export default class Config {
         return this.data.roleRequests;
     }
 
-    get nicknameCensorship(): Required<NicknameCensorshipConfig> | undefined {
-        if (!this.data.nicknameCensorship) return;
-
-        const { allowedRoles, excludedRoles, embed } = this.data.nicknameCensorship;
+    get nicknameCensorship(): Required<Pick<NicknameCensorshipConfig, "allowedRoles" | "excludedRoles">> & Pick<NicknameCensorshipConfig, "embed"> {
+        const { allowedRoles, excludedRoles, embed } = this.data.nicknameCensorship ?? {};
 
         return {
             allowedRoles: allowedRoles ?? [],

@@ -71,43 +71,41 @@ export default class CensorNicknameCommand extends Command {
             return;
         }
 
-        if (config.nicknameCensorship) {
-            const userHasAllowedRole = target.roles.cache
-                .some(role => config.nicknameCensorship?.allowedRoles.includes(role.id));
+        const targetHasAllowedRole = !config.nicknameCensorship.allowedRoles.length
+            || target.roles.cache.some(role => config.nicknameCensorship.allowedRoles.includes(role.id));
 
-            if (!userHasAllowedRole) {
-                const roleMentions = config.nicknameCensorship.allowedRoles
-                    .map(role => roleMention(role))
-                    .join(" ");
+        if (!targetHasAllowedRole) {
+            const roleMentions = config.nicknameCensorship.allowedRoles
+                .map(role => roleMention(role))
+                .join(" ");
 
-                await interaction.reply({
-                    content: `Only users with the following role(s) can have their nickname censored: ${roleMentions}`,
-                    allowedMentions: { roles: [] },
-                    ephemeral
-                });
+            await interaction.reply({
+                content: `Only users with the following role(s) can have their nickname censored: ${roleMentions}`,
+                allowedMentions: { roles: [] },
+                ephemeral
+            });
 
-                return;
-            }
+            return;
+        }
 
-            const excludedRoles = target.roles.cache
-                .filter(role => config.nicknameCensorship?.excludedRoles.includes(role.id))
-                .map(role => roleMention(role.id));
+        const excludedRoles = target.roles.cache
+            .filter(role => config.nicknameCensorship.excludedRoles.includes(role.id))
+            .map(role => roleMention(role.id));
 
-            if (excludedRoles.length) {
-                await interaction.reply({
-                    content: `This user's nickname cannot be censored due to the following role(s): ${excludedRoles.join(" ")}`,
-                    allowedMentions: { roles: [] },
-                    ephemeral
-                });
-                return;
-            }
+        if (excludedRoles.length) {
+            await interaction.reply({
+                content: `This user's nickname cannot be censored due to the following role(s): ${excludedRoles.join(" ")}`,
+                allowedMentions: { roles: [] },
+                ephemeral
+            });
+            return;
         }
 
         const oldDisplayName = target.displayName;
         await target.setNickname(target.id, `Nickname censored by ${interaction.user.tag} (${interaction.user.id})`);
 
         // Try to DM the user to let them know their nickname was censored.
-        if (config.nicknameCensorship) {
+        if (config.nicknameCensorship.embed) {
             await target.send({ embeds: [config.nicknameCensorship.embed] })
                 .catch(() => null);
         }
