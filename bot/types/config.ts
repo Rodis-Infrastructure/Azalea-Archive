@@ -64,6 +64,12 @@ export interface EmojiConfig {
     denyRequest?: string
 }
 
+export interface NicknameCensorshipConfig {
+    allowedRoles?: Snowflake[]
+    excludedRoles?: Snowflake[]
+    embed: APIEmbed
+}
+
 export interface NoticeConfig {
     enabled: boolean
     /** The channel to send notices to */
@@ -139,6 +145,7 @@ export interface ConfigData {
     deleteMessageSecondsOnBan?: number
     scheduledMessages?: ScheduledMessage[]
     roleRequests?: RoleRequests
+    nicknameCensorship?: NicknameCensorshipConfig
     /** IDs of channels that can be linked to in infraction evidence */
     proofChannelIds?: Snowflake[]
     notices?: Notices
