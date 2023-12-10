@@ -25,7 +25,7 @@ export async function sendLog(data: LogData): Promise<Message<true> | null> {
     if (sourceChannel && !config?.isLoggingAllowed(event, sourceChannel)) return null;
 
     const loggingChannelId = config?.getLoggingChannel(event);
-    if (!loggingChannelId) throw new Error(`Channel ID for event ${event} not configured.`);
+    if (!loggingChannelId) return null;
 
     const loggingChannel = await client.channels.fetch(loggingChannelId);
 
