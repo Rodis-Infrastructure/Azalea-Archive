@@ -67,7 +67,7 @@ export interface EmojiConfig {
 export interface NicknameCensorshipConfig {
     allowedRoles?: Snowflake[]
     excludedRoles?: Snowflake[]
-    embed: APIEmbed
+    embed?: APIEmbed
 }
 
 export interface NoticeConfig {
