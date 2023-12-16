@@ -1,5 +1,19 @@
 deleteMessageSecondsOnBan: 0
 
+nicknameCensorship:
+  allowedRoles:
+    - "role-id"
+  excludedRoles:
+      - "role-id"
+  embed:
+    color: 0xff0000
+    title: "Some title"
+    description: "Some description"
+    fields:
+      - name: "Some field"
+        value: "Some value"
+        inline: true
+
 ephemeralResponses:
   enabled: true
   excludedCategories:

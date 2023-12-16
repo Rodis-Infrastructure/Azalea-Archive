@@ -22,7 +22,7 @@ import {
     ConfigData,
     ConfirmationOptions,
     EmojiConfig,
-    LoggingEvent,
+    LoggingEvent, NicknameCensorshipConfig,
     NotificationOptions,
     RoleInteraction,
     RolePermission,
@@ -51,6 +51,16 @@ export default class Config {
 
     get roleRequests(): RoleRequests | undefined {
         return this.data.roleRequests;
+    }
+
+    get nicknameCensorship(): Required<Pick<NicknameCensorshipConfig, "allowedRoles" | "excludedRoles">> & Pick<NicknameCensorshipConfig, "embed"> {
+        const { allowedRoles, excludedRoles, embed } = this.data.nicknameCensorship ?? {};
+
+        return {
+            allowedRoles: allowedRoles ?? [],
+            excludedRoles: excludedRoles ?? [],
+            embed
+        };
     }
 
     get deleteMessageSecondsOnBan(): number {

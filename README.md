@@ -72,6 +72,25 @@ mediaChannels:
   - "channel-id"
 ```
 
+### Nickname Censorship
+
+Associated with the `/censor-nickname` command. The `allowedRoles` field determines which roles users must have to be able to be censored (at least one). The `excludedRoles` field determines which roles users must have to be excluded from censorship (at least one). The `embed` field determines the embed that will be sent to the user when their nickname is censored.
+
+```yaml
+nicknameCensorship:
+  allowedRoles:
+    - "role-id"
+  excludedRoles:
+    - "role-id"
+  embed:
+    title: "embed-title"
+    description: "embed-description"
+    color: 0x000000 # Optional
+```
+
+For more information on what embed attributes can be passed,
+see [Discord documentation](https://discord.com/developers/docs/resources/channel#embed-object).
+
 ### Allowed Proof Channels
 
 Require all message links in infraction evidence to be from specific channels. If set to an empty array, all channels
