@@ -69,9 +69,9 @@ export default class MessageDeleteEventListener extends EventListener {
         const fetchedAuditLogs = await sourceChannel.guild.fetchAuditLogs({
             type: AuditLogEvent.MessageDelete,
             limit: 1
-        });
+        }).catch(() => null);
 
-        const auditLog = fetchedAuditLogs.entries.first();
+        const auditLog = fetchedAuditLogs?.entries.first();
 
         if (auditLog && auditLog.targetId === message.author_id && auditLog.executor) {
             messageDeleteLog.setFooter({
