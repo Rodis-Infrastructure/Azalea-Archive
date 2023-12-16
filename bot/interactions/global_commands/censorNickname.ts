@@ -101,8 +101,9 @@ export default class CensorNicknameCommand extends Command {
             return;
         }
 
-        const oldDisplayName = target.displayName;
+        // Generate a random 5-digit number.
         const rnd = Math.floor(Math.random() * 90000) + 10000;
+        const oldDisplayName = target.displayName;
         await target.setNickname(`Unverified User ${rnd}`, `Nickname censored by ${interaction.user.tag} (${interaction.user.id})`);
 
         // Try to DM the user to let them know their nickname was censored.
