@@ -47,14 +47,6 @@ export default class CensorNicknameCommand extends Command {
             return;
         }
 
-        if (target.nickname === target.id) {
-            await interaction.reply({
-                content: "This user's nickname is already censored.",
-                ephemeral
-            });
-            return;
-        }
-
         if (!interaction.guild.members.me?.permissions.has(PermissionFlagsBits.ManageNicknames)) {
             await interaction.reply({
                 content: "I do not have permission to change nicknames.",
