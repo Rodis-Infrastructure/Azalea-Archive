@@ -1,12 +1,13 @@
 import { EmbedBuilder, Events, GuildEmoji, hyperlink, Message, MessageReaction, ReactionEmoji, User } from "discord.js";
 import { handleQuickMute, purgeMessages, validateModerationAction } from "@bot/utils/moderation";
 import { LoggingEvent, RoleInteraction } from "@bot/types/config";
-import { formatLogContent, sendLog } from "@bot/utils/logging";
+import { referenceEmbed, sendLog } from "@bot/utils/logging";
 import { handleRequestManagement } from "@bot/utils/requests";
 import { QuickMuteDuration } from "@bot/types/moderation";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 import Config from "@bot/utils/config";
+import { serializeMessage } from "@bot/utils";
 
 export default class MessageReactionAddEventListener extends EventListener {
     constructor() {
@@ -104,16 +105,16 @@ export default class MessageReactionAddEventListener extends EventListener {
 }
 
 async function handleReactionLog(message: Message<true>, user: User, emoji: GuildEmoji | ReactionEmoji): Promise<void> {
+    const emojiUrl = emoji.imageURL();
     const embed = new EmbedBuilder()
         .setColor(0x9C84EF)
         .setAuthor({ name: "Reaction Added", iconURL: "attachment://addReaction.png" })
-        .setDescription(hyperlink("Jump to message", message.url))
         .setTimestamp();
 
-    if (emoji.id && emoji.url) {
+    if (emoji.id && emojiUrl) {
         embed.setFields({
             name: "Emoji",
-            value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emoji.url)})`
+            value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emojiUrl)})`
         });
     } else {
         embed.setFields({
@@ -122,18 +123,17 @@ async function handleReactionLog(message: Message<true>, user: User, emoji: Guil
         });
     }
 
+    const serializedMessage = serializeMessage(message);
+    const reference = await referenceEmbed(serializedMessage, false);
+
     embed.addFields([
         {
-            name: "User",
+            name: "Reaction Author",
             value: `${user} (\`${user.id}\`)`
         },
         {
             name: "Channel",
             value: `${message.channel} (\`#${message.channel.name}\`)`
-        },
-        {
-            name: "Content",
-            value: formatLogContent(message.content)
         }
     ]);
 
@@ -141,8 +141,8 @@ async function handleReactionLog(message: Message<true>, user: User, emoji: Guil
         event: LoggingEvent.Message,
         sourceChannel: message.channel,
         options: {
-            embeds: [embed],
-            files: [{
+            embeds: [reference.embed, embed],
+            files: [reference.file, {
                 attachment: "./icons/addReaction.png",
                 name: "addReaction.png"
             }]
