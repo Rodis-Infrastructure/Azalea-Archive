@@ -105,16 +105,15 @@ export default class MessageReactionAddEventListener extends EventListener {
 }
 
 async function handleReactionLog(message: Message<true>, user: User, emoji: GuildEmoji | ReactionEmoji): Promise<void> {
-    const emojiUrl = emoji.imageURL();
     const embed = new EmbedBuilder()
         .setColor(0x9C84EF)
         .setAuthor({ name: "Reaction Added", iconURL: "attachment://addReaction.png" })
         .setTimestamp();
 
-    if (emoji.id && emojiUrl) {
+    if (emoji.id && emoji.url) {
         embed.setFields({
             name: "Emoji",
-            value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emojiUrl)})`
+            value: `\n\n\`<:${emoji.name}:${emoji.id}>\` (${hyperlink("view", emoji.url)})`
         });
     } else {
         embed.setFields({
