@@ -4,7 +4,7 @@ import {
     channelMention,
     Colors,
     EmbedBuilder,
-    Events,
+    Events, Guild,
     hyperlink,
     Message,
     PartialMessage,
@@ -14,6 +14,7 @@ import {
 
 import { formatLogContent, linkToPurgeLog, referenceEmbed, sendLog } from "@bot/utils/logging";
 import { isGuildTextBasedChannel, serializeMessage } from "@bot/utils";
+import { MessageModel } from "@database/models/message";
 import { LoggingEvent } from "@bot/types/config";
 import { client } from "@bot/client";
 
@@ -66,19 +67,12 @@ export default class MessageDeleteEventListener extends EventListener {
             ])
             .setTimestamp();
 
-        const fetchedAuditLogs = await sourceChannel.guild.fetchAuditLogs({
-            type: AuditLogEvent.MessageDelete,
-            limit: 1
-        }).catch(() => null);
-
-        const auditLog = fetchedAuditLogs?.entries.first();
-
-        if (auditLog && auditLog.targetId === message.author_id && auditLog.executor) {
-            messageDeleteLog.setFooter({
-                text: `Deleted by: ${auditLog.executor.tag} • ${auditLog.executor.id}`,
-                iconURL: auditLog.executor.displayAvatarURL()
-            });
-        }
+        await addDeletionExecutor({
+            embed: messageDeleteLog,
+            guild: sourceChannel.guild,
+            cache,
+            message
+        });
 
         if (message.sticker_id) {
             const sticker = await client.fetchSticker(message.sticker_id).catch(() => null);
@@ -119,5 +113,49 @@ export default class MessageDeleteEventListener extends EventListener {
             guildId: message.guild_id,
             url: log.url
         });
+    }
+}
+
+async function addDeletionExecutor(data: {
+    embed: EmbedBuilder,
+    guild: Guild,
+    cache: Cache,
+    message: MessageModel,
+}): Promise<void> {
+    const { embed, guild, cache, message } = data;
+
+    const auditLogs = await guild.fetchAuditLogs({
+        type: AuditLogEvent.MessageDelete,
+        limit: 10
+    }).catch(() => null);
+
+    const entry = auditLogs?.entries
+        .find(entry => entry.targetId === message.author_id);
+
+    if (entry) {
+        const key = `${entry.targetId}_${entry.executorId}_${entry.extra.channel.id}`;
+        const count = cache.messages.deletionAuditLogs.get(key) || 0;
+
+        if (!count) {
+            // Delete the newly added log after 10 minutes
+            setTimeout(() => {
+                cache.messages.deletionAuditLogs.delete(key);
+            }, 600000);
+        }
+
+        const entryHasIncremented = entry.extra.count === count + 1;
+        const entryIsNew = entry.createdAt.getTime() > Date.now() - 5000 && entry.extra.count === 1 && count > 1;
+
+        // Check if the entry count incremented after the message was deleted
+        if (entryHasIncremented || entryIsNew) {
+            // Increment the count
+            const newCount = entryIsNew ? 1 : count + 1;
+            cache.messages.deletionAuditLogs.set(key, newCount);
+
+            embed.setFooter({
+                text: `Deleted by: ${entry.executor!.tag} • ${entry.executor!.id}`,
+                iconURL: entry.executor!.displayAvatarURL()
+            });
+        }
     }
 }

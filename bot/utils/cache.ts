@@ -16,7 +16,11 @@ export default class Cache {
 
     private constructor() {
         this.requests = new Collection();
-        this.messages = { store: new Collection() };
+
+        this.messages = {
+            store: new Collection(),
+            deletionAuditLogs: new Collection()
+        };
     }
 
     static get(guildId: Snowflake): Cache {
