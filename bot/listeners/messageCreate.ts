@@ -41,7 +41,7 @@ export default class MessageCreateEventListener extends EventListener {
         }
 
         if (message.channelId === config.roleRequests?.channelId && message.mentions.users.size) await handleRoleRequest(message, config);
-        if (message.channelId === config.channels.mediaConversion && message.attachments.size) await handleMediaConversion(message);
+        if (message.channelId === config.channels.mediaConversion && message.attachments.size && !message.content) await handleMediaConversion(message);
 
         const requestType = getRequestType(message.channelId, config);
 
