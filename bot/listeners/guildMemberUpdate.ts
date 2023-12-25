@@ -1,7 +1,7 @@
 import { PunishmentType } from "@database/models/infraction";
 import { Events, GuildMember } from "discord.js";
 import { currentTimestamp } from "@bot/utils";
-import { runQuery } from "@database/utils";
+import { db } from "@database/utils.ts";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 
@@ -13,14 +13,19 @@ export default class InteractionCreateEventListener extends EventListener {
     async execute(oldMember: GuildMember, newMember: GuildMember): Promise<void> {
         // Update the mute expiration timestamp if the member was unmuted early
         if (oldMember.isCommunicationDisabled() && !newMember.isCommunicationDisabled()) {
-            await runQuery(`
+            await db.run(`
                 UPDATE infractions
-                SET expires_at = ${currentTimestamp()}
-                WHERE guild_id = ${newMember.guild.id}
-                  AND target_id = ${newMember.id}
-                  AND action = ${PunishmentType.Mute}
-                  AND expires_at > ${currentTimestamp()};
-            `);
+                SET expires_at = $expiresAt
+                WHERE guild_id = $guildId
+                  AND target_id = $targetId
+                  AND action = $action
+                  AND expires_at > $expiresAt
+            `, [{
+                $expiresAt: currentTimestamp(),
+                $guildId: newMember.guild.id,
+                $targetId: newMember.id,
+                $action: PunishmentType.Mute
+            }]);
         }
     }
 }

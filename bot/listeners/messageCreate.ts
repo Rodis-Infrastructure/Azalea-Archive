@@ -78,7 +78,7 @@ export default class MessageCreateEventListener extends EventListener {
                 ]);
 
                 // Remove after 5 seconds
-                setTimeout(async() => {
+                setTimeout(async () => {
                     await response.delete().catch(() => null);
                 }, 5000);
             }
@@ -126,7 +126,7 @@ export async function handleMediaChannelMessage(message: Message<true>, config: 
     if (!reply) return;
 
     // Remove after 3 seconds
-    setTimeout(async() => {
+    setTimeout(async () => {
         await reply.delete().catch(() => null);
     }, 3000);
 }

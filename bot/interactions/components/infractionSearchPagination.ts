@@ -3,7 +3,7 @@ import { InfractionFilter, MinimalInfraction } from "@database/models/infraction
 import { Component } from "@bot/handlers/interactions/interaction";
 import { InteractionResponseType } from "@bot/types/interactions";
 import { mapInfractionsToFields } from "@bot/utils/infractions";
-import { allQuery } from "@database/utils";
+import { db } from "@database/utils.ts";
 
 import Config from "@bot/utils/config";
 
@@ -13,7 +13,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
             // Custom ID format: inf-page-{next|back}-{executorId}
             name: { startsWith: "inf-page" },
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 
@@ -49,7 +49,7 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
         if (direction === "next") currentPage++;
         else if (direction === "back") currentPage--;
 
-        const infractions = await allQuery<MinimalInfraction>(`
+        const infractions = await db.all<Omit<MinimalInfraction, "archived_at" | "archived_by">>(`
             SELECT infraction_id,
                    target_id,
                    executor_id,
@@ -59,16 +59,21 @@ export default class InfractionsNextButton extends Component<ButtonInteraction<"
                    expires_at,
                    flag
             FROM infractions
-            WHERE guild_id = ${interaction.guildId}
-              AND target_id = ${targetId}
+            WHERE guild_id = $guildId
+              AND target_id = $targetId
             ORDER BY infraction_id DESC
             LIMIT 100;
-        `);
+        `, [{
+            $guildId: interaction.guildId,
+            $targetId: targetId
+        }]);
 
+        const embedAuthorText = embed.data.author!.name!;
         const [pageCount, fields] = mapInfractionsToFields({
             infractions,
             filter: filter || null,
-            page: currentPage
+            page: currentPage,
+            targetIsStaff: embedAuthorText.startsWith("Infractions by")
         });
 
         pageCountBtn.setLabel(`${currentPage} / ${pageCount}`);

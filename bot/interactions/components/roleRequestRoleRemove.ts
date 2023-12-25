@@ -2,7 +2,8 @@ import { InteractionResponseType } from "@bot/types/interactions";
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, Snowflake } from "discord.js";
 import { Component } from "@bot/handlers/interactions/interaction";
 import { RegexPatterns } from "@bot/utils";
-import { runQuery } from "@database/utils";
+import { db } from "@database/utils.ts";
+
 import Config from "@bot/utils/config";
 
 export default class RemoveRolesButton extends Component<ButtonInteraction<"cached">> {
@@ -10,7 +11,7 @@ export default class RemoveRolesButton extends Component<ButtonInteraction<"cach
         super({
             name: "role-request-role-remove",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 
@@ -34,11 +35,13 @@ export default class RemoveRolesButton extends Component<ButtonInteraction<"cach
 
         // The role is not permanent
         if (!embed.data.title?.includes("Permanent")) {
-            await runQuery(`
+            await db.run(`
                 DELETE
                 FROM temporary_roles
-                WHERE request_id = ${interaction.message.id}
-            `);
+                WHERE request_id = $requestId
+            `, [{
+                $requestId: interaction.message.id
+            }]);
         }
 
         const deleteBtn = new ButtonBuilder()

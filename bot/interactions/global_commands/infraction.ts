@@ -33,14 +33,15 @@ import {
     PunishmentType
 } from "@database/models/infraction";
 
-import { InfractionSubcommand, InteractionResponseType } from "@bot/types/interactions";
-import { getInfractionEmbedData, mapInfractionsToFields } from "@bot/utils/infractions";
-import { allQuery, getQuery, runQuery, sanitizeString } from "@database/utils";
-import { Command } from "@bot/handlers/interactions/interaction";
-import { LoggingEvent, RolePermission } from "@bot/types/config";
-import { TimestampStyles } from "@discordjs/formatters";
 import { APIEmbedField } from "discord-api-types/v10";
+import { db } from "@database/utils.ts";
 import { sendLog } from "@bot/utils/logging";
+import { SQLQueryBindings } from "bun:sqlite";
+import { TimestampStyles } from "@discordjs/formatters";
+import { getInfractionEmbedData, mapInfractionsToFields } from "@bot/utils/infractions";
+import { InfractionSubcommand, InteractionResponseType } from "@bot/types/interactions";
+import { LoggingEvent, RolePermission } from "@bot/types/config";
+import { Command } from "@bot/handlers/interactions/interaction";
 import { client } from "@bot/client";
 
 import Config from "@bot/utils/config";
@@ -53,7 +54,7 @@ export default class InfractionCommand extends Command {
             description: "All infraction-related commands",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: InfractionSubcommand.Info,
@@ -152,12 +153,23 @@ export default class InfractionCommand extends Command {
         }
 
         const infractionId = interaction.options.getNumber("infraction_id", true);
-        const infraction = await getQuery<InfractionModel, false>(`
+        const infraction = await db.get<InfractionModel>(`
             SELECT *
             FROM infractions
-            WHERE infraction_id = ${infractionId}
-              AND guild_id = ${interaction.guildId}
-        `);
+            WHERE infraction_id = $infractionId
+              AND guild_id = $guildId
+        `, [{
+            $infractionId: infractionId,
+            $guildId: interaction.guildId
+        }]);
+
+        if (!infraction) {
+            await interaction.reply({
+                content: `${emojis.error} Infraction **#${infractionId}** not found.`,
+                ephemeral
+            });
+            return;
+        }
 
         if (subcommand === InfractionSubcommand.Info) {
             const embed = getInfractionInfoEmbed(infraction);
@@ -249,7 +261,7 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         targetUser = await client.users.fetch(interaction.customId.split("-")[2]);
     }
 
-    const targetIsStaff = targetMember && config.isGuildStaff(targetMember);
+    const targetIsStaff = (targetMember && config.isGuildStaff(targetMember)) || false;
     const executorCanViewModerationActivity = config.hasPermission(interaction.member, RolePermission.ViewModerationActivity);
 
     if (targetIsStaff && !executorCanViewModerationActivity) {
@@ -260,45 +272,44 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         return;
     }
 
-    let dbQuery: string;
+    let infractionsQueryParams: [SQLQueryBindings];
 
     if (executorCanViewModerationActivity && targetIsStaff) {
-        dbQuery = `
-            SELECT infraction_id,
-                   executor_id,
-                   created_at,
-                   reason,
-                   archived_by,
-                   archived_at,
-                   flag,
-                   expires_at,
-                   action
-            FROM infractions
-            WHERE executor_id = ${interaction.user.id}
-              AND guild_id = ${interaction.guildId}
-            ORDER BY infraction_id DESC
-            LIMIT 100;
-        `;
+        // Fetch infractions dealt by a staff member
+        infractionsQueryParams = [{
+            $guildId: interaction.guildId,
+            $executorId: interaction.user.id,
+            $targetId: null
+        }];
     } else {
-        dbQuery = `
-            SELECT infraction_id,
-                   executor_id,
-                   created_at,
-                   reason,
-                   archived_by,
-                   archived_at,
-                   flag,
-                   expires_at,
-                   action
-            FROM infractions
-            WHERE target_id = ${targetUser.id}
-              AND guild_id = ${interaction.guildId}
-            ORDER BY created_at DESC
-            LIMIT 100;
-        `;
+        // Fetch infractions of a user
+        infractionsQueryParams = [{
+            $guildId: interaction.guildId,
+            $targetId: targetUser.id,
+            $executorId: null
+        }];
     }
 
-    const infractions = await allQuery<MinimalInfraction>(dbQuery);
+    const infractions = await db.all<MinimalInfraction>(`
+        SELECT infraction_id,
+               target_id,
+               executor_id,
+               created_at,
+               reason,
+               archived_by,
+               archived_at,
+               flag,
+               expires_at,
+               action
+        FROM infractions
+        WHERE guild_id = $guildId
+          AND ($executorId IS NULL OR executor_id = $executorId)
+          AND ($targetId IS NULL OR target_id = $targetId)
+        ORDER BY infraction_id DESC
+        LIMIT 100;
+    `, infractionsQueryParams);
+
+    // Embed author text is depended on by the pagination buttons
     const components: ActionRowBuilder<ButtonBuilder>[] = [];
     const searchContext = targetIsStaff && executorCanViewModerationActivity ? "by" : "of";
     const embed = new EmbedBuilder()
@@ -314,7 +325,8 @@ export async function handleInfractionSearch(interaction: ChatInputCommandIntera
         const [maxPageCount, fields] = mapInfractionsToFields({
             infractions,
             filter,
-            page: 1
+            page: 1,
+            targetIsStaff
         });
 
         if (fields.length) embed.setFields(fields);
@@ -360,14 +372,20 @@ export async function handleInfractionReasonChange(infractionId: number, data: {
 }): Promise<string> {
     const { updatedById, guildId, newReason } = data;
 
-    await runQuery(`
+    await db.run(`
         UPDATE infractions
-        SET reason     = ${sanitizeString(newReason)},
-            updated_at = ${currentTimestamp()},
-            updated_by = ${updatedById}
-        WHERE infraction_id = ${infractionId}
-          AND guild_id = ${guildId};
-    `);
+        SET reason     = $reason,
+            updated_at = $updatedAt,
+            updated_by = $updatedBy
+        WHERE infraction_id = $infractionId
+          AND guild_id = $guildId;
+    `, [{
+        $reason: newReason,
+        $updatedAt: currentTimestamp(),
+        $updatedBy: updatedById,
+        $infractionId: infractionId,
+        $guildId: guildId
+    }]);
 
     const log = new EmbedBuilder()
         .setColor(Colors.Yellow)
@@ -423,14 +441,21 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
 
     try {
         await target.disableCommunicationUntil(expiresAt * 1000, `Mute duration updated (#${infraction.infraction_id})`);
-        await runQuery(`
+
+        await db.run(`
             UPDATE infractions
-            SET expires_at = ${expiresAt},
-                updated_at = ${currentTimestamp()},
-                updated_by = ${interaction.user.id}
-            WHERE infraction_id = ${infraction.infraction_id}
-              AND guild_id = ${interaction.guildId};
-        `);
+            SET expires_at = $expiresAt,
+                updated_at = $updatedAt,
+                updated_by = $updatedBy
+            WHERE infraction_id = $infractionId
+              AND guild_id = $guildId;
+        `, [{
+            $expiresAt: expiresAt,
+            $updatedAt: currentTimestamp(),
+            $updatedBy: interaction.user.id,
+            $infractionId: infraction.infraction_id,
+            $guildId: interaction.guildId
+        }]);
     } catch (err) {
         console.error(err);
         throw new Error("An error occurred while updating the duration of this infraction");
@@ -473,13 +498,18 @@ async function handleInfractionDurationChange(infraction: InfractionModel, inter
  */
 async function handleInfractionArchive(infractionId: number, interaction: ChatInputCommandInteraction<"cached">): Promise<string> {
     try {
-        await runQuery(`
+        await db.run(`
             UPDATE infractions
-            SET archived_at = ${currentTimestamp()},
-                archived_by = ${interaction.user.id}
-            WHERE infraction_id = ${infractionId}
-              AND guild_id = ${interaction.guildId};
-        `);
+            SET archived_at = $archivedAt,
+                archived_by = $archivedBy
+            WHERE infraction_id = $infractionId
+              AND guild_id = $guildId;
+        `, [{
+            $archivedAt: currentTimestamp(),
+            $archivedBy: interaction.user.id,
+            $infractionId: infractionId,
+            $guildId: interaction.guildId
+        }]);
     } catch (err) {
         console.error(err);
         throw new Error("An error occurred while archiving the infraction");

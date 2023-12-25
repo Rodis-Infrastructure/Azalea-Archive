@@ -17,7 +17,7 @@ export default class FaqCommand extends Command {
             description: "Send a quick response to a common question.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "query",

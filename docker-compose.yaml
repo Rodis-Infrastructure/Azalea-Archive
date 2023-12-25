@@ -1,0 +1,13 @@
+services:
+  bot:
+    image: azalea
+    build: .
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}
+      DB_PATH: data/${DB_FILE:-db.sqlite}
+    volumes:
+      - data:/usr/src/azalea/data
+
+volumes:
+  data:

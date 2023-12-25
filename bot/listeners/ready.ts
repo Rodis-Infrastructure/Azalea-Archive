@@ -14,7 +14,7 @@ import {
     loadGuildCommands,
     publishGlobalCommands,
     publishGuildCommands
-} from "@bot/handlers/interactions/loader";
+} from "@bot/handlers/interactions/loader.ts";
 
 import { TemporaryRole } from "@database/models/temporaryRole";
 import { setTemporaryRoleTimeout } from "@bot/utils/requests";
@@ -22,8 +22,8 @@ import { extract, isGuildTextBasedChannel, RegexPatterns } from "@bot/utils";
 import { readFile } from "node:fs/promises";
 import { ConfigData } from "@bot/types/config";
 import { Requests } from "@bot/types/requests";
-import { allQuery, runQuery } from "@database/utils";
 import { client } from "@bot/client";
+import { db } from "@database/utils.ts";
 import { CronJob } from "cron";
 import { parse } from "yaml";
 
@@ -32,6 +32,7 @@ import Config from "@bot/utils/config";
 import Cache from "@bot/utils/cache";
 import glob from "fast-glob";
 import ms from "ms";
+
 
 export default class ReadyEventListener extends EventListener {
     constructor() {
@@ -73,13 +74,16 @@ export default class ReadyEventListener extends EventListener {
         // Store cached messages every 10 minutes
         new CronJob("*/10 * * * *", Cache.storeMessages).start();
 
-        // Delete messages older than 14 days every 12 hours
-        new CronJob("0 */6 * * *", async() => {
-            await runQuery(`
+        // Delete messages older than 12 days every 6 hours
+        new CronJob("0 */6 * * *", () => {
+            db.run(`
                 DELETE
                 FROM messages
-                WHERE ${Date.now()} - created_at > ${ms("12d")}
-            `);
+                WHERE $now - created_at > $timeout
+            `, [{
+                $now: Date.now(),
+                $timeout: ms("12d")
+            }]);
         }).start();
     }
 }
@@ -114,7 +118,7 @@ async function setRequestNoticeCronJob(config: Config): Promise<void> {
     if (notices?.muteRequests?.enabled && muteRequestQueue && muteRequestNoticesChannel) {
         const { cron, threshold, mentionedRoles } = notices.muteRequests;
 
-        new CronJob(cron, async() => {
+        new CronJob(cron, async () => {
             const cachedMuteRequests = cache.requests.filter(r => r.requestType === Requests.Mute);
             if (cachedMuteRequests.size < threshold) return;
 
@@ -137,7 +141,7 @@ async function setRequestNoticeCronJob(config: Config): Promise<void> {
     if (notices?.banRequests?.enabled && banRequestQueue && banRequestNoticesChannel) {
         const { cron, threshold, mentionedRoles } = notices.banRequests;
 
-        new CronJob(cron, async() => {
+        new CronJob(cron, async () => {
             const cachedBanRequests = cache.requests.filter(r => r.requestType === Requests.Ban);
             if (cachedBanRequests.size < threshold) return;
 
@@ -165,11 +169,13 @@ async function setTemporaryRoleTimeouts(guild: Guild, config: Config): Promise<v
     const requestQueue = await guild.channels.fetch(requestChannelId).catch(() => null);
     if (!requestQueue || !isGuildTextBasedChannel(requestQueue)) return;
 
-    const timeouts = await allQuery<Pick<TemporaryRole, "request_id" | "expires_at">>(`
+    const timeouts = await db.all<Pick<TemporaryRole, "request_id" | "expires_at">>(`
         SELECT request_id, expires_at
         FROM temporary_roles
-        WHERE guild_id = ${guild.id}
-    `);
+        WHERE guild_id = $guildId
+    `, [{
+        $guildId: guild.id
+    }]);
 
     for (const timeout of timeouts) {
         setTemporaryRoleTimeout({

@@ -13,7 +13,7 @@ export default class CleanCommand extends Command {
             description: "Purge messages in the channel.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Defer,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "all",

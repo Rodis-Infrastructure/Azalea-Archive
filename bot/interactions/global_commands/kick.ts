@@ -14,7 +14,7 @@ export default class KickCommand extends Command {
             description: "Kick a member from the guild.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "member",

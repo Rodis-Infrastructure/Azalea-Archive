@@ -1,12 +1,12 @@
 import { Colors, CommandInteraction, EmbedBuilder, Events, Interaction } from "discord.js";
 import { LoggingEvent, RoleInteraction } from "@bot/types/config";
+import { Command } from "@bot/handlers/interactions/interaction";
 import { sendLog } from "@bot/utils/logging";
 import { getCustomId } from "@bot/utils";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 import Config from "@bot/utils/config";
 import Cache from "@bot/utils/cache";
-import { Command } from "@bot/handlers/interactions/interaction";
 
 export default class InteractionCreateEventListener extends EventListener {
     constructor() {
@@ -69,7 +69,7 @@ export default class InteractionCreateEventListener extends EventListener {
         const ephemeral = await config.applyDeferralState({
             interaction,
             state: data.defer,
-            skipInternalUsageCheck: data.skipInternalUsageCheck,
+            skipInternalUsageCheck: data.skipEphemeralCheck,
             ephemeral: data.ephemeral
         });
 

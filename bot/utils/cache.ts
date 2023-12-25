@@ -1,10 +1,10 @@
 import { AnyComponentInteraction, ComponentCustomId, CustomId } from "@bot/types/interactions";
-import { allQuery, getQuery, runQuery, sanitizeString } from "@database/utils";
 import { Command, Component } from "@bot/handlers/interactions/interaction";
 import { CachedRequest, MessageCache } from "@bot/types/cache";
 import { MessageModel } from "@database/models/message";
 import { Collection, Snowflake } from "discord.js";
 import { elipsify } from "./index";
+import { db } from "@database/utils.ts";
 
 export default class Cache {
     static components = new Collection<ComponentCustomId, Component<AnyComponentInteraction<"cached">>>();
@@ -47,45 +47,40 @@ export default class Cache {
     }
 
     /** Stores cached messages in the database */
-    static async storeMessages(): Promise<void> {
-        const messageValues = Cache.instances
+    static storeMessages(): void {
+        const messages = Cache.instances
             .flatMap(cache => cache.messages.store)
             .map(data => {
                 const croppedContent = data.content && elipsify(data.content, 1024);
 
-                return `(
-                    ${data.message_id}, 
-                    ${data.author_id}, 
-                    ${data.channel_id}, 
-                    ${data.guild_id}, 
-                    ${data.created_at},
-                    ${sanitizeString(croppedContent)},
-                    ${data.reference_id},
-                    ${data.category_id},
-                    ${data.sticker_id},
-                    ${data.deleted}
-                )`;
-            })
-            .join(",");
+                return {
+                    $messageId: data.message_id,
+                    $authorId: data.author_id,
+                    $channelId: data.channel_id,
+                    $guildId: data.guild_id,
+                    $createdAt: data.created_at,
+                    $content: croppedContent,
+                    $referenceId: data.reference_id,
+                    $categoryId: data.category_id,
+                    $stickerId: data.sticker_id,
+                    $deleted: data.deleted
+                };
+            });
 
         // If any changes need to be made, make sure the field names and values are in the exact same order
-        if (messageValues) {
-            // @formatter:off
-            await runQuery(`
-                INSERT INTO messages (
-                    message_id,
-                    author_id,
-                    channel_id,
-                    guild_id,
-                    created_at,
-                    content,
-                    reference_id,
-                    category_id,
-                    sticker_id,
-                    deleted
-                )
-                VALUES ${messageValues};
-            `).catch(() => null);
+        if (messages.length) {
+            const insertMessageQuery = db._db.prepare(`
+                INSERT INTO messages (message_id, author_id, channel_id, guild_id, created_at, content, reference_id,
+                                      category_id, sticker_id, deleted)
+                VALUES ($messageId, $authorId, $channelId, $guildId, $createdAt, $content, $referenceId, $categoryId,
+                        $stickerId, $deleted)
+            `);
+
+            const insertMessages = db._db.transaction(messages => {
+                for (const message of messages) insertMessageQuery.run(message);
+            });
+
+            insertMessages(messages);
         }
 
         // Clear the cached messages
@@ -118,11 +113,14 @@ export default class Cache {
         if (message) {
             message.content = croppedContent;
         } else {
-            await getQuery<MessageModel>(`
+            await db.run(`
                 UPDATE messages
-                SET content = ${sanitizeString(croppedContent)}
-                WHERE message_id = ${messageId};
-            `);
+                SET content = $content
+                WHERE message_id = $messageId;
+            `, [{
+                $content: croppedContent,
+                $messageId: messageId
+            }]);
         }
     }
 
@@ -137,12 +135,14 @@ export default class Cache {
         if (message) {
             message.deleted = true;
         } else {
-            message = await getQuery<MessageModel>(`
+            message = await db.get<MessageModel>(`
                 UPDATE messages
                 SET deleted = 1
-                WHERE message_id = ${messageId}
+                WHERE message_id = $messageId
                 RETURNING *;
-            `);
+            `, [{
+                $messageId: messageId
+            }]);
         }
 
         if (fetchReference && message?.reference_id) {
@@ -156,11 +156,13 @@ export default class Cache {
         const cachedMessage = this.messages.store.get(messageId);
         if (cachedMessage) return Promise.resolve(cachedMessage);
 
-        return getQuery<MessageModel>(`
+        return db.get<MessageModel>(`
             SELECT *
             FROM messages
-            WHERE message_id = ${messageId};
-        `);
+            WHERE message_id = $messageId;
+        `, [{
+            $messageId: messageId
+        }]);
     }
 
     /**
@@ -185,12 +187,14 @@ export default class Cache {
 
         if (uncachedMessages.size) {
             const messageIdList = Array.from(uncachedMessages).join(",");
-            const storedMessages = await allQuery<MessageModel>(`
+            const storedMessages = await db.all<MessageModel>(`
                 UPDATE messages
                 SET deleted = true
-                WHERE message_id IN (${messageIdList})
+                WHERE message_id IN ($messageIds)
                 RETURNING *;
-            `);
+            `, [{
+                $messageIds: messageIdList
+            }]);
 
             storedMessages.forEach(message => messages.add(message));
         }

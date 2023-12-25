@@ -14,7 +14,7 @@ export default class MuteCommand extends Command {
             description: "Temporarily restrict a user's ability to communicate.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "member",

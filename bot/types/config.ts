@@ -2,6 +2,7 @@ import { APIEmbed, BaseMessageOptions, Snowflake } from "discord.js";
 import { CustomId } from "./interactions";
 
 interface UserFlag {
+    /** Text to display when the flag is present */
     name: string;
     roleIds: Snowflake[];
 }
@@ -16,13 +17,18 @@ export enum LoggingEvent {
 }
 
 export enum RolePermission {
+    /** Exempt from being moderated */
     GuildStaff = "guildStaff",
+    /** Allow modifying and archiving any infraction */
     ManageInfractions = "manageInfractions",
+    /** Allow searching a staff member's infractions (dealt) */
     ViewModerationActivity = "viewModerationActivity",
+    /** Allow approving and rejecting ban requests */
     ManageBanRequests = "manageBanRequests",
+    /** Allow approving and rejecting mute requests */
     ManageMuteRequests = "manageMuteRequests",
+    /** Automatically mute offenders ban requested by users with this permission */
     AutoMuteBanRequests = "autoMuteBanRequests",
-    ManageRoleRequests = "manageRoleRequests"
 }
 
 export enum RoleInteraction {
@@ -44,6 +50,7 @@ export interface ToggleableProperty {
 }
 
 export interface NotificationOptions {
+    /** Whether mentioned users should be notified */
     allowMentions?: boolean,
     sourceChannelId?: Snowflake
 }
@@ -72,7 +79,7 @@ export interface NicknameCensorshipConfig {
 
 export interface NoticeConfig {
     enabled: boolean
-    /** The channel to send notices to */
+    /** The channel to send notices in */
     channelId: Snowflake
     /** The number of unreviewed requests to trigger a notice */
     threshold: number

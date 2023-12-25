@@ -12,7 +12,7 @@ export default class PurgeMessageCtxCommand extends Command {
             name: "Purge messages",
             type: ApplicationCommandType.Message,
             defer: InteractionResponseType.Defer,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

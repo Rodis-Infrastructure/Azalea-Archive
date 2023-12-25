@@ -17,7 +17,7 @@ export default class ConfigCommand extends Command {
             description: "View guild configuration.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [{
                 name: "guild_id",
                 description: "The ID of the guild to view the configuration of",

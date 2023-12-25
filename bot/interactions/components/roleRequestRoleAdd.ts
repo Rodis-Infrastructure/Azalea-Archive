@@ -15,12 +15,12 @@ import {
 import { InteractionResponseType } from "@bot/types/interactions";
 import { Component } from "@bot/handlers/interactions/interaction";
 import { RegexPatterns } from "@bot/utils";
-import { allQuery, runQuery, sanitizeString } from "@database/utils";
 import { TemporaryRole } from "@database/models/temporaryRole";
 import { TimestampStyles } from "@discordjs/formatters";
+import { setTemporaryRoleTimeout } from "@bot/utils/requests";
+import { db } from "@database/utils.ts";
 
 import Config from "@bot/utils/config";
-import { setTemporaryRoleTimeout } from "@bot/utils/requests";
 
 /**
  * Select menu for approving role requests
@@ -33,7 +33,7 @@ export default class ApproveRoleRequestSelectMenu extends Component<StringSelect
         super({
             name: "role-request-role-add",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 
@@ -85,12 +85,15 @@ export default class ApproveRoleRequestSelectMenu extends Component<StringSelect
         let relativeTimestamp = "N/A";
 
         if (duration) {
-            const existingTimeoutsForRole = await allQuery<Pick<TemporaryRole, "request_id" | "users">>(`
+            const existingTimeoutsForRole = await db.all<Pick<TemporaryRole, "request_id" | "users">>(`
                 SELECT request_id, users
                 FROM temporary_roles
-                WHERE role_id = ${roleId}
-                  AND guild_id = ${interaction.guildId}
-            `);
+                WHERE role_id = $roleId
+                  AND guild_id = $guildId
+            `, [{
+                $roleId: roleId,
+                $guildId: interaction.guildId
+            }]);
 
             const timeoutsToUpdate = existingTimeoutsForRole.filter(timeout =>
                 timeout.users
@@ -106,26 +109,36 @@ export default class ApproveRoleRequestSelectMenu extends Component<StringSelect
                     .join(",");
 
                 if (updatedUserList.length) {
-                    await runQuery(`
+                    await db.run(`
                         UPDATE temporary_roles
-                        SET users = ${sanitizeString(updatedUserList)}
-                        WHERE request_id = ${timeout.request_id}
-                    `);
+                        SET users = $users
+                        WHERE request_id = $requestId
+                    `, [{
+                        $users: updatedUserList,
+                        $requestId: timeout.request_id
+                    }]);
                 } else {
-                    await runQuery(`
+                    await db.run(`
                         DELETE
                         FROM temporary_roles
-                        WHERE request_id = ${timeout.request_id}
-                    `);
+                        WHERE request_id = $requestId
+                    `, [{
+                        $requestId: timeout.request_id
+                    }]);
                 }
             }
 
             const msExpiresAt = Date.now() + duration;
-            await runQuery(`
+            await db.run(`
                 INSERT INTO temporary_roles (request_id, role_id, expires_at, guild_id, users)
-                VALUES (${interaction.message.id}, ${roleId}, ${msExpiresAt}, ${interaction.guildId},
-                        ${sanitizeString(userIds.join(","))})
-            `);
+                VALUES ($requestId, $roleId, $expiresAt, $guildId, $users)
+            `, [{
+                $requestId: interaction.message.id,
+                $roleId: roleId,
+                $expiresAt: msExpiresAt,
+                $guildId: interaction.guildId,
+                $users: userIds.join(",")
+            }]);
 
             setTemporaryRoleTimeout({
                 requestId: interaction.message.id,

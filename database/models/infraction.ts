@@ -6,11 +6,11 @@ export interface InfractionModel {
     request_author_id?: Snowflake;
     updated_by?: Snowflake;
     archived_by?: Snowflake;
-    archived_at?: EpochTimeStamp;
-    updated_at?: EpochTimeStamp;
+    archived_at?: number;
+    updated_at?: number;
     executor_id: Snowflake;
-    created_at: EpochTimeStamp;
-    expires_at?: EpochTimeStamp;
+    created_at: number;
+    expires_at?: number;
     action: PunishmentType;
     flag?: InfractionFlag;
     reason?: string;
@@ -33,11 +33,14 @@ export enum PunishmentType {
 }
 
 export enum InfractionFlag {
+    /** Infraction given by bot */
     Automatic = 1,
-    Quick = 2,
+    /** Infraction given using pre-set values (such as duration) */
+    Quick = 2
 }
 
-export type MinimalInfraction = Omit<InfractionModel, "updated_by" | "updated_at" | "request_author_id" | "target_id">
+/** Primarily used for infraction searches */
+export type MinimalInfraction = Omit<InfractionModel, "updated_by" | "updated_at" | "request_author_id">
 
 export enum InfractionFilter {
     All = "All",

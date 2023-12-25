@@ -14,7 +14,7 @@ export default class BanCommand extends Command {
             description: "Ban a user from the guild.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "user",

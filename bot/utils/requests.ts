@@ -29,6 +29,7 @@ import {
 import { muteMember, resolveInfraction, validateModerationAction } from "./moderation";
 import { Requests, RequestValidationResult } from "@bot/types/requests";
 import { LoggingEvent, RolePermission } from "@bot/types/config";
+import { TemporaryRole } from "@database/models/temporaryRole";
 import { PunishmentType } from "@database/models/infraction";
 import { ErrorCause } from "@bot/types/internals";
 import { sendLog } from "./logging";
@@ -37,8 +38,7 @@ import { client } from "@bot/client";
 import Config from "./config";
 import Cache from "./cache";
 import ms from "ms";
-import { getQuery, runQuery } from "@database/utils";
-import { TemporaryRole } from "@database/models/temporaryRole";
+import { db } from "@database/utils.ts";
 
 export function getRequestType(channelId: Snowflake, config: Config): Requests | null {
     if (channelId === config.channels.banRequestQueue) return Requests.Ban;
@@ -340,7 +340,7 @@ export async function handleBanRequestAutoMute(data: {
         const reply = await request.reply(response);
 
         // Remove after 3 seconds
-        setTimeout(async() => {
+        setTimeout(async () => {
             await reply.delete().catch(() => null);
         }, 3000);
 
@@ -431,13 +431,15 @@ export function setTemporaryRoleTimeout(data: {
         throw new Error(`setTemporaryRoleTimeout - Failed to fetch config for guild ${guild.id}`);
     }
 
-    setTimeout(async() => {
+    setTimeout(async () => {
         // Get the most up-to-date result
-        const res = await getQuery<Pick<TemporaryRole, "role_id" | "users">>(`
+        const res = await db.get<Pick<TemporaryRole, "role_id" | "users">>(`
             SELECT role_id, users
             FROM temporary_roles
-            WHERE request_id = ${requestId}
-        `);
+            WHERE request_id = $requestId
+        `, [{
+            $requestId: requestId
+        }]);
 
         if (!res) return;
 
@@ -457,9 +459,13 @@ export function setTemporaryRoleTimeout(data: {
         await Promise.all([
             ...members.map(member => member.roles.remove(res.role_id)),
             request.edit({ components: [actionRow] }),
-            runQuery(`DELETE
-                      FROM temporary_roles
-                      WHERE request_id = ${requestId}`)
+            db.run(`
+                DELETE
+                FROM temporary_roles
+                WHERE request_id = $requestId
+            `, [{
+                $requestId: requestId
+            }])
         ]);
     }, expiresAt - Date.now());
 }

@@ -4,7 +4,7 @@ import { ensureError } from "@bot/utils";
 if (process.env.DEBUG_WEBHOOK_URL) {
     const webhook = new WebhookClient({ url: process.env.DEBUG_WEBHOOK_URL });
 
-    process.on("uncaughtException", async(_error, origin) => {
+    process.on("uncaughtException", async (_error, origin) => {
         const error = ensureError(_error);
         const embed = new EmbedBuilder()
             .setTitle(origin)

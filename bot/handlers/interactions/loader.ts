@@ -1,3 +1,4 @@
+import { AbstractInstanceType } from "@bot/types/internals.ts";
 import { AnyComponentInteraction } from "@bot/types/interactions";
 import { Command, Component } from "./interaction";
 import { startProgressBar } from "@bot/utils";
@@ -11,17 +12,19 @@ import Config from "@bot/utils/config";
 import fs from "node:fs";
 
 export async function loadGlobalInteractions(): Promise<void> {
-    const dirPath = path.resolve(__dirname, "../../interactions");
-    const filepaths = glob.sync(`${dirPath}/{components,global_commands}/*`);
+    const directoryPath = path.resolve(__dirname, "../../interactions");
+    const filepaths = glob.sync(`${directoryPath}/{components,global_commands}/*`);
     const bar = startProgressBar("Loading global interactions", filepaths.length);
 
     for (const filepath of filepaths) {
         try {
+            // Get the last element of the array, which is the filename
             const filename = filepath.split("/").at(-1);
             const interactionModule = await import(filepath);
             const interactionClass = interactionModule.default;
+            const interaction: AbstractInstanceType<typeof Command> = new interactionClass();
 
-            registerGlobalInteraction(new interactionClass());
+            registerGlobalInteraction(interaction);
             bar.increment({ filename });
         } catch (err) {
             console.error(`Error loading global interaction from file ${filepath}: ${err}`);
@@ -30,8 +33,8 @@ export async function loadGlobalInteractions(): Promise<void> {
 }
 
 export async function loadGuildCommands(config: Config): Promise<void> {
-    const dirPath = path.resolve(__dirname, "../../interactions/guild_commands");
-    const filenames = fs.readdirSync(dirPath);
+    const directoryPath = path.resolve(__dirname, "../../interactions/guild_commands");
+    const filenames = fs.readdirSync(directoryPath);
     const bar = startProgressBar(`Loading guild commands — ${config.guildId}`, filenames.length);
 
     for (const filename of filenames) {
@@ -39,8 +42,9 @@ export async function loadGuildCommands(config: Config): Promise<void> {
             const filepath = path.resolve(__dirname, "../../interactions/guild_commands", filename);
             const commandModule = await import(filepath);
             const commandClass = commandModule.default;
+            const command: AbstractInstanceType<typeof Command> = new commandClass(config);
 
-            registerGuildCommand(config.guildId, new commandClass(config));
+            registerGuildCommand(config.guildId, command);
             bar.increment({ filename });
         } catch (err) {
             console.error(`Error loading guild command from file ${filename}: ${err}`);

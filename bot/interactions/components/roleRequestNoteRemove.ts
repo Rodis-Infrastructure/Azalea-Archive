@@ -1,4 +1,3 @@
-import { InteractionResponseType } from "@bot/types/interactions";
 import {
     ActionRow,
     ActionRowBuilder,
@@ -8,14 +7,16 @@ import {
     ButtonStyle,
     EmbedBuilder
 } from "discord.js";
+
 import { Component } from "@bot/handlers/interactions/interaction";
+import { InteractionResponseType } from "@bot/types/interactions";
 
 export default class RoleRequestNoteRemoveButton extends Component<ButtonInteraction<"cached">> {
     constructor() {
         super({
             name: "role-request-note-remove",
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

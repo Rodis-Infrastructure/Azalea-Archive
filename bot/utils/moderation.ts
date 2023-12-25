@@ -11,7 +11,7 @@ import { EmbedBuilder, GuildMember, GuildTextBasedChannel, Snowflake, time, User
 import { InfractionFlag, InfractionResolveOptions, PunishmentType } from "@database/models/infraction";
 import { MemberMuteResult, QuickMuteParams } from "@bot/types/moderation";
 import { MessageModel } from "@database/models/message";
-import { allQuery, storeInfraction } from "@database/utils";
+import { db, storeInfraction } from "@database/utils";
 import { TimestampStyles } from "@discordjs/formatters";
 import { getInfractionEmbedData } from "./infractions";
 import { LoggingEvent } from "@bot/types/config";
@@ -134,7 +134,7 @@ export async function muteMember(target: GuildMember, data: {
     return { expiresAt, infractionId };
 }
 
-export function muteExpirationTimestamp(member: GuildMember): EpochTimeStamp | null {
+export function muteExpirationTimestamp(member: GuildMember): number | null {
     const msExpiresAt = member.communicationDisabledUntilTimestamp;
 
     if (msExpiresAt && msExpiresAt >= Date.now()) {
@@ -189,24 +189,31 @@ export async function purgeMessages(data: {
 
     if (messagesToPurge.length < amount) {
         const messagesToFetch = amount - messagesToPurge.length;
-        const authorCondition = targetId ? `AND author_id = ${targetId}` : "";
 
         try {
             // @formatter:off
-            const storedMessages = await allQuery<Pick<MessageModel, "message_id">>(`
+            const storedMessages = await db.all<Pick<MessageModel, "message_id">>(`
                 UPDATE messages
                 SET deleted = 1
                 FROM (
                     SELECT message_id FROM messages
-                    WHERE channel_id = ${channel.id} ${authorCondition} 
+                    WHERE channel_id = $channelId
+                        AND ($authorId IS NULL OR author_id = $authorId)
                         AND deleted = 0
                     ORDER BY created_at DESC
-                    LIMIT ${messagesToFetch}
+                    LIMIT $limit
                 ) as s
                 WHERE messages.message_id = s.message_id
                 RETURNING messages.message_id;
-            `);
+            `, [{
+                $channelId: channel.id,
+                $guildId: channel.guildId,
+                $limit: messagesToFetch,
+                $authorId: targetId ?? null,
+                $messageIds: messagesToPurge.join(",")
+            }]);
 
+            // @formatter:on
             messagesToPurge.push(...storedMessages.map(({ message_id }) => message_id));
         } catch (err) {
             console.error(err);

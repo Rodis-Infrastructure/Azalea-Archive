@@ -14,7 +14,7 @@ export default class UnbanCommand extends Command {
             description: "Unbans a banned user.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [
                 {
                     name: "user",

@@ -11,7 +11,7 @@ export default class InfractionSearchButton extends Component<ButtonInteraction<
             // Custom ID format: inf-search-{targetId}
             name: { startsWith: "inf-search" },
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false
+            skipEphemeralCheck: false
         });
     }
 

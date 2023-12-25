@@ -17,7 +17,7 @@ import { Command } from "@bot/handlers/interactions/interaction";
 import { mapInfractionCount } from "@bot/utils/infractions";
 import { TimestampStyles } from "@discordjs/formatters";
 import { RolePermission } from "@bot/types/config";
-import { getQuery } from "@database/utils";
+import { db } from "@database/utils.ts";
 
 import Config from "@bot/utils/config";
 
@@ -28,7 +28,7 @@ export default class InfoCommand extends Command {
             description: "Get information about a user.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [{
                 name: "user",
                 description: "The user to get information about.",
@@ -92,23 +92,29 @@ export default class InfoCommand extends Command {
                 inline: true
             });
 
+            // We're not using the reason from the fetched ban
+            // because it won't be up-to-date if the infraction was modified
             const targetIsBanned = await interaction.guild.bans.fetch(targetUser.id)
                 .then(() => true)
                 .catch(() => false);
 
             if (targetIsBanned) {
-                const ban = await getQuery<Pick<InfractionModel, "reason">>(`
+                const ban = await db.get<Pick<InfractionModel, "reason">>(`
                     SELECT reason
                     FROM infractions
-                    WHERE target_id = ${targetUser.id}
-                      AND guild_id = ${interaction.guildId}
-                      AND action = ${PunishmentType.Ban}
+                    WHERE target_id = $targetId
+                      AND guild_id = $guildId
+                      AND action = $action
                     ORDER BY infraction_id DESC
                     LIMIT 1;
-                `);
+                `, [{
+                    $targetId: targetUser.id,
+                    $guildId: interaction.guildId,
+                    $action: PunishmentType.Ban
+                }]);
 
                 embed.setTitle("Banned");
-                embed.setDescription(ban?.reason || "No reason provided.");
+                embed.setDescription(ban?.reason ?? "No reason provided.");
             } else {
                 embed.setDescription("This user is not a member of the server.");
             }
@@ -116,16 +122,18 @@ export default class InfoCommand extends Command {
 
         // Only allows staff to view member infractions, but not the infractions of other staff
         if (!flags.includes("Staff") && config.isGuildStaff(interaction.member)) {
-            const infractionCount = await getQuery<InfractionCount, false>(`
+            const infractionCount = await db.get<InfractionCount, false>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE target_id = ${targetUser.id}
-                  AND guild_id = ${interaction.guildId};
-
-            `);
+                WHERE target_id = $targetId
+                  AND guild_id = $guildId;
+            `, [{
+                $targetId: targetUser.id,
+                $guildId: interaction.guildId
+            }]);
 
             embed.addFields({
                 name: "Infractions",
@@ -147,24 +155,24 @@ export default class InfoCommand extends Command {
             config.hasPermission(interaction.member, RolePermission.ViewModerationActivity)
         ) {
             ephemeral = true;
-            const dealtInfractionCount = await getQuery<InfractionCount>(`
+            const dealtInfractionCount = await db.get<InfractionCount, false>(`
                 SELECT SUM(action = ${PunishmentType.Note}) AS note,
                        SUM(action = ${PunishmentType.Mute}) AS mute,
                        SUM(action = ${PunishmentType.Kick}) AS kick,
                        SUM(action = ${PunishmentType.Ban})  AS ban
                 FROM infractions
-                WHERE (executor_id = ${targetUser.id} OR request_author_id = ${targetUser.id})
-                  AND guild_id = ${interaction.guildId};
+                WHERE (executor_id = $targetId OR request_author_id = $targetId)
+                  AND guild_id = $guildId;
+            `, [{
+                $targetId: targetUser.id,
+                $guildId: interaction.guildId
+            }]);
 
-            `);
-
-            if (dealtInfractionCount) {
-                embed.addFields({
-                    name: "Infractions Dealt",
-                    value: mapInfractionCount(dealtInfractionCount),
-                    inline: true
-                });
-            }
+            embed.addFields({
+                name: "Infractions Dealt",
+                value: mapInfractionCount(dealtInfractionCount),
+                inline: true
+            });
         }
 
         if (flags.length) {

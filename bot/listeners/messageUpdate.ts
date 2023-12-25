@@ -181,7 +181,7 @@ async function handleRequestEdit(message: Message<true>, config: Config): Promis
         ]);
 
         // Remove after 5 seconds
-        setTimeout(async() => {
+        setTimeout(async () => {
             await reply.delete().catch(() => null);
         }, 5000);
     }

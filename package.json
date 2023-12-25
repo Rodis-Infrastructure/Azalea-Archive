@@ -1,42 +1,34 @@
 {
-    "name": "azalea",
-    "version": "1.0.0",
-    "description": "The Roblox Discord's Moderation Bot",
-    "main": "bot/client.ts",
-    "scripts": {
-        "build": "tsc && tsc-alias",
-        "start": "test -d dist && node dist/bot/client.js || npm run build && npm start",
-        "test": "mocha bot/client.ts"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Rodis-Infrastructure/azalea.git"
-    },
-    "author": "",
-    "bugs": {
-        "url": "https://github.com/Rodis-Infrastructure/azalea/issues"
-    },
-    "homepage": "https://github.com/Rodis-Infrastructure/azalea#readme",
-    "dependencies": {
-        "cli-progress": "^3.12.0",
-        "cron": "^2.4.3",
-        "discord.js": "^14.14.1",
-        "dotenv": "^16.3.1",
-        "ms": "^2.1.3",
-        "sqlite3": "^5.1.6",
-        "yaml": "^2.3.2"
-    },
-    "devDependencies": {
-        "@types/cli-progress": "^3.11.4",
-        "@types/ms": "^0.7.32",
-        "@typescript-eslint/eslint-plugin": "^5.62.0",
-        "@typescript-eslint/parser": "^5.62.0",
-        "eslint": "^8.50.0",
-        "eslint-plugin-import": "^2.28.1",
-        "mocha": "^10.2.0",
-        "ts-node": "^10.9.1",
-        "tsc-alias": "^1.8.8",
-        "tsconfig-paths": "^4.2.0",
-        "typescript": "^5.2.2"
-    }
+  "name": "azalea",
+  "version": "1.0.0",
+  "description": "The Unofficial Roblox Discord's Moderation Bot",
+  "main": "bot/client.ts",
+  "scripts": {
+    "start": "bun run bot/client.ts",
+    "db:init": "sqlite3 ${DB_PATH:-db.sqlite} < database/migrations/init.sql"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rodis-Infrastructure/azalea.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Rodis-Infrastructure/azalea/issues"
+  },
+  "homepage": "https://github.com/Rodis-Infrastructure/azalea#readme",
+  "dependencies": {
+    "cli-progress": "^3.12.0",
+    "cron": "^2.4.3",
+    "discord.js": "^14.14.1",
+    "ms": "^2.1.3",
+    "yaml": "^2.3.2"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "^3.11.4",
+    "@types/ms": "^0.7.32",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "bun-types": "latest",
+    "eslint": "^8.50.0",
+    "typescript": "^5.2.0"
+  }
 }
