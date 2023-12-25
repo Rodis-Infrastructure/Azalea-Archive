@@ -12,6 +12,14 @@ export interface MessageCache {
     /** Messages to store in the database at regular intervals. */
     store: Collection<Snowflake, MessageModel>;
     purged?: PurgedMessages;
+    /** Key format: `{targetId}_{executorId}_{channelId}` (without brackets) */
+    deletionAuditLogs: Collection<string, number>;
+}
+
+export interface MessageDeleteAuditLog {
+    executorId: Snowflake;
+    targetId: Snowflake;
+    channelId: Snowflake;
 }
 
 export interface CachedRequest {

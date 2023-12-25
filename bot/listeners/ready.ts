@@ -74,15 +74,15 @@ export default class ReadyEventListener extends EventListener {
         // Store cached messages every 10 minutes
         new CronJob("*/10 * * * *", Cache.storeMessages).start();
 
-        // Delete messages older than 14 days every 12 hours
-        new CronJob("0 */12 * * *", () => {
+        // Delete messages older than 12 days every 6 hours
+        new CronJob("0 */6 * * *", () => {
             db.run(`
                 DELETE
                 FROM messages
                 WHERE $now - created_at > $timeout
             `, [{
                 $now: Date.now(),
-                $timeout: ms("14d")
+                $timeout: ms("12d")
             }]);
         }).start();
     }
