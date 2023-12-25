@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS infractions
     updated_at        TIMESTAMP,
     flag              TINYINT,
     reason            TEXT CHECK (length(reason) <= 1024)
-) WITHOUT ROWID;
+);
 
 CREATE INDEX IF NOT EXISTS idx_latest_user_infractions
     ON infractions (target_id, guild_id, infraction_id DESC);

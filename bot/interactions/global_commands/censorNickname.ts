@@ -47,14 +47,6 @@ export default class CensorNicknameCommand extends Command {
             return;
         }
 
-        if (target.nickname === target.id) {
-            await interaction.reply({
-                content: "This user's nickname is already censored.",
-                ephemeral
-            });
-            return;
-        }
-
         if (!interaction.guild.members.me?.permissions.has(PermissionFlagsBits.ManageNicknames)) {
             await interaction.reply({
                 content: "I do not have permission to change nicknames.",
@@ -101,8 +93,10 @@ export default class CensorNicknameCommand extends Command {
             return;
         }
 
+        // Generate a random 5-digit number.
+        const rnd = Math.floor(Math.random() * 90000) + 10000;
         const oldDisplayName = target.displayName;
-        await target.setNickname(target.id, `Nickname censored by ${interaction.user.tag} (${interaction.user.id})`);
+        await target.setNickname(`Unverified User ${rnd}`, `Nickname censored by ${interaction.user.tag} (${interaction.user.id})`);
 
         // Try to DM the user to let them know their nickname was censored.
         if (config.nicknameCensorship.embed) {
