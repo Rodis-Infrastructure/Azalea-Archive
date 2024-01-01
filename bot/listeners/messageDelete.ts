@@ -8,7 +8,7 @@ import {
     hyperlink,
     Message,
     PartialMessage,
-    StickerFormatType,
+    StickerFormatType, time,
     userMention
 } from "discord.js";
 
@@ -20,6 +20,7 @@ import { client } from "@bot/client";
 
 import EventListener from "@bot/handlers/listeners/eventListener";
 import Cache from "@bot/utils/cache";
+import { TimestampStyles } from "@discordjs/formatters";
 
 export default class MessageDeleteEventListener extends EventListener {
     constructor() {
@@ -59,6 +60,10 @@ export default class MessageDeleteEventListener extends EventListener {
                 {
                     name: "Channel",
                     value: channelMention(message.channel_id)
+                },
+                {
+                    name: "Posted",
+                    value: time(message.created_at, TimestampStyles.ShortDateTime)
                 },
                 {
                     name: "Content",
