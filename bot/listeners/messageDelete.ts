@@ -63,7 +63,7 @@ export default class MessageDeleteEventListener extends EventListener {
                 },
                 {
                     name: "Posted",
-                    value: time(message.created_at, TimestampStyles.ShortDateTime)
+                    value: time(Math.floor(message.created_at / 1000), TimestampStyles.ShortDateTime)
                 },
                 {
                     name: "Content",
