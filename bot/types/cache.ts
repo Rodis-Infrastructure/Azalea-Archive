@@ -5,7 +5,7 @@ import { MessageModel } from "@database/models/message";
 interface PurgedMessages {
     targetId?: Snowflake;
     executorId: Snowflake;
-    messageIds: Snowflake[];
+    messages: MessageModel[];
 }
 
 export interface MessageCache {

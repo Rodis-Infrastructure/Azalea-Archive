@@ -32,37 +32,53 @@ export default class MessageBulkDeleteEventListener extends EventListener {
         const authors = new Set<ReturnType<typeof userMention>>();
         const messages = new Set<MessageModel>();
 
-        for (const message of deletedMessages.values()) {
-            if (message.partial) {
-                partialMessages.add(message.id);
-                continue;
+        // If the messages were purged, no data needs to be fetched
+        if (cache.messages.purged?.messages.some(({ message_id }) => deletedMessages.has(message_id))) {
+            for (const message of cache.messages.purged.messages) {
+                await storeMessageAndReference({
+                    message,
+                    channel,
+                    cache,
+                    sets: {
+                        messages,
+                        authors,
+                        references
+                    }
+                });
+            }
+        } else {
+            for (const message of deletedMessages.values()) {
+                if (message.partial) {
+                    partialMessages.add(message.id);
+                    continue;
+                }
+
+                await storeMessageAndReference({
+                    message: serializeMessage(message, true),
+                    channel,
+                    cache,
+                    sets: {
+                        messages,
+                        authors,
+                        references
+                    }
+                });
             }
 
-            await storeMessageAndReference({
-                message: serializeMessage(message, true),
-                channel,
-                cache,
-                sets: {
-                    messages,
-                    authors,
-                    references
-                }
-            });
-        }
+            const cachedMessages = await cache.handleBulkDeletedMessages(partialMessages);
 
-        const cachedMessages = await cache.handleBulkDeletedMessages(partialMessages);
-
-        for (const message of cachedMessages) {
-            await storeMessageAndReference({
-                message,
-                channel,
-                cache,
-                sets: {
-                    messages,
-                    authors,
-                    references
-                }
-            });
+            for (const message of cachedMessages) {
+                await storeMessageAndReference({
+                    message,
+                    channel,
+                    cache,
+                    sets: {
+                        messages,
+                        authors,
+                        references
+                    }
+                });
+            }
         }
 
         // There are no messages to log

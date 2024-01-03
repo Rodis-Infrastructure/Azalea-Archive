@@ -2,7 +2,7 @@ import { ApplicationCommandType, MessageContextMenuCommandInteraction } from "di
 import { purgeMessages, validateModerationAction } from "@bot/utils/moderation";
 import { InteractionResponseType } from "@bot/types/interactions";
 import { Command } from "@bot/handlers/interactions/interaction";
-import { ensureError } from "@bot/utils";
+import { ensureError, pluralize } from "@bot/utils";
 
 import Config from "@bot/utils/config";
 
@@ -38,19 +38,19 @@ export default class PurgeMessageCtxCommand extends Command {
         }
 
         try {
-            const purgedMessageCount = await purgeMessages({
+            const purgedMessages = await purgeMessages({
                 channel: interaction.channel,
                 amount: 100,
                 targetId: targetUser.id,
                 executorId: interaction.user.id
             });
 
-            if (!purgedMessageCount) {
+            if (!purgedMessages.length) {
                 await interaction.editReply(`${emojis.error} There are no messages to purge.`);
                 return;
             }
 
-            await interaction.editReply(`${emojis.success} Successfully purged \`${purgedMessageCount}\` messages by ${targetUser}.`);
+            await interaction.editReply(`${emojis.success} Successfully purged \`${purgedMessages.length}\` ${pluralize("message", purgedMessages.length)} by ${targetUser}.`);
         } catch (_error) {
             const error = ensureError(_error);
             await interaction.editReply(`${emojis.error} Failed to purge messages: ${error.message}`);
