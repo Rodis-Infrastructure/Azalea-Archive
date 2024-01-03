@@ -177,11 +177,11 @@ export async function purgeMessages(data: {
     amount: number,
     executorId: Snowflake,
     targetId?: Snowflake
-}): Promise<number> {
+}): Promise<MessageModel[]> {
     const { channel, amount, targetId, executorId } = data;
     const cache = Cache.get(channel.guildId);
 
-    const messagesToPurge = cache.getMessageIds({
+    const messagesToPurge = cache.deleteMessages({
         channelId: channel.id,
         authorId: targetId,
         limit: amount
@@ -192,7 +192,7 @@ export async function purgeMessages(data: {
 
         try {
             // @formatter:off
-            const storedMessages = await db.all<Pick<MessageModel, "message_id">>(`
+            const storedMessages = await db.all<MessageModel>(`
                 UPDATE messages
                 SET deleted = 1
                 FROM (
@@ -204,7 +204,7 @@ export async function purgeMessages(data: {
                     LIMIT $limit
                 ) as s
                 WHERE messages.message_id = s.message_id
-                RETURNING messages.message_id;
+                RETURNING *;
             `, [{
                 $channelId: channel.id,
                 $limit: messagesToFetch,
@@ -212,7 +212,7 @@ export async function purgeMessages(data: {
             }]);
 
             // @formatter:on
-            messagesToPurge.push(...storedMessages.map(({ message_id }) => message_id));
+            messagesToPurge.push(...storedMessages);
         } catch (err) {
             console.error(err);
         }
@@ -221,11 +221,13 @@ export async function purgeMessages(data: {
     cache.messages.purged = {
         targetId,
         executorId,
-        messageIds: messagesToPurge
+        messages: messagesToPurge
     };
 
-    const purgedMessages = await channel.bulkDelete(messagesToPurge);
-    return purgedMessages.size;
+    const messageIds = messagesToPurge.map(({ message_id }) => message_id);
+    await channel.bulkDelete(messageIds);
+
+    return messagesToPurge;
 }
 
 /** @returns {Object} The response to send to the executor and whether the operation was successful */

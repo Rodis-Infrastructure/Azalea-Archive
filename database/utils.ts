@@ -14,7 +14,8 @@ class AsyncDatabase {
 
     run(query: string, bindings: [SQLQueryBindings]): Promise<void> {
         return new Promise(resolve => {
-            this._db.run(query, bindings);
+            const stmt = this._db.prepare<void, SQLQueryBindings>(query);
+            stmt.run(...bindings);
             resolve();
         });
     }
