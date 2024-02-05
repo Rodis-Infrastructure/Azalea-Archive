@@ -78,19 +78,19 @@ export default class CleanCommand extends Command {
         }
 
         try {
-            const purgedMessageCount = await purgeMessages({
+            const purgedMessages = await purgeMessages({
                 channel: interaction.channel,
                 executorId: interaction.user.id,
                 targetId: targetUser?.id,
                 amount
             });
 
-            if (!purgedMessageCount) {
+            if (!purgedMessages.length) {
                 await interaction.editReply(`${emojis.error} There are no messages to purge.`);
                 return;
             }
 
-            await interaction.editReply(`${emojis.success} Successfully purged \`${purgedMessageCount}\` ${pluralize("message", purgedMessageCount)}.`);
+            await interaction.editReply(`${emojis.success} Successfully purged \`${purgedMessages.length}\` ${pluralize("message", purgedMessages.length)}.`);
         } catch (_error) {
             const err = ensureError(_error);
             await interaction.editReply(`${emojis.error} ${err.message}`);

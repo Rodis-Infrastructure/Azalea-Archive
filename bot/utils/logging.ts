@@ -50,10 +50,10 @@ export async function linkToPurgeLog(params: {
     const cache = Cache.get(guildId);
     if (!cache.messages.purged) return;
 
-    const { messageIds, executorId, targetId } = cache.messages.purged;
+    const { messages, executorId, targetId } = cache.messages.purged;
 
-    if (typeof data === "string" && !messageIds.includes(data)) return;
-    if (typeof data !== "string" && !data.some(({ message_id }) => messageIds.includes(message_id))) return;
+    if (typeof data === "string" && !messages.includes(data)) return;
+    if (typeof data !== "string" && !data.some(({ message_id }) => messages.includes(message_id))) return;
 
     const config = Config.get(guildId);
     if (!config) return;

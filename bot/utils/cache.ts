@@ -88,20 +88,24 @@ export default class Cache {
     }
 
     /** @returns IDs of the cached messages sorted by their creation dates */
-    getMessageIds(data: {
+    deleteMessages(data: {
         authorId?: Snowflake,
         channelId: Snowflake,
         limit: number
-    }): Snowflake[] {
+    }): MessageModel[] {
         const { authorId, channelId, limit } = data;
+
         return this.messages.store
             .filter(message =>
                 message.channel_id === channelId
                 && (!authorId || message.author_id === authorId)
                 && !message.deleted
             )
+            .map(message => {
+                message.deleted = true;
+                return message;
+            })
             .sort((a, b) => b.created_at - a.created_at)
-            .map((_, id) => id)
             .slice(0, limit);
     }
 
