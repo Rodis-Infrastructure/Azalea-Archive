@@ -134,13 +134,13 @@ export default class Config {
                 mediaChannel.channelId === message.channelId
             );
 
-            if (!channel?.allowedRoles?.length) return;
+            if (channel?.allowedRoles?.length) {
+                const memberRoles = message.member.roles.cache;
+                const hasAnyRequiredRole = channel.allowedRoles.some(roleId => memberRoles.has(roleId));
 
-            const memberRoles = message.member.roles.cache;
-            const hasAnyRequiredRole = channel.allowedRoles.some(roleId => memberRoles.has(roleId));
-
-            if (!hasAnyRequiredRole) {
-                return channel.fallbackResponse || "You do not have permission to post in this channel";
+                if (!hasAnyRequiredRole) {
+                    return channel.fallbackResponse || "You do not have permission to post in this channel";
+                }
             }
         }
 
