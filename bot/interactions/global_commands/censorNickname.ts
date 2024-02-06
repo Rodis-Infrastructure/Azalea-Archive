@@ -26,7 +26,7 @@ export default class CensorNicknameCommand extends Command {
             description: "Set a user's nickname to their ID.",
             type: ApplicationCommandType.ChatInput,
             defer: InteractionResponseType.Default,
-            skipInternalUsageCheck: false,
+            skipEphemeralCheck: false,
             options: [{
                 name: "user",
                 description: "The user to add a note to",
