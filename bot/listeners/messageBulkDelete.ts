@@ -122,7 +122,7 @@ export default class MessageBulkDeleteEventListener extends EventListener {
         if (!log) return;
 
         const encodedAttachmentUrl = encodeURIComponent(log.attachments.first()!.url);
-        const url = `https://rodis.vercel.app/files?url=${encodedAttachmentUrl}`;
+        const url = `https://discord-fv.vercel.app/?url=${encodedAttachmentUrl}`;
 
         await Promise.all([
             log.edit(`${log.content}\n\n${hyperlink("Open in browser", url)}`),
