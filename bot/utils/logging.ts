@@ -94,9 +94,13 @@ export async function linkToPurgeLog(params: {
 export function formatLogContent(content: string | null): string {
     if (!content) return "No message content.";
 
-    let formatted = content.replaceAll("```", "\\`\\`\\`");
-    formatted = elipsify(formatted, 1000);
+    let formatted = content
+		// Escape code block formatting characters
+		.replaceAll("```", "\\`\\`\\`")
+		// Escape custom emoji
+		.replaceAll(/<:(?<name>[^\s]+):(?<id>\d{17,19})>/g, "<\\:$<name>\\:$<id>>");
 
+    formatted = elipsify(formatted, 1000);
     return codeBlock(formatted);
 }
 
