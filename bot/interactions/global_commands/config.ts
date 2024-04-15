@@ -39,7 +39,7 @@ export default class ConfigCommand extends Command {
         }
 
         const file = new AttachmentBuilder(filename)
-            .setName(`${guildId}.yaml`)
+            .setName(filename)
             .setDescription(`Configuration for guild with ID ${guildId}`);
 
         await interaction.reply({
